@@ -778,6 +778,23 @@ const IconClose = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 
   h('line', { x1: 18, y1: 6, x2: 6, y2: 18 })
 );
 
+/* Mute/unmute is one preference shared by every page's BGM track (Home's
+   and Event's are separate Audio() elements, but "am I muted" should
+   follow the visitor across both) — stored client-side since there's no
+   account system to persist it to, and read back as each page's own
+   initial state so muting on one page stays muted after navigating to
+   the other. */
+const AUDIO_MUTED_KEY = 'p4r_audio_muted';
+function loadAudioMuted(fallback) {
+  try {
+    const saved = localStorage.getItem(AUDIO_MUTED_KEY);
+    return saved === null ? fallback : saved === '1';
+  } catch (e) { return fallback; }
+}
+function saveAudioMuted(muted) {
+  try { localStorage.setItem(AUDIO_MUTED_KEY, muted ? '1' : '0'); } catch (e) {}
+}
+
 /* ---------------------------------------------------------------
    Background music (Figma nodes 4600:15914 / 4946:9347). Loops the
    page's BGM track, defaulting to on. Most browsers block audio
@@ -788,7 +805,7 @@ const IconClose = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 
 --------------------------------------------------------------- */
 function useBackgroundMusic(src, initialMuted) {
   const audioRef = React.useRef(null);
-  const [muted, setMuted] = React.useState(initialMuted);
+  const [muted, setMuted] = React.useState(() => loadAudioMuted(initialMuted));
   React.useEffect(() => {
     const audio = new Audio(src);
     audio.loop = true;
@@ -805,7 +822,8 @@ function useBackgroundMusic(src, initialMuted) {
     };
   }, [src]);
   React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
-  return [muted, () => setMuted((m) => !m)];
+  const toggleMuted = () => setMuted((m) => { const next = !m; saveAudioMuted(next); return next; });
+  return [muted, toggleMuted];
 }
 /* Tabler "login-2" icon, copied 1:1 from assets/icons/login-2.svg —
    inlined (rather than an <img>) so it can take the button's yellow

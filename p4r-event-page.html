@@ -431,12 +431,29 @@ const IconVolume = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke:
   h('path', { d: 'M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5' })
 );
 
+/* Mute/unmute is one preference shared by every page's BGM track (Home's
+   and Event's are separate Audio() elements, but "am I muted" should
+   follow the visitor across both) — stored client-side since there's no
+   account system to persist it to, and read back as each page's own
+   initial state so muting on one page stays muted after navigating to
+   the other. Same helpers as p4r-home-hero.html — kept in sync by hand. */
+const AUDIO_MUTED_KEY = 'p4r_audio_muted';
+function loadAudioMuted(fallback) {
+  try {
+    const saved = localStorage.getItem(AUDIO_MUTED_KEY);
+    return saved === null ? fallback : saved === '1';
+  } catch (e) { return fallback; }
+}
+function saveAudioMuted(muted) {
+  try { localStorage.setItem(AUDIO_MUTED_KEY, muted ? '1' : '0'); } catch (e) {}
+}
+
 /* Background music (Figma node 4946:9347's page, and 4600:15914's).
    Loops the Event page's BGM track, defaulting to on — see the same
    hook + note about browser autoplay policy in p4r-home-hero.html. */
 function useBackgroundMusic(src, initialMuted) {
   const audioRef = React.useRef(null);
-  const [muted, setMuted] = React.useState(initialMuted);
+  const [muted, setMuted] = React.useState(() => loadAudioMuted(initialMuted));
   React.useEffect(() => {
     const audio = new Audio(src);
     audio.loop = true;
@@ -453,7 +470,8 @@ function useBackgroundMusic(src, initialMuted) {
     };
   }, [src]);
   React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
-  return [muted, () => setMuted((m) => !m)];
+  const toggleMuted = () => setMuted((m) => { const next = !m; saveAudioMuted(next); return next; });
+  return [muted, toggleMuted];
 }
 
 function AudioToggle({ muted, onToggle }) {
