@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Persona 4 Revival — Midnight Channel (Home / First Visit)</title>
+<!-- ============================================================
+  PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
+  Home hero (first-visit) — built from Figma
+  https://www.figma.com/design/EQqpCalb2NqZuvRf7fWEk5/-Midnight-Channel-?node-id=4041-2795
+  ------------------------------------------------------------
+  Stack     : React 18 (ESM, no build step) + hand-written CSS
+  Backend   : integration points stubbed — search "BACKEND:" comments
+  Assets    : ./assets/ (official art) — logo-p4r.png, flower-1.webp,
+              flower-2.webp reused from the existing prototype;
+              tv-glitch.jpg (from Figma "05. background elements/TV Glitch.png")
+              is the TV screen texture; info-section-bg.jpg /
+              merch-placeholder-bg.jpg exported fresh from the Figma frame.
+  Fonts     : "Neue Frutiger World" (licensed), self-hosted from
+              ./assets/fonts/ — Black (as "NFW Display") for headlines,
+              Regular/Medium/Bold (as "Neue Frutiger World") for body.
+  States    : Figma has 3 Home states (first visit / language hint /
+              basic) that turned out to be one layout, not three pages —
+              "basic" is pixel-identical to what's built here, and
+              "language hint" adds one dismissible tooltip pointing at
+              the Language toggle (see LangHint below). It shows once
+              (localStorage-remembered) and dismisses itself if the
+              visitor uses the toggle. Swap the "should we show this"
+              check and the hardcoded language name for a real
+              browser-locale comparison when that logic exists.
+  ============================================================ -->
+<style>
+/* Neue Frutiger World — self-hosted webfont (replaces the Anton/Archivo stand-in) */
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Medium.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Medium.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Medium.ttf') format('truetype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Bold.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Bold.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+:root{
+  /* --- existing site colors (unchanged — kept exactly as tuned) --- */
+  --yellow:#FFFC00;         /* = --yellow-fog (Primary/Yellow Fog - Primary) */
+  --yellow-tint:#EEE843;    /* = --yellow-fog-10 (Primary/Yellow Fog - 10) */
+  --cyan:#00C8E2;           /* Log In badge fill = --daylight-blue-20 (Primary/Daylight Blue - 20) */
+  --black:#0b0b0b;          /* custom near-black bg — NOT the official Secondary/Black (#000000) */
+  --graphite-60:#1B1B1B;    /* Primary/Yasogami Graphite - 60 */
+  --graphite:#2D2D2D;       /* = --graphite-primary (Primary/Yasogami Graphite - Primary) */
+  --graphite-40:#636363;    /* Primary/Yasogami Graphite - 40 */
+  --graphite-30:#8B8B8B;
+  --grey-copy:#9A9A9A;      /* custom footer grey — close to but not exactly --graphite-30 (#8B8B8B) */
+  --orange:#FF8A00;         /* custom accent — no equivalent in the official Figma color system */
+  --red:#FF0000;            /* = --error-red-10 (Secondary/Error Red - 10) */
+
+  /* --- official design-system palette, Figma "Colors" frame (node 41:1627) ---
+     Full token set added for site-wide use. Values above are left as-is;
+     use these for any new work so it stays on-system. */
+
+  /* Primary / Yellow Fog */
+  --yellow-fog:#FFFC00;
+  --yellow-fog-60:#271D00;
+  --yellow-fog-50:#3E4300;
+  --yellow-fog-40:#606A00;
+  --yellow-fog-30:#8B9300;
+  --yellow-fog-20:#BCBD00;
+  --yellow-fog-10:#EEE843;
+
+  /* Primary / Daylight Blue */
+  --daylight-blue:#00E2FF;
+  --daylight-blue-60:#00232F;
+  --daylight-blue-50:#004A5F;
+  --daylight-blue-40:#00738D;
+  --daylight-blue-30:#009DB8;
+  --daylight-blue-20:#00C8E2;
+  --daylight-blue-10:#78F3FF;
+
+  /* Primary / Yasogami Graphite */
+  --graphite-primary:#2D2D2D;
+  --graphite-50:#3E3E3E;
+  --graphite-20:#B6B6B6;
+  --graphite-10:#E2E2E2;
+  /* --graphite-60, --graphite-40, --graphite-30 already declared above */
+
+  /* Secondary */
+  --white:#FFFFFF;
+  --true-black:#000000;     /* official Secondary/Black — distinct from the site's --black bg */
+  --error-red-10:#FF0000;
+  --success-green-300:#00D200;
+  --grey-300:#575757;
+
+  --font-head:'NFW Display','Neue Frutiger World',Impact,sans-serif;
+  --font-body:'Neue Frutiger World',Helvetica,Arial,sans-serif;
+
+  /* --- type scale, Figma variables (font-size only — pick weight via
+     --font-head [Black] or --font-body [Regular/Medium/Bold] above).
+     Note: a few Figma token names say "Thin" but are actually bound to
+     the Regular (400) style, not an actual Thin cut — that's a naming
+     quirk in the source file, not a typo here. --- */
+  --text-display-xl:80px;   /* display/XL-Black */
+  --text-display-m:48px;    /* display/M-Black */
+  --text-headline-l:32px;   /* headline/L-Black */
+  --text-headline-m:28px;   /* headline/M-Black */
+  --text-headline-s:24px;   /* headline/S-Black, headline/S-Medium */
+  --text-title-m:16px;      /* title/M-Black, title/M-Medium */
+  --text-title-s:14px;      /* title/S-Black, title/S-Medium, title/S-Thin(=Regular) */
+  --text-label-l:14px;      /* label/L-Medium, label/L-Thin(=Regular) */
+  --text-label-m:12px;      /* label/M-Black, label/M-Medium, label/M-Thin(=Regular) */
+  --text-body-m:14px;       /* body/M-Medium */
+  --text-body-s:12px;       /* body/S-Thin(=Regular) */
+
+  /* --- spacing scale, Figma variables (source file labels these "N rem"
+     but the bound values are literal px, not real rem multiples — kept
+     as px here to match what's actually in the design) --- */
+  --space-0:0px;
+  --space-4:4px;
+  --space-6:6px;
+  --space-8:8px;
+  --space-12:12px;
+  --space-16:16px;
+  --space-20:20px;
+  --space-24:24px;
+  --space-28:28px;
+  --space-40:40px;
+  --space-56:56px;
+  --space-64:64px;
+  --space-80:80px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+/* background matches the footer (--graphite-60), not --black: on a
+   browser window taller than the page's actual content, CSS propagates
+   body's own background color to fill the whole remaining viewport
+   below it — with --black that showed up as a visibly different-toned
+   block under the footer. Matching the footer's color makes that
+   overflow blend in as if the footer just continues, instead of
+   reading as a stray black rectangle. */
+body{background:var(--graphite-60);color:var(--white);font-family:var(--font-body);overflow-x:hidden}
+img{max-width:100%;display:block}
+button,a{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+
+/* =========================================================
+   PARALLELOGRAM CTA BUTTON — shared shape, 3 color variants
+   (recreates the skewed "Rectangle 2/3/4" badges from Figma)
+   ========================================================= */
+.cta{
+  position:relative; display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  padding:14px 40px; font-family:var(--font-head); font-weight:400; letter-spacing:.02em;
+  color:var(--graphite);
+  /* .cta is a real <button> in several places (Start, Join Now,
+     Register, this Log In trigger). Once background/border moved onto
+     ::before, nothing was left suppressing the browser's native button
+     chrome (light-gray background, outset border) — it was showing
+     through as a pale rectangle behind the actual skewed face. */
+  appearance:none; background:none; border:none; font-size:inherit; cursor:pointer;
+  /* isolation:isolate scopes the ::before/::after negative z-index
+     layers to just this element, so they can never paint behind
+     unrelated page content. */
+  isolation:isolate;
+  transition:transform .15s ease;
+}
+/* The visible face (::before) and the hard shadow (::after) are both
+   negative-z-index pseudo-elements rather than paint on .cta itself.
+   Two reasons:
+   1) filter:drop-shadow(...) (the old approach) doesn't correctly
+      re-clip its silhouette to a skewed clip-path in Chromium — the
+      shadow (and the border's pre-clip rectangular edges) rendered as
+      stray lines/ghosting outside the parallelogram at some zoom
+      levels. A pseudo-element sharing the same clip-path draws a
+      pixel-accurate hard shadow with no filter involved.
+   2) A single ::after with background+border directly on .cta paints
+      *on top of* .cta's own background (per the CSS stacking-context
+      paint order, an element's own background is step 1, negative-z
+      children are step 2 — i.e. after, not before) — that showed up as
+      a dark tint smeared across the button face. Splitting the face
+      into its own ::before (z:-1, on top) from the shadow ::after
+      (z:-2, behind that) fixes the order: shadow, then face, then
+      text — each color variant now sets its background/border on
+      ::before instead of on .cta directly. */
+.cta::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  clip-path:polygon(14% 0, 100% 0, 86% 100%, 0% 100%);
+  border:2px solid var(--graphite);
+}
+.cta::after{
+  content:""; position:absolute; inset:0; z-index:-2;
+  clip-path:polygon(14% 0, 100% 0, 86% 100%, 0% 100%);
+  background:rgba(0,0,0,.35);
+  transform:translate(4px,4px);
+}
+.cta:hover{transform:translate(-2px,-2px)}
+.cta svg{flex:none}
+.cta--yellow{color:var(--graphite)}
+.cta--yellow::before{background:var(--yellow); border:none}
+.cta--yellow svg{color:var(--graphite)}
+.cta--yellow:hover{color:var(--graphite-60)}
+.cta--yellow:hover::before{background:var(--daylight-blue-10)}
+.cta--yellow:hover svg{color:var(--graphite-60)}
+.cta--dark{color:var(--yellow)}
+/* Figma's real "JOIN NOW" asset (node 4217:3830) is fill:#1B1B1B only —
+   no stroke at all. The old border-color:var(--yellow) here was wrong;
+   combined with the border+clip-path limitation below, it showed up as
+   a stray yellow sliver poking out at the button's diagonal corners. */
+.cta--dark::before{background:var(--graphite-60); border:none}
+.cta--dark svg{color:var(--yellow)}
+/* Figma node 4217:3764 component (States=Enable/Hover/Pressed,
+   Size=Large, Types=Filled) — exact fills read from the component's own
+   SVG assets: Enable #1B1B1B (=--graphite-60, already the base), Hover
+   #78F3FF (=--daylight-blue-10), Pressed #00C8E2 (=--cyan); text/icon
+   go from yellow to graphite-60 on both Hover and Pressed. */
+.cta--dark:hover{color:var(--graphite-60)}
+.cta--dark:hover::before{background:var(--daylight-blue-10)}
+.cta--dark:hover svg{color:var(--graphite-60)}
+.cta--dark:active{color:var(--graphite-60)}
+.cta--dark:active::before{background:var(--cyan)}
+.cta--dark:active svg{color:var(--graphite-60)}
+.cta--cyan{color:var(--graphite); font-size:.85rem; padding:9px 26px 9px 20px}
+.cta--cyan::before{background:var(--cyan)}
+.cta--start{
+  /* Figma "_based-text-button/Default": px-40 py-12, 16px gap between
+     the "Start" label and its icon (node I4804:8177;4800:7713). */
+  font-size:clamp(20px,2.4vw,28px); padding:12px 40px; gap:16px;
+}
+.cta--join{
+  font-size:clamp(22px,3vw,40px);
+  /* Figma "Join CTA" (node 4963:62782) is Hug, not Fill — .col-left is a
+     flex column with no align-items override, so it defaults to
+     stretch and was forcing this button to fill the column's full
+     width instead of sizing to its own text. */
+  align-self:flex-start;
+}
+
+/* =========================================================
+   HERO — TV
+   ========================================================= */
+#tv-wrap{
+  /* Single red surface (Figma "TV Body", node 4590:3218) — the red
+     gradient is painted once, here, not again on .tv. Earlier .tv also
+     carried its own copy of this background plus a border + drop-shadow,
+     which read as a separate framed box sitting on top of this one
+     instead of one continuous surface — removed per design update. */
+  width:100%; display:flex; justify-content:center; align-items:center;
+  padding:clamp(10px,2.8vw,40px) 40px; background:linear-gradient(180deg,#f22e29 0%, #b8120f 100%);
+}
+.tv{
+  /* Fixed content width per Figma (Bezel 1144px + 16px gap + Control
+     Panel 200px = 1360px) — not fluid up to a max-width like before.
+     max-width:100% is just a safety net so it never causes horizontal
+     overflow on viewports narrower than 1360 before the mobile
+     breakpoint's own layout takes over. */
+  /* Height is content-driven, not a fixed aspect-ratio — a fixed ratio
+     was clipping the Start button once the headline text got taller
+     (fixed font-size steps). Bezel/control-panel now grow to fit
+     whatever's actually inside them. */
+  width:1360px; max-width:100%;
+  display:flex; gap:clamp(8px,1.4vw,16px);
+  position:relative;
+}
+.bezel{
+  /* Figma node 4590:3219 "Bezel": plain rectangle, no border-radius —
+     sharp edges, not rounded. Exact styling per Figma dev-mode inspect
+     (border is a warm off-white #D1C29E, not pure white). */
+  flex:1 1 0; min-width:0; position:relative; overflow:hidden;
+  border:8px solid #D1C29E;
+  background:linear-gradient(180deg,#211C17 0%, #0D0A08 100%);
+  box-shadow:0 6px 24px 0 rgba(0,0,0,.90) inset;
+  padding:clamp(10px,3.6vw,56px);
+  display:flex;
+}
+/* Figma "Clip path group" (node 4590:3220): 4 triangular facets that
+   give the bezel its inset/mitered-frame look. Each is a linear
+   gradient (dark apex toward the screen, lighter base along its edge
+   of the frame), reproduced with clip-path instead of the original
+   masked raster/vector assets so it stays fully responsive. Sits
+   behind .screen — only visible in the bezel's padding gutter, exactly
+   like the source design.
+
+   Each facet's diagonal edge must land exactly on the bezel's outer
+   corner and the screen's inner corner. Padding is uniform (same value
+   on all 4 sides), so that diagonal is always a true 45° line — which a
+   full-height/full-width triangle only draws correctly when its own
+   short side is exactly HALF its long side (proof: a triangle from
+   (0,0) to (w, H/2) has slope H/(2w); that's a true 45° line, passing
+   through *any* point (P,P) for whatever the padding P happens to be,
+   only when w = H/2). The old build used fixed percentages tuned for
+   one specific bezel aspect ratio (the fixed-aspect-ratio TV), so they
+   drifted off-corner once the bezel's height became content-driven.
+   `aspect-ratio` keeps the 1:2 / 2:1 relationship regardless of the
+   bezel's actual size. */
+.bezel-facets{position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.bezel-facets i{position:absolute; display:block}
+.bezel-facets .f-left{
+  left:0; top:0; height:100%; aspect-ratio:1/2;
+  clip-path:polygon(0 0, 100% 50%, 0 100%);
+  background:linear-gradient(to right, #4D4D4D 0%, #000 100%);
+}
+.bezel-facets .f-right{
+  right:0; top:0; height:100%; aspect-ratio:1/2;
+  clip-path:polygon(100% 0, 0 50%, 100% 100%);
+  background:linear-gradient(to left, #4D4D4D 0%, #000 100%);
+}
+.bezel-facets .f-top{
+  left:0; top:0; width:100%; aspect-ratio:2/1;
+  clip-path:polygon(0 0, 100% 0, 50% 100%);
+  background:linear-gradient(to bottom, #333333 0%, #000 100%);
+}
+.bezel-facets .f-bottom{
+  left:0; bottom:0; width:100%; aspect-ratio:2/1;
+  clip-path:polygon(0 100%, 100% 100%, 50% 0);
+  background:linear-gradient(to top, #333333 0%, #000 100%);
+}
+.screen{
+  /* Figma "Screen" (I4804:8177): border-4, no border-radius — sharp edges. */
+  position:relative; flex:1; overflow:hidden;
+  border:4px solid #0d0d0d; background:#000;
+  box-shadow:inset 0 0 40px 5px rgba(0,0,0,.24);
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:clamp(16px,3.4vw,40px) clamp(16px,5vw,80px);
+}
+.screen::before{ /* screen texture: TV Glitch (Figma "05. background elements") */
+  content:""; position:absolute; inset:0; z-index:0;
+  background:url('assets/tv-glitch.jpg') center/cover;
+  opacity:.8;
+}
+.screen::after{ /* vignette + scanlines */
+  content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 3px, transparent 3px 12px),
+    radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 42%, rgba(0,0,0,.55) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.7) 0%, rgba(0,0,0,.07) 12%, rgba(0,0,0,.2) 55%, rgba(0,0,0,0) 88%, rgba(0,0,0,.7) 120%);
+}
+.screen-inner{position:relative; z-index:2; display:flex; flex-direction:column;
+  /* Figma "title" container is `items-start` — children (incl. the Start
+     button) hug their own content width, they don't stretch full-bleed. */
+  align-items:flex-start; justify-content:space-between; height:100%; gap:16px}
+.screen-glass{position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 52%);}
+.title-block{
+  display:flex; flex-direction:column; gap:clamp(12px,2.2vw,24px);
+  /* Without this, title-block (and everything in it) is shrink-to-fit —
+     sized by its widest child's un-wrapped natural width instead of the
+     screen's actual available width, which is what let the headline
+     text silently overflow .screen at narrow viewports. */
+  width:100%;
+}
+.logo{
+  width:clamp(140px,26vw,300px); flex:none; /* lock aspect ratio: never let flex-shrink squish the height */
+  filter:drop-shadow(0 0 24px rgba(255,243,0,.6)); transform:skewX(.73deg);
+}
+.headline{
+  display:flex; flex-direction:column; gap:16px; /* equal 16px visual gap between every line */
+  /* Safety net: at true phone widths even a single word ("MIDNIGHT" at
+     48px) can be wider than the screen. Wrapping the line isn't enough
+     in that case — allow breaking the word itself rather than clipping
+     or overflowing it. */
+  overflow-wrap:break-word; min-width:0;
+}
+.headline h1{
+  font-family:var(--font-head); font-weight:400; color:#fff; line-height:1;
+  font-size:48px; /* Figma: 48px at >=1280 (node 4963:60266) */
+  text-shadow:2px 2px 8px #000, 4px -2px 2px rgba(255,0,0,.5), -2px 4px 2px rgba(13,165,0,.5), 0 0 8px #fff;
+  /* was white-space:nowrap — same overflow-instead-of-wrap bug as
+     "MIDNIGHT CHANNEL" (see .headline h2), just triggered only at
+     narrower widths where "WELCOME TO THE" itself doesn't fit. */
+  white-space:normal;
+}
+.headline h2{
+  font-family:var(--font-head); font-weight:400; color:var(--yellow); line-height:1;
+  font-size:64px; letter-spacing:-1px; /* Figma: 64px (nodes 4963:60266, 4963:62758) */
+  /* was white-space:nowrap — cut the text off instead of wrapping when the
+     screen got too narrow for it; now wraps to 2 lines like Figma's own
+     1024-1279 frame does. */
+  white-space:normal;
+  text-shadow:0 0 12px #000, 4px -2px 2px rgba(255,0,0,.5), -3px 3px 2px rgba(13,165,0,.5), 0 0 8px var(--yellow);
+}
+.headline p{
+  font-family:var(--font-body); font-weight:500; color:#fff; line-height:1;
+  font-size:24px; /* Figma: 24px (nodes 4963:60266, 4963:62758) */
+  text-shadow:2px 2px 8px #000, 2px -1px 2px rgba(255,0,0,.5), -1px 2px 2px rgba(13,165,0,.5), 0 0 8px #fff;
+}
+
+/* ===== Control panel (right on desktop, bottom strip on mobile) ===== */
+.control-panel{
+  flex:none; width:200px; display:flex; flex-direction:column; gap:16px; align-items:center;
+  background:linear-gradient(180deg,#e8dec4 0%, #ccbfa1 100%);
+  border:1px solid #262421;
+}
+.grille{
+  width:100%; background:#120e0a; border:4px solid #171412; overflow:hidden; position:relative;
+  padding:4px 0; display:flex; flex-direction:column; gap:6px;
+}
+.grille span{display:block; height:6px; width:100%; flex:none; background:linear-gradient(180deg,#d9c9a8,#8c8066)}
+.grille-badge{position:absolute; top:33px; left:50%; transform:translateX(-50%); width:36px; height:36px; background:#120E0A; z-index:2}
+
+.dial-panel{
+  flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+  background:linear-gradient(180deg,#e8dec4 0%, #ccbfa1 100%);
+  border:4px solid #73664d; padding:20px; gap:16px;
+}
+.knob-row{display:flex; align-items:center; justify-content:space-between; width:100%}
+
+.icon-btn-wrap{
+  /* Figma node 4600:15914: fixed 34px width (matches the icon circle's
+     own diameter) so the circle's position never shifts when the label
+     below it changes length ("Mute" vs "Unmute") — the label is
+     allowed to overflow that width rather than resizing the column. */
+  display:flex; flex-direction:column; align-items:center; gap:8px; width:34px; flex:none;
+}
+/* Figma "Icon Button" component (node 4080:3416, state=Enable): a
+   brushed-metal outer ring + a slightly smaller inner ring (both real
+   exported textures), with a pale-yellow core disc (#EEE843 fill,
+   #8B8B8B stroke) behind the icon. */
+.icon-btn{
+  position:relative; width:34px; height:34px; border-radius:999px; border:none; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  background:url('assets/icon-btn-outer-border.png') center/cover;
+}
+.icon-btn::before{
+  /* Figma insets these exactly 4.17% per side off the 34px button —
+     my earlier 11% was arbitrary and made the ring read as a thick
+     flat washer instead of a thin metal bevel. */
+  content:""; position:absolute; inset:4.17%; border-radius:999px;
+  background:url('assets/icon-btn-inner-border.png') center/cover;
+}
+.icon-btn::after{
+  content:""; position:absolute; inset:9.17%; border-radius:999px;
+  background:#EEE843; border:1px solid #8B8B8B;
+}
+.icon-btn svg{position:relative; z-index:1; width:16px; height:16px}
+.icon-btn.lang span{position:relative; z-index:1; font-family:var(--font-body); font-weight:500; font-size:11px; color:var(--graphite)}
+.icon-btn-wrap label{font-family:var(--font-body); font-size:12px; color:var(--black); white-space:nowrap}
+
+/* Figma "Channel Dial" component (node 4621:5925 family): a real
+   dial with 11 clock-style positions (12,1..8,10,11 — 9 is skipped by
+   design, leaving a gap in the ring). Clicking advances one position
+   clockwise; the lever + red tick rotate 30deg per step and whichever
+   number the lever points at turns yellow. Colors/geometry lifted
+   directly from the exported node SVG. */
+.turn-knob{
+  position:relative; width:clamp(84px,9.5vw,152px); aspect-ratio:1; flex:none;
+  border:none; background:none; padding:0; -webkit-tap-highlight-color:transparent;
+}
+.turn-knob svg{display:block; width:100%; height:100%; filter:drop-shadow(0 4px 4px rgba(0,0,0,.35))}
+.knob-lever{transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.dial-labels{display:flex; justify-content:space-between; width:100%; font-family:var(--font-body); font-weight:700; font-size:9px; letter-spacing:.12em; color:#4a4232}
+
+/* ===== Language hint tooltip (dismissible; nudges first-time /
+   language-mismatched visitors toward the Language toggle) ===== */
+.icon-btn-wrap.has-hint{position:relative}
+.lang-hint{
+  position:absolute; bottom:calc(100% + 14px); right:-46px; z-index:20;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--black);
+  padding:4px 12px; white-space:nowrap;
+  font-family:var(--font-head); font-weight:400; font-size:14px; color:var(--black);
+  filter:drop-shadow(2px 2px 0 rgba(0,0,0,.2));
+}
+.lang-hint::before,.lang-hint::after{ content:""; position:absolute; width:0; height:0; }
+.lang-hint::after{ /* speech-bubble tail border */
+  bottom:-8px; right:52px;
+  border-left:8px solid transparent; border-right:8px solid transparent; border-top:8px solid var(--black);
+}
+.lang-hint::before{ /* tail fill, drawn over the border tail so it reads as one seamless shape */
+  bottom:-6px; right:54px; z-index:1;
+  border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid #fff;
+}
+.lang-hint-close{
+  position:absolute; top:-14px; right:-14px; width:28px; height:28px; border-radius:999px;
+  background:var(--yellow); border:3px solid var(--black);
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.lang-hint-close svg{width:14px; height:14px; color:var(--black)}
+
+/* =========================================================
+   INFO SECTION
+   ========================================================= */
+#info{
+  position:relative; padding:clamp(28px,7vw,80px); overflow:hidden;
+  background:var(--yellow-tint);
+}
+#info::before{
+  content:""; position:absolute; inset:0; z-index:0;
+  background:url('assets/info-section-bg.jpg') center/cover;
+}
+#info::after{
+  content:""; position:absolute; inset:0; z-index:1; background:rgba(238,232,67,.9);
+}
+.info-inner{position:relative; z-index:2; display:flex; flex-direction:column; gap:24px}
+.info-top{display:flex; justify-content:flex-end}
+
+/* align-items:stretch (was center) — Figma's "Character Strip" (the
+   merch card's wrapper) is h-full and "Merch placeholder" fills it
+   completely (0,0 offset, same 667x438 bounds as its parent), so the
+   card is meant to match .col-left's full height, not size to its own
+   min-height fallback. */
+.row-a{display:flex; gap:clamp(24px,5vw,80px); align-items:stretch; flex-wrap:wrap}
+.col-left{flex:1 1 380px; display:flex; flex-direction:column; justify-content:center; gap:24px; min-width:280px}
+.heading{filter:drop-shadow(0 4px 2px rgba(0,0,0,.25))}
+/* Not in the Figma design (which hard-codes exactly 2 lines as 2
+   separate elements) — per explicit request, this highlight now
+   follows however the text actually wraps: one continuous shape when
+   it fits on a line, a separate shape per line when it doesn't. That
+   needs the text to be ONE run (not two separate boxed phrases) so the
+   browser controls the wrapping, plus box-decoration-break so each
+   wrapped line fragment gets its own background/shadow "clone" instead
+   of one box stretching to fit the whole (possibly multi-line) span. */
+.heading span{
+  background:var(--graphite-60); color:#fff; font-family:var(--font-head); font-weight:400;
+  font-size:clamp(24px,4.4vw,48px); padding:4px 10px;
+  /* line-height only controls the DISTANCE between wrapped lines here —
+     it does not shrink the box itself. This font's own rendered glyph
+     box (plus the vertical padding) is taller than a 1.3 line-height
+     allocates, so with box-decoration-break:clone, each wrapped line's
+     box physically overlapped the next one's text. 2 gives each line
+     enough room to clear the one above it, with ~8px of true gap left
+     over, per request. */
+  line-height:2;
+  box-shadow:-4px 4px 0 #bcbd00;
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+}
+.info-copy{
+  font-family:var(--font-body); font-weight:500; color:var(--graphite-60); font-size:clamp(13px,1.6vw,16px);
+  /* was max-width:46ch — capped the line width well short of .col-left's
+     actual space, leaving a dead gap to the right instead of using it.
+     Letting it fill the container means it re-wraps to fewer, wider
+     lines whenever there's room, instead of a fixed 3-line block. */
+  margin-top:8px; /* extra breathing room between the heading and this copy */
+}
+.tnc{font-family:var(--font-body); color:#636363; font-size:12px}
+
+.col-right{position:relative; flex:1 1 320px; min-width:260px; display:flex}
+.merch-card{
+  position:relative; z-index:1; flex:1; min-height:280px; border-radius:16px; overflow:hidden;
+  box-shadow:4px 4px 0 0 var(--orange);
+  display:flex; align-items:center; justify-content:center; text-align:center;
+}
+.merch-card::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
+.merch-card::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.73)}
+.merch-card span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(20px,3.2vw,32px); line-height:1.3}
+
+/* Decorative flowers anchored to the Merch Placeholder card's corners
+   (Figma node 4963:55782 — flower centers sit on the card's top-left and
+   bottom-right corners, confirmed by comparing each flower's bounding-box
+   center against the card's box: bottom-right yellow flower center
+   (1360,582.5) vs. card bottom-right (1360,583) — exact match). Siblings
+   of .merch-card inside .col-right (whose box == the card's box, since
+   the card is its only flex:1 child), positioned in % so they stay
+   pinned to the same corner as the card resizes at any breakpoint. */
+.merch-flower{position:absolute; pointer-events:none}
+.merch-flower__spin{display:block; animation:merch-flower-spin 10s linear infinite}
+.merch-flower__spin img{width:100%; display:block}
+@keyframes merch-flower-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .merch-flower__spin{animation:none}
+}
+.merch-flower--top-left{
+  left:0; top:0; transform:translate(-50%,-50%); z-index:0;
+  width:clamp(70px,9vw,120px);
+}
+.merch-flower--yellow{
+  left:100%; top:100%; transform:translate(-50%,-50%); z-index:2;
+  width:clamp(110px,13vw,184px);
+}
+.merch-flower--black{
+  left:100%; top:100%; transform:translate(calc(-50% + 4px),calc(-50% - 5.5rem)); z-index:0;
+  width:clamp(56px,6vw,88px);
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+footer{
+  background:var(--graphite-60); padding:clamp(24px,4.4vw,64px);
+  display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+}
+.socials{display:flex; gap:14px}
+.socials a{
+  width:48px; height:48px; border-radius:999px; background:var(--graphite-40); color:#fff;
+  display:flex; align-items:center; justify-content:center; transition:background .15s ease;
+}
+.socials a:hover{background:var(--yellow)}
+.socials a svg{width:24px; height:24px}
+.socials a:hover svg path{fill:var(--graphite)}
+footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); text-align:right}
+
+/* =========================================================
+   MODAL — SEGA Account (Figma node 4217:3714). Same modal
+   chrome (.modal-*) the Event page's Lucky Draw family uses;
+   buttons reuse this page's own .cta system (+ two new size/
+   outline modifiers) instead of importing Event's button set,
+   since every other CTA on this page already goes through .cta.
+   ========================================================= */
+.modal-overlay{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:20px}
+/* overflow lives on .modal-scroll (below), not this box — the close
+   button sits outside the box's own edges (top:-12px right:-12px per
+   Figma), so the box itself has to stay overflow:visible or it clips
+   its own close button. */
+.modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible; display:flex; flex-direction:column}
+.modal-scroll{overflow:auto; flex:1; min-height:0}
+.modal-close{position:absolute; top:-12px; right:-12px; z-index:2; width:48px; height:48px; border-radius:999px; background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center}
+.modal-close svg{color:#0B0B0B}
+.modal-header{background:var(--graphite-60); padding:16px; text-align:center}
+.modal-header p{font-family:var(--font-body); font-weight:500; font-size:16px; color:#fff; margin:0}
+.modal-body{padding:24px; display:flex; flex-direction:column; align-items:flex-start; gap:24px; max-width:560px}
+.modal-text h3{font-family:var(--font-head); font-weight:400; font-size:24px; color:var(--graphite-60); margin:0 0 8px}
+.modal-text .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:var(--graphite-60); margin:0 0 8px}
+.modal-actions{display:flex; gap:12px; flex-wrap:wrap}
+.cta--outline{color:var(--graphite)}
+/* A CSS `border` only ever draws along a box's real rectangular edges.
+   .cta's clip-path turns that rectangle into a parallelogram by
+   slicing diagonally near the top-right/bottom-left corners — those
+   diagonal cuts are NOT box edges, so a plain `border` cannot put a
+   stroke on them at all. The old code showed this as a border only
+   across the top/bottom, with nothing on the two slanted sides. Figma
+   itself never draws this as a CSS border either — its own exported
+   asset for this component is a flat SVG with the polygon traced by
+   `stroke`, which is exactly reproduced here: background:none is
+   replaced by an inline SVG whose path matches the clip-path polygon,
+   stroked on all 4 sides (diagonals included). clip-path is turned off
+   here since the SVG's own transparent fill already limits paint to
+   the shape — clipping it again would slice the stroke's outer half off.
+   vector-effect="non-scaling-stroke" matters here: the button is much
+   wider than tall, and background-size:100% 100% stretches this square
+   viewBox non-uniformly to fit — without it, that stretch makes the
+   top/bottom stroke render thinner than the diagonal sides (each edge
+   gets a different effective scale). non-scaling-stroke keeps the
+   stroke a true constant width regardless of that per-axis stretch. */
+.cta--outline::before{
+  border:none; clip-path:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none' overflow='visible'%3E%3Cpath d='M14,0 L100,0 L86,100 L0,100 Z' fill='none' stroke='%23271D00' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  background-size:100% 100%; background-repeat:no-repeat;
+}
+/* Figma's Outline-type button variants (all sizes) never carry a
+   drop-shadow class — only Filled/Yellow do. Since this variant's fill
+   is transparent, the shared .cta::after shadow wasn't hidden behind
+   an opaque face like it is on the other variants; it rendered as its
+   own visible offset gray shape (very obvious on the white modal
+   background). Disable it here to match Figma exactly. */
+.cta--outline::after{content:none}
+/* Figma node 4166:2959 component (States=Hover/Pressed, Size=Small,
+   Types=Outline) — exact fills/border/text read from the component's
+   own SVG assets: Hover fill #78F3FF (=--daylight-blue-10), Pressed
+   fill #00C8E2 (=--cyan), both with a #2D2D2D (=--graphite) border and
+   #1B1B1B (=--graphite-60) text/icon — same progression already used
+   by .cta--yellow and .cta--dark. */
+.cta--outline:hover{color:var(--graphite-60)}
+.cta--outline:hover::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none' overflow='visible'%3E%3Cpath d='M14,0 L100,0 L86,100 L0,100 Z' fill='%2378F3FF' stroke='%232D2D2D' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+}
+.cta--outline:hover svg{color:var(--graphite-60)}
+.cta--outline:active{color:var(--graphite-60)}
+.cta--outline:active::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none' overflow='visible'%3E%3Cpath d='M14,0 L100,0 L86,100 L0,100 Z' fill='%2300C8E2' stroke='%232D2D2D' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+}
+.cta--outline:active svg{color:var(--graphite-60)}
+.cta--sm{padding:8px 28px; font-size:14px}
+
+/* =========================================================
+   RESPONSIVE (H5 / mobile) — consolidated at the end on purpose
+   so every override here wins the cascade regardless of where
+   its base rule is declared above.
+   ========================================================= */
+@media (max-width:1279px){
+  /* Screen headline text steps down in fixed sizes rather than scaling
+     fluidly — per spec, not pulled from Figma at this exact tier for
+     "MIDNIGHT CHANNEL"/tagline (Figma keeps those flat at 64/24 through
+     this range; these are deliberate smaller overrides). */
+  .headline h1{ font-size:32px; }
+  .headline h2{ font-size:56px; }
+  .headline p{ font-size:16px; }
+}
+@media (max-width:1023px){
+  .headline h1{ font-size:28px; }
+  .headline h2{ font-size:40px; } /* was 48px — even "MIDNIGHT" alone broke mid-word on narrow phones (~390px) */
+  .headline p{ font-size:14px; }
+}
+@media (max-width:820px){
+  .tv{ flex-direction:column; aspect-ratio:auto; min-height:0; }
+  .bezel{ flex:none; }
+  /* Was flex:none + aspect-ratio:1032/618 — with no explicit width, that
+     sized .screen off its own (nowrap) headline text instead of the
+     actual phone width, so at narrow widths it rendered wider than
+     .bezel and clipped the overflow instead of wrapping/shrinking.
+     Keep the base flex:1 (fills .bezel's width) and let height be
+     content-driven, same as the desktop .tv fix. */
+  .screen{ padding:12px 16px; }
+  .title-block{ gap:4px; }
+  .logo{ width:clamp(70px,20vw,160px); }
+  .headline p{ margin-top:0; }
+  .cta--start{ padding:6px 18px; font-size:13px; gap:6px; }
+  .cta--start svg{ width:14px; height:14px; }
+  .control-panel{ width:100%; flex-direction:row; justify-content:space-between; padding:14px 20px; gap:12px; }
+  .grille{ display:none; }
+  .dial-panel{ flex-direction:row; border-width:0; padding:0; gap:20px; background:none; flex:none; }
+  .knob-row{ width:auto; gap:16px; }
+  .icon-btn-wrap label{ display:none; }
+  .dial-labels{ display:none; }
+  .lang-hint{ right:auto; left:50%; transform:translateX(-50%); }
+  .lang-hint::after,.lang-hint::before{ right:auto; left:50%; transform:translateX(-50%); }
+  .modal-body{ align-items:center; text-align:center; }
+  .modal-text{ text-align:center; }
+  .modal-actions{ justify-content:center; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+import React from 'https://esm.sh/react@18.3.1';
+import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+const h = React.createElement;
+
+/* ---------------------------------------------------------------
+   BACKEND: replace these stubs with real endpoints.
+   All handlers are isolated here so wiring up an API is a
+   find-and-replace job, not a rewrite.
+--------------------------------------------------------------- */
+const Api = {
+  isLoggedIn: () => false, // BACKEND: read auth/session state
+  toggleAudio: (muted) => console.log('BACKEND/ANALYTICS: audio muted =', muted),
+  setLanguage: (lang) => console.log('BACKEND: set locale =', lang),
+  // BACKEND: p4r-sega-account.html is an honest stand-in, not a build of
+  // SEGA's real external account site — swap for the real OAuth URL
+  // once that integration exists (see that file's own header comment).
+  goToRegister: () => { window.location.href = 'p4r-sega-account.html?mode=register'; },
+  goToLogin: () => { window.location.href = 'p4r-sega-account.html?mode=login'; },
+};
+
+/* ---------- icons (exported 1:1 from the Figma node's SVG layers) ---------- */
+const IconTV = (p) => h('svg', { viewBox: '0 0 20 24', fill: 'none', ...p },
+  h('path', { fillRule: 'evenodd', clipRule: 'evenodd', fill: 'currentColor', d: 'M18.7422 20.265C18.4514 20.9802 17.7455 21.4485 16.9611 21.4485H16.7822L16.2117 23.7852C16.1966 23.8468 16.1583 23.9011 16.1032 23.9332C16.0413 23.969 15.9508 24.0046 15.8388 23.9995C15.7588 23.9959 15.6923 23.9726 15.6412 23.9463C15.5735 23.9113 15.5266 23.8467 15.5144 23.7718C15.3881 22.9974 15.2618 22.2229 15.1354 21.4485H10.0003H9.99975H4.76466C4.63828 22.2229 4.51196 22.9974 4.38564 23.7718C4.37343 23.8467 4.32654 23.9113 4.25888 23.9463C4.20781 23.9726 4.14124 23.9959 4.06131 23.9995C3.94923 24.0046 3.85867 23.969 3.7969 23.9332C3.74172 23.9011 3.70343 23.8468 3.68837 23.7852L3.11791 21.4485H3.03887C2.25458 21.4485 1.54863 20.9802 1.25783 20.265C0.71978 18.9418 -0.0254678 16.6692 0.000669033 14.2814C0.011744 13.2761 0.0138324 12.3408 0.0109845 11.5111C0.00389658 9.40975 1.64463 7.65703 3.77798 7.48885C4.84972 7.40435 6.29357 7.34455 7.52061 7.3083C7.66072 7.03602 7.89266 6.7939 8.19067 6.59914L3.6852 0.432572C3.62565 0.306108 3.65989 0.155331 3.76671 0.0681324C3.87772 -0.0223964 4.04061 -0.0230246 4.15415 0.0681324L9.27646 6.17163C9.50644 6.12633 9.74895 6.10158 10.0001 6.10158C10.2458 6.10158 10.4834 6.12533 10.7091 6.16874L15.829 0.0681324C15.9425 -0.0230246 16.1054 -0.0223964 16.2163 0.0681324C16.3232 0.155331 16.3575 0.306108 16.2979 0.432572L11.7979 6.59161C12.1015 6.78761 12.3375 7.0325 12.4794 7.3083C13.7064 7.34455 15.1503 7.40435 16.2221 7.48885C18.3554 7.65703 19.9962 9.40975 19.989 11.5111C19.9862 12.3408 19.9883 13.2761 19.9993 14.2814C20.0255 16.6692 19.2803 18.9418 18.7422 20.265ZM14.2704 12.6931C14.2747 11.2904 13.2968 10.1205 12.0252 10.0083C10.6687 9.88852 8.31206 9.84323 8.31661 9.86421C8.32117 9.84323 5.96455 9.88852 4.60803 10.0083C3.3365 10.1205 2.35855 11.2904 2.36279 12.6931C2.36444 13.2469 2.36317 13.8712 2.35665 14.5422C2.34109 16.1361 2.78522 17.653 3.10595 18.5363C3.27929 19.0136 3.70001 19.3262 4.1675 19.3262H8.31642H8.3168H12.4657C12.9332 19.3262 13.354 19.0136 13.5273 18.5363C13.848 17.653 14.2922 16.1361 14.2766 14.5422C14.2701 13.8712 14.2688 13.2469 14.2704 12.6931ZM17.7261 10.8823C17.7261 10.5581 17.4614 10.2952 17.1348 10.2952H16.0541C15.7276 10.2952 15.4629 10.5581 15.4629 10.8823V15.1257C15.4629 15.5636 15.8204 15.9187 16.2614 15.9187H16.9275C17.3686 15.9187 17.7261 15.5636 17.7261 15.1257V10.8823ZM16.5384 16.8727C15.8177 16.8727 15.2334 17.4529 15.2334 18.1685C15.2334 18.8842 15.8177 19.4643 16.5384 19.4643C17.2591 19.4643 17.8433 18.8842 17.8433 18.1685C17.8433 17.4529 17.2591 16.8727 16.5384 16.8727Z' }),
+  /* Play triangle inside the screen (Figma node 4734:7138, "Polygon 1") — the
+     TV outline alone was already exact; this was the missing piece. */
+  h('polygon', { fill: 'currentColor', points: '6.5,12.1 6.5,17.56 11.6,14.83' })
+);
+/* Tabler "login-2" icon, copied 1:1 from assets/icons/login-2.svg — was
+   a hand-fabricated approximation before, which is why it looked wrong. */
+const IconLogin = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M9 8v-2a2 2 0 0 1 2 -2h7a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-7a2 2 0 0 1 -2 -2v-2' }),
+  h('path', { d: 'M3 12h13l-3 -3' }),
+  h('path', { d: 'M13 15l3 -3' })
+);
+const IconFacebook = (p) => h('svg', { viewBox: '0 0 13 20', fill: 'none', ...p },
+  h('path', { fill: '#fff', d: 'M12 0C12.2449 3.23106e-05 12.4813 0.0899562 12.6644 0.252715C12.8474 0.415475 12.9643 0.639749 12.993 0.883L13 1V5C13 5.24493 12.91 5.48134 12.7473 5.66437C12.5845 5.84741 12.3603 5.96434 12.117 5.993L12 6H9V7H12C12.1424 7.00005 12.2831 7.0305 12.4127 7.0893C12.5423 7.14811 12.6579 7.23391 12.7517 7.34098C12.8456 7.44804 12.9154 7.57391 12.9567 7.71015C12.998 7.84639 13.0096 7.98987 12.991 8.131L12.971 8.243L11.971 12.243C11.9214 12.4405 11.8126 12.6182 11.6593 12.7522C11.506 12.8862 11.3154 12.9702 11.113 12.993L11 13H9V19C8.99997 19.2449 8.91004 19.4813 8.74728 19.6644C8.58453 19.8474 8.36025 19.9643 8.117 19.993L8 20H4C3.75507 20 3.51866 19.91 3.33563 19.7473C3.15259 19.5845 3.03566 19.3603 3.007 19.117L3 19V13H1C0.755067 13 0.518663 12.91 0.335628 12.7473C0.152593 12.5845 0.0356572 12.3603 0.00699997 12.117L0 12V8C3.23106e-05 7.75507 0.089956 7.51866 0.252715 7.33563C0.415474 7.15259 0.639749 7.03566 0.883 7.007L1 7H3V6C2.99994 4.44762 3.60157 2.95564 4.67847 1.83753C5.75537 0.719417 7.22371 0.0622142 8.775 0.00399995L9 0H12Z' })
+);
+const IconInstagram = (p) => h('svg', { viewBox: '0 0 18 18', fill: 'none', ...p },
+  h('path', { fill: '#fff', d: 'M13 0C14.3261 0 15.5979 0.526784 16.5355 1.46447C17.4732 2.40215 18 3.67392 18 5V13C18 14.3261 17.4732 15.5979 16.5355 16.5355C15.5979 17.4732 14.3261 18 13 18H5C3.67392 18 2.40215 17.4732 1.46447 16.5355C0.526784 15.5979 0 14.3261 0 13V5C0 3.67392 0.526784 2.40215 1.46447 1.46447C2.40215 0.526784 3.67392 0 5 0H13ZM9 5C7.97376 5 6.98677 5.39444 6.24319 6.10172C5.4996 6.80901 5.05631 7.77504 5.005 8.8L5 9C5 9.79113 5.2346 10.5645 5.67412 11.2223C6.11365 11.8801 6.73836 12.3928 7.46927 12.6955C8.20017 12.9983 9.00444 13.0775 9.78036 12.9231C10.5563 12.7688 11.269 12.3878 11.8284 11.8284C12.3878 11.269 12.7688 10.5563 12.9231 9.78036C13.0775 9.00444 12.9983 8.20017 12.6955 7.46927C12.3928 6.73836 11.8801 6.11365 11.2223 5.67412C10.5645 5.2346 9.79113 5 9 5ZM13.5 3.5C13.2551 3.50003 13.0187 3.58996 12.8356 3.75272C12.6526 3.91547 12.5357 4.13975 12.507 4.383L12.5 4.51C12.5003 4.76488 12.5979 5.01003 12.7728 5.19537C12.9478 5.3807 13.187 5.49223 13.4414 5.50717C13.6958 5.52211 13.9464 5.43933 14.1418 5.27573C14.3373 5.11214 14.4629 4.8801 14.493 4.627L14.5 4.5C14.5 4.23478 14.3946 3.98043 14.2071 3.79289C14.0196 3.60536 13.7652 3.5 13.5 3.5Z' })
+);
+/* Tabler "brand-tiktok" filled icon, copied 1:1 from
+   assets/icons/tiktok.svg — replaces the old X/Twitter icon now that
+   ATLUS SEA's social presence moved to TikTok. */
+const IconTikTok = (p) => h('svg', { viewBox: '0 0 24 24', fill: '#fff', ...p },
+  h('path', { d: 'M16.083 2h-4.083a1 1 0 0 0 -1 1v11.5a1.5 1.5 0 1 1 -2.519 -1.1l.12 -.1a1 1 0 0 0 .399 -.8v-4.326a1 1 0 0 0 -1.23 -.974a7.5 7.5 0 0 0 1.73 14.8l.243 -.005a7.5 7.5 0 0 0 7.257 -7.495v-2.7l.311 .153c1.122 .53 2.333 .868 3.59 .993a1 1 0 0 0 1.099 -.996v-4.033a1 1 0 0 0 -.834 -.986a5.005 5.005 0 0 1 -4.097 -4.096a1 1 0 0 0 -.986 -.835z' })
+);
+/* Tabler "brand-discord" filled icon, copied 1:1 from
+   assets/icons/discord-filled.svg — was a hand-fabricated (and
+   visibly broken) approximation before. */
+const IconDiscord = (p) => h('svg', { viewBox: '0 0 24 24', fill: '#fff', ...p },
+  h('path', { d: 'M14.983 3l.123 .006c2.014 .214 3.527 .672 4.966 1.673a1 1 0 0 1 .371 .488c1.876 5.315 2.373 9.987 1.451 12.28c-1.003 2.005 -2.606 3.553 -4.394 3.553c-.732 0 -1.693 -.968 -2.328 -2.045a21.512 21.512 0 0 0 2.103 -.493a1 1 0 1 0 -.55 -1.924c-3.32 .95 -6.13 .95 -9.45 0a1 1 0 0 0 -.55 1.924c.717 .204 1.416 .37 2.103 .494c-.635 1.075 -1.596 2.044 -2.328 2.044c-1.788 0 -3.391 -1.548 -4.428 -3.629c-.888 -2.217 -.39 -6.89 1.485 -12.204a1 1 0 0 1 .371 -.488c1.439 -1.001 2.952 -1.459 4.966 -1.673a1 1 0 0 1 .935 .435l.063 .107l.651 1.285l.137 -.016a12.97 12.97 0 0 1 2.643 0l.134 .016l.65 -1.284a1 1 0 0 1 .754 -.54l.122 -.009zm-5.983 7a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15zm6 0a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15z' })
+);
+/* Figma nodes 4600:15914 ("Audio" icon button) / 4946:9347 (Event page's
+   audio pill) both use Tabler's exact volume-3 (muted) / volume (on)
+   glyphs — copied 1:1 from assets/icons/mute-volume-3.svg and
+   assets/icons/volume.svg. Replaces an earlier hand-approximated mute
+   glyph that didn't match the real icon, and adds the missing
+   IconVolume — the "on" icon was never actually defined before, so
+   this control never visually swapped between mute/unmute. */
+const IconMute = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5' }),
+  h('path', { d: 'M16 10l4 4m0 -4l-4 4' })
+);
+const IconVolume = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M15 8a5 5 0 0 1 0 8' }),
+  h('path', { d: 'M17.7 5a9 9 0 0 1 0 14' }),
+  h('path', { d: 'M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5' })
+);
+const IconClose = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('line', { x1: 6, y1: 6, x2: 18, y2: 18 }),
+  h('line', { x1: 18, y1: 6, x2: 6, y2: 18 })
+);
+
+/* ---------------------------------------------------------------
+   Background music (Figma nodes 4600:15914 / 4946:9347). Loops the
+   page's BGM track, defaulting to on. Most browsers block audio
+   autoplay-with-sound until a user gesture, so this also retries once
+   on the first click/keydown/touch anywhere on the page — "on by
+   default" still holds, it just may need that first interaction to
+   actually start audibly, per browser autoplay policy, not a bug here.
+--------------------------------------------------------------- */
+function useBackgroundMusic(src, initialMuted) {
+  const audioRef = React.useRef(null);
+  const [muted, setMuted] = React.useState(initialMuted);
+  React.useEffect(() => {
+    const audio = new Audio(src);
+    audio.loop = true;
+    audio.muted = muted;
+    audioRef.current = audio;
+    const tryPlay = () => audio.play().catch(() => {});
+    tryPlay();
+    const events = ['click', 'keydown', 'touchstart'];
+    const onFirstInteract = () => { tryPlay(); events.forEach((e) => document.removeEventListener(e, onFirstInteract)); };
+    events.forEach((e) => document.addEventListener(e, onFirstInteract, { once: true }));
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, onFirstInteract));
+      audio.pause();
+    };
+  }, [src]);
+  React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
+  return [muted, () => setMuted((m) => !m)];
+}
+/* Tabler "login-2" icon, copied 1:1 from assets/icons/login-2.svg —
+   inlined (rather than an <img>) so it can take the button's yellow
+   via stroke, same approach as the icons above. */
+const IconLogin2 = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M9 8v-2a2 2 0 0 1 2 -2h7a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-7a2 2 0 0 1 -2 -2v-2' }),
+  h('path', { d: 'M3 12h13l-3 -3' }),
+  h('path', { d: 'M13 15l3 -3' })
+);
+
+/* =========================================================
+   MODAL — SEGA Account (Figma node 4217:3714). Same shared-chrome
+   pattern the Event page's Lucky Draw modal family uses.
+   ========================================================= */
+function Modal({ onClose, header, children }) {
+  return h('div', { className: 'modal-overlay', onClick: (e) => { if (e.target === e.currentTarget) onClose(); } },
+    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
+      h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
+      h('div', { className: 'modal-scroll' },
+        header && h('div', { className: 'modal-header' }, header),
+        h('div', { className: 'modal-body' }, children)
+      )
+    )
+  );
+}
+
+function SegaAccountModal({ onClose }) {
+  return h(Modal, {
+    onClose,
+    header: h(React.Fragment, null,
+      h('p', null, 'Welcome to SEGA Account! Sign up to receive'),
+      h('p', null, 'in-game rewards exclusive to members!')
+    ),
+  },
+    h('div', { className: 'modal-text' },
+      h('h3', null, 'WHAT IS A SEGA ACCOUNT?'),
+      h('p', { className: 'copy' }, "A SEGA Account is a profile that lets you maximise SEGA's online services and offers a ton of benefits. Anyone can sign up, and it's free to use!"),
+      h('p', { className: 'copy' }, 'Create an account today to get bonus items for hit titles!')
+    ),
+    h('div', { className: 'modal-actions' },
+      h('button', { type: 'button', className: 'cta cta--outline cta--sm', onClick: Api.goToRegister }, h('span', null, 'Register')),
+      h('button', { type: 'button', className: 'cta cta--dark cta--sm', onClick: Api.goToLogin },
+        h('span', null, 'Log in'), h(IconLogin2, { width: 24, height: 24 })
+      )
+    )
+  );
+}
+
+function IconBtn({ children, label, onClick, className = '', hint = null }) {
+  return h('div', { className: hint ? 'icon-btn-wrap has-hint' : 'icon-btn-wrap' },
+    h('button', { className: `icon-btn ${className}`, onClick, 'aria-label': label }, children),
+    h('label', null, label),
+    hint
+  );
+}
+
+/* BACKEND: swap this for a real "should we nudge this visitor toward
+   another language" check (e.g. browser locale vs. current site locale).
+   For now it's a one-time, locally-remembered dismissal. */
+function LangHint({ text, onDismiss }) {
+  return h('div', { className: 'lang-hint', role: 'status' },
+    h('span', null, text),
+    h('button', { className: 'lang-hint-close', onClick: onDismiss, 'aria-label': 'Dismiss language hint' }, h(IconClose))
+  );
+}
+
+/* Figma "Channel Dial" (node 4621:5925 family): 11 clock positions,
+   9 intentionally skipped. BACKEND note: if this should drive a real
+   "channel" concept later, lift KNOB_POSITIONS out and wire onSelect. */
+const KNOB_POSITIONS = [
+  { n: '12', a: 0 }, { n: '1', a: 30 }, { n: '2', a: 60 }, { n: '3', a: 90 },
+  { n: '4', a: 120 }, { n: '5', a: 150 }, { n: '6', a: 180 }, { n: '7', a: 210 },
+  { n: '8', a: 240 }, { n: '9', a: 270 }, { n: '10', a: 300 }, { n: '11', a: 330 },
+];
+/* Centered in the 170x170 viewBox (76 radius + 9px margin all round for
+   the drop-shadow) so the dial sits dead-center in its container. */
+const KNOB_CENTER = { x: 85, y: 85 };
+const KNOB_NUMBER_R = 58;
+
+function TurnKnob() {
+  // "step" only ever increases — it's the true, unbounded rotation
+  // count (in units of 30deg), so the lever always keeps turning
+  // clockwise past 11->12->1 instead of snapping counter-clockwise
+  // back to 0deg when the CSS angle wraps. "idx" (derived, wrapped)
+  // just looks up which position that step currently lands on.
+  const [step, setStep] = React.useState(1); // default = "1", matches Figma's default variant
+  const idx = ((step % KNOB_POSITIONS.length) + KNOB_POSITIONS.length) % KNOB_POSITIONS.length;
+  const current = KNOB_POSITIONS[idx];
+  const rotation = step * 30;
+  const next = () => setStep((s) => s + 1);
+  const { x: cx, y: cy } = KNOB_CENTER;
+
+  return h('button', {
+      type: 'button', className: 'turn-knob', onClick: next,
+      'aria-label': `Channel tuning dial, currently ${current.n}. Tap to turn.`,
+    },
+    h('svg', { viewBox: '0 0 170 170' },
+      h('defs', null,
+        h('linearGradient', { id: 'knobFace', x1: '85', y1: '9', x2: '85', y2: '153', gradientUnits: 'userSpaceOnUse' },
+          h('stop', { stopColor: '#292624' }),
+          h('stop', { offset: '1', stopColor: '#0A0A0A' })
+        ),
+        h('linearGradient', { id: 'knobLever', x1: '0', y1: '0', x2: '1', y2: '0' },
+          h('stop', { stopColor: '#F7F7FF' }),
+          h('stop', { offset: '.5', stopColor: '#8C919E' }),
+          h('stop', { offset: '1', stopColor: '#D9DBE6' })
+        )
+      ),
+      h('circle', { cx, cy, r: 76, fill: '#E0D5BA', stroke: '#4D4740' }),
+      h('circle', { cx, cy, r: 72, fill: 'url(#knobFace)' }),
+      h('circle', { cx, cy, r: 74, fill: 'none', stroke: '#4D4740', strokeWidth: 4, strokeDasharray: '4 5' }),
+      ...KNOB_POSITIONS.map(({ n, a }) => {
+        const rad = (a - 90) * Math.PI / 180;
+        const x = cx + KNOB_NUMBER_R * Math.cos(rad);
+        const y = cy + KNOB_NUMBER_R * Math.sin(rad);
+        return h('text', {
+          key: n, x, y, textAnchor: 'middle', dominantBaseline: 'central',
+          fontFamily: 'var(--font-head)', fontSize: 13,
+          fill: a === current.a ? '#FFFC00' : '#E6DBBF',
+        }, n);
+      }),
+      h('circle', { cx, cy, r: 42, fill: '#171412', stroke: '#59544D', strokeOpacity: .7, strokeWidth: 2 }),
+      h('g', { className: 'knob-lever', style: { transformOrigin: `${cx}px ${cy}px`, transform: `rotate(${rotation}deg)` } },
+        /* Figma's lever is a full 96-long bar centered exactly on the
+           knob's pivot (verified against node 4621:5950's raw
+           coordinates) — it crosses through the middle, it doesn't
+           stop there. */
+        h('rect', { x: cx - 7, y: cy - 48, width: 14, height: 96, rx: 7, fill: 'url(#knobLever)', stroke: '#1F1F24', strokeWidth: 2 }),
+        h('rect', { x: cx - 1, y: cy - 42, width: 2, height: 12, rx: 1, fill: '#FF0000' })
+      )
+    )
+  );
+}
+
+function ControlPanel() {
+  const [muted, toggleMuted] = useBackgroundMusic('assets/bgm-home.m4a', false); // default on, per Figma
+  const [lang, setLang] = React.useState('EN');
+  const [showLangHint, setShowLangHint] = React.useState(() => {
+    try { return !localStorage.getItem('p4r_lang_hint_dismissed'); } catch (e) { return true; }
+  });
+  const dismissLangHint = () => {
+    setShowLangHint(false);
+    try { localStorage.setItem('p4r_lang_hint_dismissed', '1'); } catch (e) {}
+  };
+  const toggleAudio = () => { toggleMuted(); Api.toggleAudio(!muted); };
+  const cycleLang = () => {
+    /* Figma node 4600:15191 "Language": only 2 languages, EN <-> TH
+       (the lang-hint tooltip already said "Thai" — the toggle itself
+       was wrongly cycling to "JP" instead). */
+    const next = lang === 'EN' ? 'TH' : 'EN'; setLang(next); Api.setLanguage(next);
+    if (showLangHint) dismissLangHint(); // engaging with the toggle answers the nudge
+  };
+  return h('div', { className: 'control-panel' },
+    h('div', { className: 'grille', 'aria-hidden': 'true' },
+      /* Figma "Speaker Grille" (node 4590:3295): 34 stripes, not 24 —
+         getting the count right is what makes the grille/dial-panel
+         height ratio match Figma (Dial Panel is flex:1, so the
+         grille's own content height is what sets the split). */
+      Array.from({ length: 34 }).map((_, i) => h('span', { key: i })),
+      h('div', { className: 'grille-badge' }) // node 4590:3296 — #120E0A square over stripes 4-6
+    ),
+    h('div', { className: 'dial-panel' },
+      h('div', { className: 'knob-row' },
+        /* Figma node 4600:15914: icon+label describe the action a
+           click performs, not the current state — playing shows
+           "Mute" (with the mute-look icon), muted shows "Unmute". */
+        h(IconBtn, { label: muted ? 'Unmute' : 'Mute', onClick: toggleAudio },
+          muted ? h(IconVolume, { width: 16, height: 16, color: '#2D2D2D' }) : h(IconMute, { width: 16, height: 16, color: '#2D2D2D' })
+        ),
+        h(IconBtn, {
+          label: 'Language', onClick: cycleLang, className: 'lang',
+          hint: showLangHint ? h(LangHint, { text: 'CLICK HERE FOR THAI', onDismiss: dismissLangHint }) : null,
+        }, h('span', null, lang))
+      ),
+      h(TurnKnob, null),
+      h('div', { className: 'dial-labels' }, h('span', null, 'CHANNEL'), h('span', null, 'TUNING'))
+    )
+  );
+}
+
+function Hero() {
+  return h('section', { id: 'tv-wrap' },
+    h('div', { className: 'tv' },
+      h('div', { className: 'bezel' },
+        h('div', { className: 'bezel-facets', 'aria-hidden': 'true' },
+          h('i', { className: 'f-left' }), h('i', { className: 'f-top' }),
+          h('i', { className: 'f-bottom' }), h('i', { className: 'f-right' })
+        ),
+        h('div', { className: 'screen' },
+          h('div', { className: 'screen-inner' },
+            h('div', { className: 'title-block' },
+              h('img', { className: 'logo', src: 'assets/logo-p4r.png', alt: 'Persona 4 Revival logo' }),
+              h('div', { className: 'headline' },
+                h('h1', null, 'WELCOME TO THE'),
+                h('h2', null, 'MIDNIGHT CHANNEL'),
+                h('p', null, 'Do mission & win prizes.')
+              )
+            ),
+            h('button', {
+              className: 'cta cta--yellow cta--start',
+              onClick: () => document.getElementById('info').scrollIntoView({ behavior: 'smooth' }),
+            },
+              h('span', null, 'Start'), h(IconTV, { width: 24, height: 24 })
+            )
+          ),
+          h('div', { className: 'screen-glass', 'aria-hidden': 'true' })
+        )
+      ),
+      h(ControlPanel, null)
+    )
+  );
+}
+
+function InfoSection({ onOpenAccountModal }) {
+  return h('section', { id: 'info' },
+    h('div', { className: 'info-inner' },
+      h('div', { className: 'info-top' },
+        /* Figma node 4621:6657 ("ID" button, states=Enable/size=Small/
+           types=Outline): transparent bg, graphite text/icon,
+           yellow-fog-60 border (confirmed 1:1 against the component's
+           own stroke asset) — was wrongly using .cta--cyan, then
+           wrongly using .cta--yellow. */
+        h('button', { className: 'cta cta--outline cta--sm', onClick: onOpenAccountModal },
+          h('span', null, 'Log In'), h(IconLogin, { width: 24, height: 24 })
+        )
+      ),
+      h('div', { className: 'row-a' },
+        h('div', { className: 'col-left' },
+          h('div', { className: 'heading' },
+            h('span', null, 'COMPLETE MISSIONS, WIN BIG!')
+          ),
+          h('p', { className: 'info-copy' }, 'Clear all the Midnight Channel missions to unlock prizes and enter the Lucky Draw for exclusive Persona 4 Revival merch.'),
+          h('button', { className: 'cta cta--dark cta--join', onClick: onOpenAccountModal }, h('span', null, 'JOIN NOW')),
+          h('p', { className: 'tnc' }, '*Terms & Conditions apply.')
+        ),
+        h('div', { className: 'col-right' },
+          h('div', { className: 'merch-flower merch-flower--top-left' },
+            h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-1.webp', alt: '' }))
+          ),
+          h('div', { className: 'merch-flower merch-flower--black' },
+            h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-2.webp', alt: '' }))
+          ),
+          h('div', { className: 'merch-card' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
+          h('div', { className: 'merch-flower merch-flower--yellow' },
+            h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-1.webp', alt: '' }))
+          )
+        )
+      )
+    )
+  );
+}
+
+function Footer() {
+  const socials = [
+    { label: 'Facebook', Icon: IconFacebook, href: 'https://www.facebook.com/Atlus.asia' },
+    { label: 'Discord', Icon: IconDiscord, href: 'https://discord.com/invite/atlussea' },
+    { label: 'TikTok', Icon: IconTikTok, href: 'https://www.tiktok.com/@segaatlus.sea' },
+    { label: 'Instagram', Icon: IconInstagram, href: 'https://www.instagram.com/atlus.sea/' },
+  ];
+  return h('footer', null,
+    h('div', { className: 'socials' },
+      socials.map(({ label, Icon, href }) => h('a', { key: label, href, 'aria-label': label, target: '_blank', rel: 'noopener' }, h(Icon, null)))
+    ),
+    h('p', null, '©ATLUS. ©SEGA. All rights reserved. | Persona 4 Revival "Midnight Channel" Campaign')
+  );
+}
+
+function App() {
+  const [accountModalOpen, setAccountModalOpen] = React.useState(false);
+  return h(React.Fragment, null,
+    h(Hero, null),
+    h(InfoSection, { onOpenAccountModal: () => setAccountModalOpen(true) }),
+    h(Footer, null),
+    accountModalOpen && h(SegaAccountModal, { onClose: () => setAccountModalOpen(false) })
+  );
+}
+
+createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

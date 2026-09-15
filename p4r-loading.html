@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- No-JS fallback: still gets you to the Event page once the entrance
+     effect has had time to play (see the video's real ~5s runtime below). -->
+<meta http-equiv="refresh" content="5;url=p4r-event-page.html" />
+<title>Loading — Persona 4 Revival</title>
+<!-- ============================================================
+  PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
+  Loading screen — Figma node 4600:15951 ("P4R — Loading").
+  ------------------------------------------------------------
+  That frame names its placeholder shape "〇テレビ入り演出_汎用_4K 1"
+  ("TV entrance effect, general, 4K") but had no asset attached in
+  Figma — now wired to the real file of that name (video/〇テレビ入り
+  演出_汎用_4K.mp4): an old CRT screen collapsing to black, ~5s, which
+  is exactly the "pulled into the TV" beat this page needs. It plays
+  once (not looped — the clip already ends on black, which is this
+  page's own background color, so there's no last-frame jump) at full
+  strength, with the logo + "Connecting..." label over it.
+  Wired in as the interstitial between the SEGA Account stand-in
+  page's "Continue" and the Event page, rather than an orphaned
+  page — swap the timing/destination once a real SEGA OAuth
+  callback exists (see the BACKEND comment below).
+  ============================================================ -->
+<style>
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+:root{ --yellow:#FFFC00; --black:#0b0b0b; --font-head:'NFW Display','Neue Frutiger World',Impact,sans-serif; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black); min-height:100vh; overflow:hidden}
+.loading-video{position:fixed; inset:0; width:100%; height:100%; object-fit:cover}
+.loading-overlay{
+  position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,.75) 75%);
+}
+.loading-overlay img{height:56px; width:auto; filter:drop-shadow(0 0 24px rgba(255,252,0,.5))}
+.loading-overlay p{font-family:var(--font-head); font-weight:400; font-size:16px; letter-spacing:.04em; color:var(--yellow); text-transform:uppercase}
+.dots span{animation:pulse 1.2s ease-in-out infinite; opacity:.2}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+</style>
+</head>
+<body>
+<!-- disablePictureInPicture/disableRemotePlayback: stop Chrome/Edge's
+     automatic hover PiP icon and the cast/remote-playback affordance —
+     neither is wanted on a full-bleed decorative background clip. -->
+<video class="loading-video" autoplay muted playsinline disablePictureInPicture disableRemotePlayback>
+  <source src="assets/〇テレビ入り演出_汎用_4K.mp4" type="video/mp4">
+</video>
+<div class="loading-overlay">
+  <img src="assets/logo-p4r.png" alt="Persona 4 Revival">
+  <p>Connecting to SEGA Account<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+</div>
+<script>
+  // BACKEND: this currently just times out and continues — swap for
+  // "wait until the SEGA OAuth callback resolves, then continue" once
+  // that integration exists. Primary trigger is the entrance video
+  // actually finishing; the timeout is only a fallback for when
+  // autoplay is blocked or the video fails to load.
+  var video = document.querySelector('.loading-video');
+  var redirected = false;
+  function goToEvent() {
+    if (redirected) return;
+    redirected = true;
+    window.location.href = 'p4r-event-page.html';
+  }
+  video.addEventListener('ended', goToEvent);
+  // The `autoplay` attribute alone gives no way to detect a blocked
+  // autoplay (some browsers/settings/OS "reduce motion" prefs block it
+  // even when muted) — left alone, the visitor is stuck staring at a
+  // paused first frame with the browser's own native play button
+  // sitting on top of it, which reads as "a video player," not a
+  // loading screen. Calling play() explicitly lets us catch that and
+  // hide the video entirely instead, falling back to the plain
+  // logo + "Connecting..." label (which is all this screen showed
+  // before the video existed, so it's a safe, finished-looking fallback).
+  var playPromise = video.play();
+  if (playPromise && playPromise.catch) {
+    playPromise.catch(function () {
+      video.style.display = 'none';
+    });
+  }
+  setTimeout(goToEvent, 5500);
+</script>
+</body>
+</html>

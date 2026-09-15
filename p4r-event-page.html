@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Persona 4 Revival — Midnight Channel (Event / Mission Tracker)</title>
+<!-- ============================================================
+  PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
+  Event page (mission tracker) — built from the Figma frame family:
+  Mission 1 states  : node 4296:2098 (0/3), 4633:6713 (1/3), 4633:7493 (2/3),
+                       4646:9195 (3/3 "COMPLETED!"), 4646:10117 ("CLAIMED!")
+  Mission 2         : node 4633:5977 ("Spread the Word")
+  Mission 3         : node 4633:6345 ("Reach the Goal")
+  https://www.figma.com/design/EQqpCalb2NqZuvRf7fWEk5/-Midnight-Channel-?node-id=4296-2098
+  ------------------------------------------------------------
+  Stack     : React 18 (ESM, no build step) + hand-written CSS, same
+              conventions as p4r-home-hero.html (shared :root tokens,
+              .cta-style skewed buttons, self-hosted Neue Frutiger World).
+  Backend   : this page is the mission tracker landed on after SEGA
+              Account login/registration (see p4r-home-hero.html's
+              Api.start). All mission/task/claim state here is a LOCAL
+              MOCK (persisted to localStorage only) so the flow can be
+              demoed end-to-end before the real SEGA Account API exists.
+              Every point that needs a real endpoint is marked
+              "BACKEND:" — search for that to find every stub.
+  States    : "Sign up for SEGA Account" is always shown DONE — Figma
+              only ever renders it done, because by the time a visitor
+              reaches this page they've already completed SEGA Account
+              registration to get here. Mission 2 and 3 have no such
+              gate task (confirmed against their Figma frames).
+  Assets    : ./assets/ — event-logo-mark.png (compact P4R mark, distinct
+              from Home's full logo-p4r.png), event-mission-screen.png
+              (mission-card texture), event-task-deco-top/bottom.png
+              (task-row corner flourishes), event-bg-decor.png (flattened
+              export of Figma's "P4R BG 1" stage-truss silhouette layer —
+              recreating its 40+ nested vector layers 1:1 wasn't a good
+              use of a hand-authored page, so it's exported as one image
+              instead, same spirit as Home's bezel-facets/tv-glitch
+              treatment). icon-btn-outer/inner-border.png, flower-*.webp,
+              merch-placeholder-bg.jpg, fonts/ are reused as-is from Home.
+  Progress  : the segmented progress bar under each mission is CSS
+              (.progress-seg), not the raw Figma SVG export — the
+              exported bar is a flat image baked for one specific
+              fill amount per frame, which can't drive a live "N of M
+              tasks done" state. Segmented div row reproduces the same
+              look (skewed segments, same colors) and stays dynamic.
+  ============================================================ -->
+<style>
+/* Neue Frutiger World — self-hosted webfont (same as Home) */
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Medium.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Medium.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Medium.ttf') format('truetype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Bold.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Bold.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+:root{
+  --yellow:#FFFC00; --yellow-tint:#EEE843; --cyan:#00C8E2; --black:#0b0b0b;
+  --graphite-60:#1B1B1B; --graphite:#2D2D2D; --graphite-40:#636363; --graphite-30:#8B8B8B;
+  --grey-copy:#9A9A9A; --orange:#FF8A00; --red:#FF0000;
+  --yellow-fog:#FFFC00; --yellow-fog-60:#271D00; --yellow-fog-50:#3E4300; --yellow-fog-40:#606A00;
+  --yellow-fog-30:#8B9300; --yellow-fog-20:#BCBD00; --yellow-fog-10:#EEE843;
+  --daylight-blue:#00E2FF; --daylight-blue-60:#00232F; --daylight-blue-50:#004A5F;
+  --daylight-blue-40:#00738D; --daylight-blue-30:#009DB8; --daylight-blue-20:#00C8E2; --daylight-blue-10:#78F3FF;
+  --graphite-primary:#2D2D2D; --graphite-50:#3E3E3E; --graphite-20:#B6B6B6; --graphite-10:#E2E2E2;
+  --white:#FFFFFF; --true-black:#000000; --error-red-10:#FF0000; --success-green-300:#00D200; --grey-300:#575757;
+  --font-head:'NFW Display','Neue Frutiger World',Impact,sans-serif;
+  --font-body:'Neue Frutiger World',Helvetica,Arial,sans-serif;
+  --space-8:8px; --space-12:12px; --space-16:16px; --space-24:24px; --space-40:40px; --space-80:80px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:var(--font-body);overflow-x:hidden}
+img{max-width:100%;display:block}
+button,a{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* =========================================================
+   PAGE SHELL — dark maroon gradient + flattened stage-truss backdrop
+   ========================================================= */
+/* Figma node 4772:9063 ("P4R BG 1"): sampled the rendered frame directly
+   (flat corners, away from the ring decor) — a dark maroon around
+   #5f0000 at the top fading toward #490000 near the bottom, nowhere
+   near as bright/saturated as the #f22e29→#b8120f red this had before. */
+#event-wrap{
+  min-height:100vh; position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#620000 0%, #400000 100%);
+}
+#event-wrap::before{
+  content:""; position:absolute; inset:0; z-index:0;
+  background:url('assets/event-bg-decor.png') center/cover no-repeat;
+  opacity:.35; pointer-events:none;
+}
+.event-inner{position:relative; z-index:1; flex:1; display:flex; flex-direction:column; gap:var(--space-40); padding:var(--space-40) var(--space-80)}
+
+.event-top{display:flex; align-items:center; justify-content:space-between}
+.event-logo{height:64px; width:auto; cursor:pointer}
+.event-id{display:flex; align-items:center; gap:var(--space-8); padding:var(--space-8) var(--space-24)}
+.event-id .name{font-family:var(--font-body); font-weight:500; color:var(--yellow); font-size:14px; text-shadow:2px 2px 4px rgba(0,0,0,.25)}
+.event-id .sep{width:1px; height:20px; background:rgba(255,255,255,.4)}
+.event-id .logout{background:none; border:none; font-family:var(--font-body); font-weight:400; color:#fff; font-size:14px; text-shadow:2px 2px 4px rgba(0,0,0,.25)}
+.event-id .logout:hover{color:var(--yellow)}
+
+.event-top-right{display:flex; align-items:center; gap:var(--space-24)}
+
+/* Figma "based_secondary_button" (node 4946:9347): icon-only at rest,
+   hover reveals the "Mute"/"Unmute" label (yellow), :active swaps it
+   to the cyan variant — same two-state icon/label logic as the TV
+   control panel's Audio button (node 4600:15914). */
+.audio-toggle{background:none; border:none; padding:0; cursor:pointer; display:inline-flex; align-items:center; gap:var(--space-8); filter:drop-shadow(2px 2px 2px rgba(0,0,0,.25))}
+.audio-toggle svg{width:24px; height:24px; color:#fff; flex:none}
+.audio-toggle .label{font-family:var(--font-body); font-weight:400; font-size:14px; color:var(--yellow); text-shadow:2px 2px 0 var(--yellow-fog-40); display:none; white-space:nowrap}
+.audio-toggle:hover .label{display:inline}
+.audio-toggle:active .label{color:var(--daylight-blue); text-shadow:2px 2px 0 var(--daylight-blue-40)}
+
+.main-row{flex:1; display:flex; gap:var(--space-40); align-items:flex-start}
+
+/* =========================================================
+   MISSION CARD
+   ========================================================= */
+.mission-card{flex:1 1 630px; max-width:630px; background:#970000; border-radius:24px; padding:8px; box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.mission-screen{position:relative; overflow:hidden; border-radius:14px; background:#520000; padding:var(--space-24); display:flex; flex-direction:column; gap:var(--space-24)}
+.mission-screen::before{content:""; position:absolute; inset:0; z-index:0; background:url('assets/event-mission-screen.png') center/cover; mix-blend-mode:multiply; opacity:.12}
+.mission-screen::after{ /* faint scanlines, same technique as Home's TV screen */
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.15) 0 1px, transparent 1px 12px);
+}
+.mission-screen>*{position:relative; z-index:1}
+
+.mission-head{display:flex; align-items:center; gap:var(--space-16); width:100%}
+.mission-title{flex:1; display:flex; gap:var(--space-8); flex-wrap:wrap; align-items:baseline; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(20px,2.4vw,28px); line-height:1}
+
+.mission-toggle{display:flex; gap:var(--space-16)}
+.toggle-btn{
+  position:relative; width:34px; height:34px; border-radius:999px; border:none; padding:0;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  background:url('assets/icon-btn-outer-border.png') center/cover;
+}
+.toggle-btn::before{content:""; position:absolute; inset:4.17%; border-radius:999px; background:url('assets/icon-btn-inner-border.png') center/cover}
+.toggle-btn::after{content:""; position:absolute; inset:9.17%; border-radius:999px; background:#8B9300; border:1px solid #8B8B8B; transition:background .15s ease}
+.toggle-btn.active::after{background:#EEE843}
+.toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#2D2D2D}
+
+.task-list{display:flex; flex-direction:column; gap:var(--space-16); width:100%}
+.task-row{
+  position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; min-height:65px;
+  padding:12px var(--space-16); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
+  transition:background .15s ease;
+}
+.task-row.done{background:#1B1B1B; opacity:.8; cursor:default}
+.task-row .label{flex:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#fff; z-index:2; position:relative}
+.task-row.done .label{color:#636363}
+.task-deco-bottom{position:absolute; pointer-events:none; left:-2px; top:-48px; width:113px; height:112px; z-index:1}
+.task-deco-top{position:absolute; pointer-events:none; right:-2px; top:-8px; width:86px; height:94px; z-index:1}
+
+.task-btn{
+  position:relative; z-index:2; flex:none; display:inline-flex; align-items:center; justify-content:center;
+  padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px; border:none;
+  clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35));
+}
+.task-btn--go{background:var(--yellow); color:var(--graphite); cursor:pointer}
+.task-btn--done{background:var(--graphite-10); color:var(--graphite-30); cursor:default; filter:none}
+
+.mission-progress{display:flex; align-items:center; gap:var(--space-16); width:100%}
+.mission-progress .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:var(--space-8)}
+.mission-progress .label{font-family:var(--font-head); font-weight:400; font-size:16px; color:var(--yellow); white-space:nowrap}
+.progress-track{display:flex; align-items:stretch; gap:4px; width:100%; max-width:432px; height:7px}
+/* Figma component (node 4590:3551, "progress bar"): decoded the exported
+   SVG paths directly — segments are a light graphite-10 fill (#E2E2E2)
+   with a thin dark outline, NOT the dark graphite fill this had before
+   (which read as almost invisible against the page's dark maroon). The
+   skew is also a near-constant ~1.3px shift tied to the bar's fixed
+   ~7px height, not a percentage of each segment's own (much wider)
+   width — the old 12%-of-width clip-path was ~10x steeper than the
+   real design. A small permanent yellow "start" tick (.progress-cap)
+   always precedes the segments, filled regardless of progress. */
+.progress-cap{flex:0 0 3px; height:100%; background:var(--yellow); clip-path:polygon(0 0, 100% 0, calc(100% - 1.5px) 100%, 0 100%)}
+.progress-seg{
+  flex:1; height:100%; background:var(--graphite-10); border:1px solid var(--graphite-60);
+  clip-path:polygon(1.5px 0, 100% 0, calc(100% - 1.5px) 100%, 0 100%);
+  transition:background .3s ease;
+}
+.progress-seg.filled{background:var(--yellow)}
+
+.bonus-btn{
+  position:relative; flex:none; padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px;
+  clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none; cursor:pointer;
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--yellow); color:var(--graphite);
+}
+.bonus-btn:disabled{opacity:.4; cursor:not-allowed; filter:none}
+
+.stamp-wrap{position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; pointer-events:none}
+.stamp{
+  transform:rotate(-22deg); border:4px dashed var(--yellow-fog-30); border-radius:40px; padding:10px 32px;
+  font-family:var(--font-head); font-weight:400; font-size:clamp(24px,5vw,56px); color:var(--yellow-fog-30); white-space:nowrap;
+}
+
+/* =========================================================
+   PRIZE / LUCKY DRAW RAIL
+   ========================================================= */
+.prize-rail{flex:1 1 480px; max-width:610px; display:flex; flex-direction:column; align-items:center; gap:var(--space-24); padding:0 var(--space-24)}
+.lucky-draw-block{display:flex; flex-direction:column; align-items:center; gap:var(--space-8); width:100%}
+.lucky-draw-title{background:#1B1B1B; padding:0 var(--space-24); box-shadow:-4px 4px 0 #520000; transition:box-shadow .2s ease}
+.lucky-draw-title.glow{box-shadow:-4px 4px 0 var(--yellow-fog-20)}
+.lucky-draw-title span{font-family:var(--font-head); font-weight:400; font-size:clamp(28px,4vw,48px); color:#fff; white-space:nowrap}
+.lucky-draw-copy{text-align:center; color:#fff; text-shadow:0 4px 2px rgba(0,0,0,.25)}
+.lucky-draw-copy p:first-child{font-family:var(--font-head); font-weight:400; font-size:16px}
+.lucky-draw-copy p:last-child{font-family:var(--font-body); font-weight:400; font-size:14px; margin-top:2px}
+
+.prize-merch{
+  flex:1; width:100%; min-height:200px; border-radius:16px; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; box-shadow:4px 4px 0 #450000;
+}
+.prize-merch::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
+.prize-merch::after{content:""; position:absolute; inset:0; background:#b10000; mix-blend-mode:multiply; opacity:.55}
+.prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:24px; text-align:center; line-height:1.3}
+
+.enter-draw-btn{
+  position:relative; padding:12px var(--space-40); font-family:var(--font-head); font-weight:400; font-size:clamp(18px,2.4vw,24px);
+  clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none;
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--graphite-10); color:var(--graphite-30); cursor:not-allowed;
+}
+.enter-draw-btn.active{background:var(--yellow); color:var(--graphite); cursor:pointer}
+.event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:12px; text-shadow:0 4px 4px rgba(0,0,0,.25)}
+
+/* =========================================================
+   FOOTER — legal links only (no socials on this page per Figma)
+   ========================================================= */
+.event-footer{position:relative; z-index:1; background:#1B1B1B; height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 clamp(24px,10vw,163px)}
+.event-footer .links{display:flex; align-items:center; gap:var(--space-12)}
+.event-footer .links a{font-family:var(--font-body); font-size:12px; color:#fff; padding:4px 8px}
+.event-footer .links a:hover{color:var(--yellow)}
+.event-footer .links .sep{width:1px; height:16px; background:rgba(255,255,255,.3)}
+.event-footer .copyright{font-family:var(--font-body); font-size:12px; color:#fff}
+
+/* =========================================================
+   MODALS — Lucky Draw family (4 distinct dialogs, Figma nodes
+   4481:736 reveal / 4484:2930 submitted / 4484:3348 logout /
+   4810:7393 bonus). Shared chrome (.modal-*), per-dialog content.
+   ========================================================= */
+.modal-overlay{
+  position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+/* overflow lives on .modal-scroll (below), not this box — the close
+   button sits outside the box's own edges (top:-14px right:-14px per
+   Figma node 4484:3349), so the box itself has to stay overflow:visible
+   or it clips its own close button. */
+.modal-box{
+  position:relative; background:#fff; border:4px solid var(--graphite);
+  box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible;
+  display:flex; flex-direction:column;
+}
+.modal-scroll{overflow:auto; flex:1; min-height:0}
+.modal-close{
+  position:absolute; top:-14px; right:-14px; z-index:2; width:48px; height:48px; border-radius:999px;
+  background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center;
+}
+.modal-header{background:#1B1B1B; padding:var(--space-16); text-align:center}
+.modal-header span{font-family:var(--font-head); font-weight:400; font-size:clamp(28px,5vw,48px); color:#fff}
+.modal-body{padding:var(--space-24); display:flex; flex-direction:column; align-items:center; gap:var(--space-24); text-align:center; max-width:640px}
+.modal-content-row{display:flex; gap:var(--space-24); align-items:stretch; flex-wrap:wrap; justify-content:center}
+.modal-text{display:flex; flex-direction:column; gap:var(--space-16); text-align:left; max-width:284px}
+.modal-text h3{font-family:var(--font-head); font-weight:400; font-size:24px; color:#1B1B1B; margin:0 0 8px}
+.modal-text .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:#3E3E3E; margin:0}
+.modal-text .tnc{font-family:var(--font-body); font-weight:400; font-size:12px; color:#636363; margin:0}
+.modal-body--centered .modal-text{align-items:center; text-align:center; max-width:342px}
+
+.modal-merch{
+  width:284px; min-height:200px; border-radius:16px; position:relative; overflow:hidden; flex:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.modal-merch--wide{width:100%; max-width:520px; min-height:220px}
+.modal-merch::before{content:""; position:absolute; inset:0; background:url('assets/modal-merch-placeholder.png') center/cover}
+.modal-merch::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.73)}
+.modal-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:24px; line-height:1.3}
+
+.modal-btn{
+  position:relative; display:inline-flex; align-items:center; justify-content:center; gap:var(--space-8);
+  padding:12px var(--space-40); font-family:var(--font-head); font-weight:400; font-size:clamp(16px,2.4vw,24px); border:none; cursor:pointer;
+  clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35));
+}
+.modal-btn--dark{background:#1B1B1B; color:var(--yellow)}
+.modal-btn--sm{padding:8px 28px; font-size:14px}
+/* A plain CSS border only draws along a box's real rectangular edges —
+   .modal-btn's clip-path slices two of its corners diagonally, and
+   those cuts aren't real edges, so the old `border` only ever showed
+   on the flat top/bottom (nothing on the slanted sides, reading as
+   "cropped"). Figma's own exported asset for this button (node
+   4484:3457) is a flat SVG with the same parallelogram traced by
+   `stroke`, reproduced here the same way .cta--outline on Home already
+   fixes this: an inline SVG background whose path matches the
+   clip-path polygon, stroked on all 4 sides. clip-path is turned off
+   since the SVG's own transparent fill already limits paint to the
+   shape; vector-effect="non-scaling-stroke" keeps the stroke a
+   constant width even though background-size:100% 100% stretches this
+   square viewBox non-uniformly to fit the button's real (much wider
+   than tall) box. */
+.modal-btn--outline{
+  background:none; color:#2D2D2D; border:none; filter:none; clip-path:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none' overflow='visible'%3E%3Cpath d='M12,0 L100,0 L88,100 L0,100 Z' fill='none' stroke='%23271D00' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  background-size:100% 100%; background-repeat:no-repeat;
+}
+.modal-actions{display:flex; gap:var(--space-12); flex-wrap:wrap; justify-content:center}
+
+/* ===== Share modal content (Figma node 4621:7005) ===== */
+.share-socials{display:flex; gap:var(--space-40); flex-wrap:wrap; justify-content:center}
+.share-social{display:flex; flex-direction:column; align-items:center; gap:var(--space-8); text-decoration:none}
+.share-social-circle{width:48px; height:48px; border-radius:999px; background:#636363; color:#fff; display:flex; align-items:center; justify-content:center; transition:background .15s ease}
+.share-social:hover .share-social-circle{background:var(--yellow-fog-30)}
+.share-social-label{font-family:var(--font-body); font-weight:400; font-size:14px; color:#2D2D2D}
+.share-link-row{display:flex; gap:var(--space-16); align-items:stretch; width:100%; flex-wrap:wrap}
+.share-link-box{
+  flex:1 1 220px; min-width:0; border:2px solid #2D2D2D; display:flex; align-items:center;
+  padding:8px var(--space-12); font-family:var(--font-body); font-size:14px; color:#000;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* ===== Password modal content (Figma node 5116:14611, "Modal — Input
+   Password from KOL streams") — shared by both password-gated tasks
+   (Mission 2's KOL-stream password and Mission 3's secret message).
+   Empty/Entered/Verifying/Error states per that node's own variants. */
+/* justify-content:center — once the input wraps to its own line at
+   narrow widths, the Enter button becomes the sole item on the next
+   line and was sitting flush left; centering it there is a no-op at
+   wider widths, since the input's flex:1 already fills that line. */
+.password-row{display:flex; gap:var(--space-16); align-items:flex-start; justify-content:center; width:100%; flex-wrap:wrap}
+.password-field{flex:1 1 220px; min-width:0; display:flex; flex-direction:column; gap:4px}
+.password-input{
+  width:100%; border:2px solid #2D2D2D; padding:8px var(--space-12);
+  font-family:var(--font-body); font-size:14px; color:#000; background:#fff;
+}
+.password-input::placeholder{color:var(--graphite-20)}
+.password-input:disabled{color:var(--graphite-20); background:var(--graphite-10); border-color:var(--graphite-20)}
+/* Yellow Fog - 20 border instead of the graphite default (and instead
+   of the browser's own blue/orange focus ring) — recolors the existing
+   2px border rather than adding a separate outline. */
+.password-input:focus{border-color:var(--yellow-fog-20); outline:none}
+.password-error{font-family:var(--font-body); font-weight:400; font-size:11px; color:var(--red); margin:4px 0 0}
+/* Every other modal-btn use on this page is always-enabled, so this is
+   the first one that needs a real disabled look — but only for the
+   pristine Empty state (node 4946:7933's own asset, fill #E2E2E2/text
+   #8B8B8B). Verifying and Error both keep the same dark/active look as
+   Entered (node 5116:14608's Verifying asset is solid #1B1B1B, same as
+   modal-btn--dark) — a plain `:disabled` selector would override
+   modal-btn--dark's background for ALL three regardless of which
+   other classes are present (higher specificity always wins over a
+   single class, no matter what's on the element), so Empty gets its
+   own class instead of relying on :disabled for color. */
+.modal-btn:disabled{cursor:not-allowed}
+.modal-btn--empty{background:var(--graphite-10); color:var(--graphite-30); filter:none}
+
+/* ===== Toast (Figma "Toaster", node 4633:8141) ===== */
+.toast{
+  position:fixed; left:50%; bottom:32px; z-index:60; transform:translate(-50%,0);
+  background:var(--graphite-10); color:var(--graphite);
+  clip-path:polygon(5% 0,100% 0,95% 100%,0 100%);
+  padding:12px var(--space-24); font-family:var(--font-body); font-weight:400; font-size:12px; white-space:nowrap;
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.2));
+  opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+}
+.toast.visible{opacity:1; transform:translate(-50%,-8px)}
+
+/* =========================================================
+   RESPONSIVE (H5 / mobile) — consolidated at the end, same
+   rule as Home: keeps every override winning the cascade.
+   ========================================================= */
+@media (max-width:960px){
+  .event-inner{padding:20px 20px}
+  .main-row{flex-direction:column}
+  .mission-card,.prize-rail{max-width:100%; flex:none; width:100%}
+  .prize-rail{padding:0}
+  .event-footer{padding:0 20px; flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:12px; gap:8px}
+}
+@media (max-width:520px){
+  .mission-head{flex-wrap:wrap}
+  .task-row{flex-wrap:wrap; gap:8px}
+  .task-btn{padding:6px 20px; font-size:12px}
+  .mission-progress{flex-wrap:wrap}
+  .bonus-btn{padding:6px 20px; font-size:12px}
+  .modal-content-row{flex-direction:column; align-items:center}
+  .modal-text{max-width:100%; text-align:center; align-items:center}
+  .modal-merch{width:100%}
+  .modal-btn{padding:10px 24px}
+  .share-socials{gap:var(--space-24)}
+  .share-link-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+import React from 'https://esm.sh/react@18.3.1';
+import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+const h = React.createElement;
+
+/* ---------------------------------------------------------------
+   BACKEND: replace these stubs with real SEGA Account API calls.
+   Every handler lives here so wiring up the real integration is a
+   find-and-replace job, not a rewrite — same pattern as Home's Api.
+--------------------------------------------------------------- */
+const Api = {
+  logOut: () => { window.location.href = 'p4r-home-hero.html'; }, // BACKEND: destroy session server-side first
+  completeAutoTask: (taskId) => console.log('BACKEND: mark task complete (no-API type) ->', taskId),
+  confirmApiTask: (taskId) => console.log('BACKEND: this task is SEGA-Account-gated (e.g. demo playtime, purchase record) — real completion should come from a poll/webhook, not a click ->', taskId),
+  submitPassword: (taskId, value) => console.log('BACKEND: verify password server-side ->', taskId, value),
+  claimBonus: (missionId, platform) => console.log('BACKEND: record prize claim + serve the real download ->', missionId, platform),
+  submitEntry: (draws) => console.log('BACKEND: POST Lucky Draw entry — Participated = 1, Number of draws =', draws), // per brief §"Lucky Draw Popup"
+  markInviteShared: (missionId, taskId, channel) => console.log('BACKEND: record the share/invite (analytics + anti-abuse, since a click here cant confirm a friend actually joined) ->', missionId, taskId, channel),
+};
+
+/* Tabler icons inlined with explicit colors (same approach as Home's
+   IconMute/IconClose) — copied 1:1 from assets/icons/cross-x.svg,
+   assets/icons/download.svg, and the four
+   assets/icons/{facebook,discord,instagram,tiktok}-filled.svg
+   brand icons — inlined instead of <img> so each can take a fixed
+   color via currentColor without a hover/state class on the <img>. */
+const IconClose = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#0B0B0B', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M18 6l-12 12' }), h('path', { d: 'M6 6l12 12' })
+);
+/* Figma node 4946:9347 ("based_secondary_button", Event page's new
+   Mute/Unmute pill) — same Tabler volume-3 / volume glyphs Home's
+   control panel uses (assets/icons/mute-volume-3.svg, volume.svg). */
+const IconMute = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5' }),
+  h('path', { d: 'M16 10l4 4m0 -4l-4 4' })
+);
+const IconVolume = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M15 8a5 5 0 0 1 0 8' }),
+  h('path', { d: 'M17.7 5a9 9 0 0 1 0 14' }),
+  h('path', { d: 'M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5' })
+);
+
+/* Background music (Figma node 4946:9347's page, and 4600:15914's).
+   Loops the Event page's BGM track, defaulting to on — see the same
+   hook + note about browser autoplay policy in p4r-home-hero.html. */
+function useBackgroundMusic(src, initialMuted) {
+  const audioRef = React.useRef(null);
+  const [muted, setMuted] = React.useState(initialMuted);
+  React.useEffect(() => {
+    const audio = new Audio(src);
+    audio.loop = true;
+    audio.muted = muted;
+    audioRef.current = audio;
+    const tryPlay = () => audio.play().catch(() => {});
+    tryPlay();
+    const events = ['click', 'keydown', 'touchstart'];
+    const onFirstInteract = () => { tryPlay(); events.forEach((e) => document.removeEventListener(e, onFirstInteract)); };
+    events.forEach((e) => document.addEventListener(e, onFirstInteract, { once: true }));
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, onFirstInteract));
+      audio.pause();
+    };
+  }, [src]);
+  React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
+  return [muted, () => setMuted((m) => !m)];
+}
+
+function AudioToggle({ muted, onToggle }) {
+  return h('button', { type: 'button', className: 'audio-toggle', onClick: onToggle, 'aria-label': muted ? 'Unmute' : 'Mute' },
+    muted ? h(IconVolume, null) : h(IconMute, null),
+    h('span', { className: 'label' }, muted ? 'Unmute' : 'Mute')
+  );
+}
+const IconDownload = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#FFFC00', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2' }),
+  h('path', { d: 'M7 11l5 5l5 -5' }),
+  h('path', { d: 'M12 4l0 12' })
+);
+const IconFacebookFilled = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'currentColor', ...p },
+  h('path', { d: 'M18 2a1 1 0 0 1 .993 .883l.007 .117v4a1 1 0 0 1 -.883 .993l-.117 .007h-3v1h3a1 1 0 0 1 .991 1.131l-.02 .112l-1 4a1 1 0 0 1 -.858 .75l-.113 .007h-2v6a1 1 0 0 1 -.883 .993l-.117 .007h-4a1 1 0 0 1 -.993 -.883l-.007 -.117v-6h-2a1 1 0 0 1 -.993 -.883l-.007 -.117v-4a1 1 0 0 1 .883 -.993l.117 -.007h2v-1a6 6 0 0 1 5.775 -5.996l.225 -.004h3z' })
+);
+const IconDiscordFilled = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'currentColor', ...p },
+  h('path', { d: 'M14.983 3l.123 .006c2.014 .214 3.527 .672 4.966 1.673a1 1 0 0 1 .371 .488c1.876 5.315 2.373 9.987 1.451 12.28c-1.003 2.005 -2.606 3.553 -4.394 3.553c-.732 0 -1.693 -.968 -2.328 -2.045a21.512 21.512 0 0 0 2.103 -.493a1 1 0 1 0 -.55 -1.924c-3.32 .95 -6.13 .95 -9.45 0a1 1 0 0 0 -.55 1.924c.717 .204 1.416 .37 2.103 .494c-.635 1.075 -1.596 2.044 -2.328 2.044c-1.788 0 -3.391 -1.548 -4.428 -3.629c-.888 -2.217 -.39 -6.89 1.485 -12.204a1 1 0 0 1 .371 -.488c1.439 -1.001 2.952 -1.459 4.966 -1.673a1 1 0 0 1 .935 .435l.063 .107l.651 1.285l.137 -.016a12.97 12.97 0 0 1 2.643 0l.134 .016l.65 -1.284a1 1 0 0 1 .754 -.54l.122 -.009zm-5.983 7a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15zm6 0a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15z' })
+);
+const IconInstagramFilled = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'currentColor', ...p },
+  h('path', { d: 'M16 3a5 5 0 0 1 5 5v8a5 5 0 0 1 -5 5h-8a5 5 0 0 1 -5 -5v-8a5 5 0 0 1 5 -5zm-4 5a4 4 0 0 0 -3.995 3.8l-.005 .2a4 4 0 1 0 4 -4m4.5 -1.5a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1' })
+);
+/* Tabler "brand-tiktok" filled icon, copied 1:1 from
+   assets/icons/tiktok.svg — replaces the old X/Twitter icon now that
+   ATLUS SEA's social presence moved to TikTok. */
+const IconTikTok = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'currentColor', ...p },
+  h('path', { d: 'M16.083 2h-4.083a1 1 0 0 0 -1 1v11.5a1.5 1.5 0 1 1 -2.519 -1.1l.12 -.1a1 1 0 0 0 .399 -.8v-4.326a1 1 0 0 0 -1.23 -.974a7.5 7.5 0 0 0 1.73 14.8l.243 -.005a7.5 7.5 0 0 0 7.257 -7.495v-2.7l.311 .153c1.122 .53 2.333 .868 3.59 .993a1 1 0 0 0 1.099 -.996v-4.033a1 1 0 0 0 -.834 -.986a5.005 5.005 0 0 1 -4.097 -4.096a1 1 0 0 0 -.986 -.835z' })
+);
+
+/* localStorage/file:// safe clipboard copy — navigator.clipboard needs
+   a secure context, which a plain file:// prototype page usually isn't,
+   so this falls back to the old execCommand trick when needed. */
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+/* ---------------------------------------------------------------
+   Mission content — mirrors the 3 Figma mission frames exactly.
+   "kind" documents which of the brief's two mission types a task is:
+   gate  = already satisfied by SEGA Account sign-up to reach this page;
+   auto  = no-API, marks complete on click (e.g. "follow our page");
+   api   = SEGA-Account-gated in production (e.g. play demo, pre-order);
+   password = opens the Password modal (Figma "Modal — Input Password
+           from KOL streams", node 5116:14611) instead of completing
+           instantly; modalTitle is that modal's header copy;
+   share = opens the Share modal (Figma "Modal — Share") instead of
+           completing instantly; completes once the visitor actually
+           shares or copies the link;
+   link  = opens task.href in a new tab (a real external site — the
+           actual Steam store page, the actual ATLUS SEA Instagram —
+           rather than a fake in-site copy of either) and marks complete.
+--------------------------------------------------------------- */
+const MISSIONS = [
+  {
+    id: 1,
+    name: 'Stay Up to Date',
+    tasks: [
+      { id: '1.gate', label: 'Sign up for SEGA Account', kind: 'gate' },
+      { id: '1.a', label: 'Wishlist Persona 4 Revival', kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
+      { id: '1.b', label: 'Follow ATLUS SEA on Instagram', kind: 'link', href: 'https://www.instagram.com/atlus.sea/' },
+      { id: '1.c', label: 'Invite a friend to join', kind: 'share' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Spread the Word',
+    tasks: [
+      { id: '2.a', label: 'Join the ATLUS SEA server on Discord', kind: 'link', href: 'https://discord.com/invite/atlussea' },
+      { id: '2.b', label: 'Input password from KOL streams', kind: 'password', modalTitle: 'Enter the Password from the Stream' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Reach the Goal',
+    tasks: [
+      { id: '3.a', label: 'Play the Persona 4 Revival demo', kind: 'api' },
+      { id: '3.b', label: 'Pre-order Persona 4 Revival', kind: 'api' },
+      { id: '3.c', label: 'Complete the secret message', kind: 'password', modalTitle: 'Enter the Secret Message' },
+    ],
+  },
+];
+
+const STORAGE_KEY = 'p4r_event_state';
+
+function loadState() {
+  const done = {};
+  MISSIONS.forEach((m) => m.tasks.forEach((t) => { done[t.id] = t.kind === 'gate'; }));
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return { done: { ...done, ...(saved.done || {}) }, claimed: saved.claimed || {} };
+  } catch (e) {
+    return { done, claimed: {} };
+  }
+}
+
+function TaskRow({ task, isDone, onGo }) {
+  // 'share' (Invite a friend) stays repeatable — there's no one-time
+  // "did it" to lock once done, the visitor can keep inviting more
+  // friends, so its row/button never freeze the way a one-shot task's
+  // does. It still reads DONE once completed once, just not disabled.
+  const repeatable = task.kind === 'share';
+  const locked = isDone && !repeatable;
+  return h('div', { className: `task-row${locked ? ' done' : ''}`, onClick: locked ? undefined : onGo },
+    !locked && h('img', { className: 'task-deco-bottom', src: 'assets/event-task-deco-bottom.png', alt: '', 'aria-hidden': 'true' }),
+    !locked && h('img', { className: 'task-deco-top', src: 'assets/event-task-deco-top.png', alt: '', 'aria-hidden': 'true' }),
+    h('p', { className: 'label' }, task.label),
+    h('button', {
+      type: 'button',
+      className: `task-btn ${locked ? 'task-btn--done' : 'task-btn--go'}`,
+      disabled: locked,
+      onClick: (e) => { e.stopPropagation(); if (!locked) onGo(); },
+    }, isDone ? 'DONE' : 'GO')
+  );
+}
+
+function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBonusClick }) {
+  const doneCount = mission.tasks.filter((t) => done[t.id]).length;
+  const total = mission.tasks.length;
+  const isComplete = doneCount === total;
+  const isClaimed = !!claimed[mission.id];
+
+  return h('div', { className: 'mission-card' },
+    h('div', { className: 'mission-screen' },
+      h('div', { className: 'mission-head' },
+        h('div', { className: 'mission-title' },
+          h('span', null, `MISSION ${mission.id}:`),
+          h('span', null, mission.name)
+        ),
+        h('div', { className: 'mission-toggle' },
+          MISSIONS.map((m) => h('button', {
+            key: m.id, type: 'button',
+            className: `toggle-btn${m.id === active ? ' active' : ''}`,
+            'aria-label': `Show Mission ${m.id}`, 'aria-pressed': m.id === active,
+            onClick: () => onSelect(m.id),
+          }, h('span', null, String(m.id))))
+        )
+      ),
+      h('div', { className: 'task-list' },
+        mission.tasks.map((t) => h(TaskRow, {
+          key: t.id, task: t, isDone: !!done[t.id],
+          onGo: () => onTaskGo(mission.id, t),
+        }))
+      ),
+      h('div', { className: 'mission-progress' },
+        h('div', { className: 'col' },
+          h('p', { className: 'label' }, `Mission ${mission.id} Progress${isComplete ? ' - Complete!' : ''}`),
+          h('div', { className: 'progress-track' },
+            h('div', { className: 'progress-cap', 'aria-hidden': 'true' }),
+            /* Fill the first `doneCount` segments in order (left to right),
+               not whichever specific tasks happen to be done — matches
+               Figma's actual exported asset (node 4590:3551), which
+               composites a single continuous yellow rect sized by count
+               of tasks done, always anchored to the left edge, rather
+               than highlighting particular task slots out of order. */
+            mission.tasks.map((t, i) => h('div', { key: i, className: `progress-seg${i < doneCount ? ' filled' : ''}` }))
+          )
+        ),
+        h('button', {
+          // Stays enabled after being claimed — the mission-complete gate
+          // is the only real requirement; re-opening the modal after
+          // claiming (e.g. to re-download) shouldn't be blocked.
+          type: 'button', className: 'bonus-btn', disabled: !isComplete,
+          onClick: () => onBonusClick(mission.id),
+        }, 'BONUS')
+      ),
+      isComplete && h('div', { className: 'stamp-wrap' },
+        h('div', { className: 'stamp' }, isClaimed ? 'CLAIMED!' : 'COMPLETED!')
+      )
+    )
+  );
+}
+
+function PrizeRail({ entries, total, onEnterDraw }) {
+  const glowing = entries > 0;
+  return h('div', { className: 'prize-rail' },
+    h('div', { className: 'lucky-draw-block' },
+      h('div', { className: `lucky-draw-title${glowing ? ' glow' : ''}` }, h('span', null, 'LUCKY DRAW')),
+      h('div', { className: 'lucky-draw-copy' },
+        h('p', null, 'Complete missions to accumulate entry chances!'),
+        h('p', null, `Entries acquired:  ${entries}/${total}`)
+      )
+    ),
+    h('div', { className: 'prize-merch' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
+    h('button', {
+      type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
+      onClick: () => glowing && onEnterDraw(),
+    }, 'ENTER LUCKY DRAW'),
+    h('p', { className: 'event-date' }, 'Event period: xx October - xx November 2025')
+  );
+}
+
+/* =========================================================
+   MODAL FAMILY — Lucky Draw (Figma nodes 4481:736 reveal,
+   4484:2930 submitted, 4484:3348 logout, 4810:7393 bonus).
+   One shared chrome component, one content component per dialog.
+   ========================================================= */
+function Modal({ onClose, header, centered, children, dismissOnOverlayClick = true }) {
+  return h('div', { className: 'modal-overlay', onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
+    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
+      h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
+      h('div', { className: 'modal-scroll' },
+        header && h('div', { className: 'modal-header' }, h('span', null, header)),
+        h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children)
+      )
+    )
+  );
+}
+
+function LuckyDrawRevealModal({ draws, drawsTotal, onSubmit, onClose }) {
+  return h(Modal, { onClose, header: 'LUCKY DRAW' },
+    h('div', { className: 'modal-content-row' },
+      h('div', { className: 'modal-text' },
+        h('div', null,
+          h('h3', null, "You've completed all the missions!"),
+          h('p', { className: 'copy' }, `This gives you ${draws}/${drawsTotal} total draws.`),
+          h('p', { className: 'copy' }, 'Join us in lorem ipsum dolor sit amet, consectetur adipiscing elit.')
+        ),
+        h('p', { className: 'tnc' }, '*T&Cs apply.')
+      ),
+      h('div', { className: 'modal-merch' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER'))
+    ),
+    h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onSubmit }, 'SUBMIT ENTRY')
+  );
+}
+
+function LuckyDrawSubmittedModal({ onReturn }) {
+  return h(Modal, { onClose: onReturn, centered: true },
+    h('div', { className: 'modal-text' },
+      h('h3', null, 'Your entry has been submitted!'),
+      h('p', { className: 'copy' }, '*Please note that your entry may be forfeited if you do not meet the requirements for any of the missions e.g. Wrong email, invalid receipt, etc.')
+    ),
+    h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onReturn }, 'RETURN TO MISSION')
+  );
+}
+
+function LogoutConfirmModal({ onConfirm, onCancel }) {
+  return h(Modal, { onClose: onCancel, centered: true },
+    h('div', { className: 'modal-text' },
+      h('h3', null, 'Are you sure', h('br'), 'you want to logout?')
+    ),
+    h('div', { className: 'modal-actions' },
+      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, 'Yes,  log me out'),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--dark', onClick: onCancel }, 'No, bring me back')
+    )
+  );
+}
+
+function BonusModal({ onDownload, onClose }) {
+  return h(Modal, { onClose, header: 'BONUS', centered: true },
+    h('p', { className: 'copy' }, "Here's an exclusive Persona 4 Revival Merch!"),
+    h('div', { className: 'modal-merch modal-merch--wide' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
+    h('div', { className: 'modal-actions' },
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), 'DESKTOP'),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), 'MOBILE')
+    )
+  );
+}
+
+/* Figma node 4621:7005. Facebook gets a real, publicly-documented web
+   share-intent URL; Discord, TikTok, and Instagram have no such web
+   intent, so those three link straight to the real ATLUS SEA channel/
+   profile instead (same as the footer socials and the Mission 2
+   Discord task). The explicit "Copy" button copies the link and can be
+   pressed any number of times. None of these close the modal — only
+   the [x] does, so the visitor can share to multiple platforms or copy
+   repeatedly in one visit. Any of them completes the "Invite a friend
+   to join" task, but the task stays repeatable (see TaskRow). */
+function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
+  return h(Modal, { onClose, centered: true, dismissOnOverlayClick: false },
+    h('div', { className: 'modal-text' }, h('h3', null, 'Share to your friends!')),
+    h('div', { className: 'share-socials' },
+      h('a', {
+        className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('facebook'),
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      }, h('span', { className: 'share-social-circle' }, h(IconFacebookFilled, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'Facebook')),
+      /* Discord/Instagram have no "share this URL" web intent, so — same
+         as the footer socials and the Mission 2 Discord task — this
+         points straight at the real ATLUS SEA server/profile instead of
+         a fake in-site share action. */
+      h('a', {
+        className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('discord'),
+        href: 'https://discord.com/invite/atlussea',
+      }, h('span', { className: 'share-social-circle' }, h(IconDiscordFilled, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'Discord')),
+      /* TikTok has no "share this URL" web intent either — same
+         straight-to-profile treatment as Discord/Instagram above. */
+      h('a', {
+        className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('tiktok'),
+        href: 'https://www.tiktok.com/@segaatlus.sea',
+      }, h('span', { className: 'share-social-circle' }, h(IconTikTok, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'TikTok')),
+      h('a', {
+        className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('instagram'),
+        href: 'https://www.instagram.com/atlus.sea/',
+      }, h('span', { className: 'share-social-circle' }, h(IconInstagramFilled, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'Instagram'))
+    ),
+    h('div', { className: 'share-link-row' },
+      h('div', { className: 'share-link-box' }, shareUrl),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark modal-btn--sm', onClick: () => { onCopyLink(); onShared('copy-link'); } },
+        'Copy'
+      )
+    )
+  );
+}
+
+/* Figma node 5116:14611 ("Modal — Input Password from KOL streams"),
+   reused for both password-gated tasks. 4 states per that node's own
+   variants: Empty (button disabled) / Entered (button active) /
+   Verifying (input disabled, button reads "Verifying...") / Error
+   (input clears, red message appears, button active again to retry).
+   onVerify resolves true/false; the current mock (see
+   handlePasswordVerify) always resolves true for any non-empty value —
+   the Error state is fully wired and Figma-accurate, just not
+   reachable until real server-side verification exists to actually
+   reject a wrong password. */
+function PasswordModal({ title, onClose, onVerify }) {
+  const [value, setValue] = React.useState('');
+  const [status, setStatus] = React.useState('idle'); // idle | verifying | error
+  // Once they've typed a real character, the button stays in its dark
+  // "active" look for the rest of this modal's life — including Error,
+  // where the input clears back to empty but Figma's own asset still
+  // shows the dark button (node 5116:14608), not the pristine-Empty
+  // gray one. Only the very first, untouched Empty state is gray.
+  const [touched, setTouched] = React.useState(false);
+  const submitDisabled = value.trim() === '' || status === 'verifying';
+
+  const handleSubmit = () => {
+    if (submitDisabled) return;
+    setStatus('verifying');
+    Promise.resolve(onVerify(value)).then((ok) => {
+      if (ok) return; // onVerify already closes the modal + marks the task done
+      setStatus('error');
+      setValue('');
+    });
+  };
+
+  return h(Modal, { onClose, centered: true },
+    h('div', { className: 'modal-text' }, h('h3', null, title)),
+    h('div', { className: 'password-row' },
+      h('div', { className: 'password-field' },
+        h('input', {
+          type: 'text', className: 'password-input', placeholder: 'Enter Password',
+          value, disabled: status === 'verifying', autoFocus: true,
+          onChange: (e) => {
+            const next = e.target.value;
+            setValue(next);
+            if (next.trim() !== '') setTouched(true);
+            if (status === 'error') setStatus('idle');
+          },
+          onKeyDown: (e) => { if (e.key === 'Enter') handleSubmit(); },
+        }),
+        status === 'error' && h('p', { className: 'password-error' }, 'Password invalid. Please try a different password.')
+      ),
+      h('button', {
+        type: 'button', className: `modal-btn modal-btn--sm ${touched ? 'modal-btn--dark' : 'modal-btn--empty'}`,
+        disabled: submitDisabled, onClick: handleSubmit,
+      }, status === 'verifying' ? 'Verifying...' : 'Enter')
+    )
+  );
+}
+
+function Toast({ message }) {
+  return h('div', { className: `toast${message ? ' visible' : ''}`, role: 'status', 'aria-live': 'polite' }, message || '');
+}
+
+function App() {
+  const [active, setActive] = React.useState(1);
+  const [state, setState] = React.useState(loadState);
+  const [modal, setModal] = React.useState(null); // null | 'lucky-draw' | 'lucky-draw-submitted' | 'logout' | { type:'bonus'|'share'|'password', missionId, taskId?, title? }
+  const [toastMessage, setToastMessage] = React.useState(null);
+  const [audioMuted, toggleAudioMuted] = useBackgroundMusic('assets/bgm-event.m4a', false); // default on, per Figma
+  // 'link' tasks (Wishlist, Instagram, Discord, ...) send the visitor to a
+  // real external site — GO no longer marks them done on click. It only
+  // queues the task id here; the visibilitychange effect below completes
+  // it once they actually switch back to this tab, so "done" reflects
+  // that they went and did the thing, not just that they clicked a button.
+  const pendingLinkTasksRef = React.useRef(new Set());
+
+  React.useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }, [state]);
+
+  React.useEffect(() => {
+    if (!toastMessage) return;
+    const t = setTimeout(() => setToastMessage(null), 2500);
+    return () => clearTimeout(t);
+  }, [toastMessage]);
+
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible' || pendingLinkTasksRef.current.size === 0) return;
+      const ids = Array.from(pendingLinkTasksRef.current);
+      pendingLinkTasksRef.current.clear();
+      ids.forEach((id) => Api.completeAutoTask(id)); // BACKEND: this "did they come back to the tab" is a client-side stand-in — a real check would verify server-side (e.g. the Steam wishlist API)
+      setState((s) => ({ ...s, done: { ...s.done, ...Object.fromEntries(ids.map((id) => [id, true])) } }));
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const shareUrl = new URL('p4r-home-hero.html', window.location.href).href;
+
+  const handleTaskGo = (missionId, task) => {
+    if (task.kind === 'share') {
+      setModal({ type: 'share', missionId, taskId: task.id });
+      return; // completes once the visitor actually shares/copies — see handleShareComplete
+    }
+    if (task.kind === 'link') {
+      window.open(task.href, '_blank', 'noopener'); // real external site (Steam) — no fake in-site copy of it
+      pendingLinkTasksRef.current.add(task.id); // completes on return — see the visibilitychange effect above
+      setToastMessage("We'll mark this done once you're back!");
+      return;
+    }
+    if (task.kind === 'password') {
+      setModal({ type: 'password', missionId, taskId: task.id, title: task.modalTitle });
+      return; // completes once the visitor enters a value that verifies — see handlePasswordVerify
+    }
+    if (task.kind === 'api') {
+      Api.confirmApiTask(task.id);
+    } else {
+      Api.completeAutoTask(task.id);
+    }
+    setState((s) => ({ ...s, done: { ...s.done, [task.id]: true } }));
+  };
+
+  // Doesn't close the modal — the visitor can share to multiple
+  // platforms / copy the link as many times as they like in one visit.
+  // Only the modal's own [x] closes it (see ShareModal's
+  // dismissOnOverlayClick: false, which also turns off backdrop-click-
+  // to-dismiss for this one).
+  const handleShareComplete = (missionId, taskId, channel) => {
+    Api.markInviteShared(missionId, taskId, channel);
+    setState((s) => ({ ...s, done: { ...s.done, [taskId]: true } }));
+  };
+
+  const handleCopyLink = () => {
+    copyToClipboard(shareUrl);
+    setToastMessage('Link copied to clipboard !');
+  };
+
+  // BACKEND: verify server-side, not client-side. This mock always
+  // accepts any non-empty value after a short "Verifying..." delay —
+  // there's no real password to check against yet, same spirit as
+  // every other Api.* stub on this page (none simulate failure either).
+  // Returns a Promise<boolean> so PasswordModal can show its Error
+  // state the moment a real check exists to actually reject one.
+  const handlePasswordVerify = (missionId, taskId, value) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        Api.submitPassword(taskId, value);
+        setState((s) => ({ ...s, done: { ...s.done, [taskId]: true } }));
+        setModal(null);
+        resolve(true);
+      }, 900);
+    });
+  };
+
+  // BONUS is a two-step confirm: the button opens the modal, the modal's
+  // download action is what actually records the claim (matches the
+  // brief: "Claim Prize opens a popup to download digital prizes").
+  const handleBonusDownload = (missionId, platform) => {
+    Api.claimBonus(missionId, platform);
+    setState((s) => ({ ...s, claimed: { ...s.claimed, [missionId]: true } }));
+    setModal(null);
+  };
+
+  const handleSubmitEntry = () => {
+    Api.submitEntry(draws);
+    setModal('lucky-draw-submitted');
+  };
+
+  const entries = MISSIONS.filter((m) => m.tasks.every((t) => state.done[t.id])).length;
+  const activeMission = MISSIONS.find((m) => m.id === active);
+
+  // "Total draws" (Figma: "This gives you 9/9 total draws") counts every
+  // individual completed task across all 3 missions, not just fully-
+  // completed missions — distinct from the rail's mission-based "Entries
+  // acquired" counter. 9 = 4 (Mission 1, incl. the sign-up gate) + 2 + 3.
+  const allTasks = MISSIONS.flatMap((m) => m.tasks);
+  const draws = allTasks.filter((t) => state.done[t.id]).length;
+  const drawsTotal = allTasks.length;
+
+  return h(React.Fragment, null,
+    h('div', { id: 'event-wrap' },
+      h('div', { className: 'event-inner' },
+        h('div', { className: 'event-top' },
+          h('img', {
+            className: 'event-logo', src: 'assets/event-logo-mark.png', alt: 'Persona 4 Revival logo',
+            onClick: () => { window.location.href = 'p4r-home-hero.html'; },
+          }),
+          h('div', { className: 'event-top-right' },
+            h('div', { className: 'event-id' },
+              h('span', { className: 'name' }, 'Protaginist_67'), // BACKEND: real username from SEGA Account
+              h('div', { className: 'sep' }),
+              h('button', { className: 'logout', onClick: () => setModal('logout') }, 'Log Out')
+            ),
+            h(AudioToggle, { muted: audioMuted, onToggle: toggleAudioMuted })
+          )
+        ),
+        h('div', { className: 'main-row' },
+          h(MissionCard, {
+            mission: activeMission, active, onSelect: setActive,
+            done: state.done, onTaskGo: handleTaskGo,
+            claimed: state.claimed, onBonusClick: (missionId) => setModal({ type: 'bonus', missionId }),
+          }),
+          h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => setModal('lucky-draw') })
+        )
+      ),
+      h('footer', { className: 'event-footer' },
+        h('div', { className: 'links' },
+          h('a', { href: '#' }, 'Privacy Policy'), // BACKEND/CONTENT: real legal page URLs
+          h('div', { className: 'sep' }),
+          h('a', { href: '#' }, 'Terms of Service')
+        ),
+        h('p', { className: 'copyright' }, '©ATLUS. ©SEGA.')
+      )
+    ),
+    modal === 'lucky-draw' && h(LuckyDrawRevealModal, {
+      draws, drawsTotal, onSubmit: handleSubmitEntry, onClose: () => setModal(null),
+    }),
+    modal === 'lucky-draw-submitted' && h(LuckyDrawSubmittedModal, { onReturn: () => setModal(null) }),
+    modal === 'logout' && h(LogoutConfirmModal, { onConfirm: Api.logOut, onCancel: () => setModal(null) }),
+    modal && modal.type === 'bonus' && h(BonusModal, {
+      onDownload: (platform) => handleBonusDownload(modal.missionId, platform),
+      onClose: () => setModal(null),
+    }),
+    modal && modal.type === 'share' && h(ShareModal, {
+      shareUrl,
+      onClose: () => setModal(null),
+      onShared: (channel) => handleShareComplete(modal.missionId, modal.taskId, channel),
+      onCopyLink: handleCopyLink,
+    }),
+    modal && modal.type === 'password' && h(PasswordModal, {
+      key: modal.taskId, title: modal.title,
+      onClose: () => setModal(null),
+      onVerify: (value) => handlePasswordVerify(modal.missionId, modal.taskId, value),
+    }),
+    h(Toast, { message: toastMessage })
+  );
+}
+
+createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

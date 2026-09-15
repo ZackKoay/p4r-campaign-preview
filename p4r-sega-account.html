@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SEGA Account — Persona 4 Revival</title>
+<!-- ============================================================
+  PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
+  SEGA Account stand-in — NOT a build of Figma node 4600:15960.
+  ------------------------------------------------------------
+  That Figma frame ("Sega - Login/Register") is a mockup of SEGA's
+  own real, external Account website (their blue/yellow branding,
+  their gift/globe icons, their trademark legal text) — the site a
+  visitor gets redirected to once SEGA Account OAuth exists. It is
+  not a page this app is meant to render, so this page deliberately
+  does not copy it.
+  This is instead an honest placeholder in the campaign site's own
+  visual language: it explains that registration/login happens on
+  SEGA's site, and gives the demo flow a "Continue" step to the
+  Event page so a click-through doesn't dead-end while the real
+  OAuth handoff isn't built yet. Reads ?mode=register|login from the
+  query string (see p4r-home-hero.html's SegaAccountModal) to decide
+  which copy to show — swap Continue's destination for the real SEGA
+  OAuth redirect URL when that exists (see the BACKEND comment below).
+  ============================================================ -->
+<style>
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Medium.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Medium.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Medium.ttf') format('truetype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Bold.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Bold.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+:root{
+  --yellow:#FFFC00; --black:#0b0b0b; --graphite-60:#1B1B1B; --graphite:#2D2D2D;
+  --graphite-30:#8B8B8B; --graphite-10:#E2E2E2; --grey-copy:#9A9A9A;
+  --yellow-fog-60:#271D00; --yellow-fog-20:#BCBD00;
+  --font-head:'NFW Display','Neue Frutiger World',Impact,sans-serif;
+  --font-body:'Neue Frutiger World',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--black); color:#fff; font-family:var(--font-body); min-height:100vh;
+  display:flex; flex-direction:column;
+}
+main{flex:1; display:flex; align-items:center; justify-content:center; padding:40px 20px}
+a{color:inherit; text-decoration:none}
+button{font-family:inherit; cursor:pointer}
+
+.brand{position:fixed; top:24px; left:24px; z-index:1}
+.brand img{height:40px; width:auto}
+
+.card{
+  position:relative; width:100%; max-width:440px; background:#fff; color:var(--graphite-60);
+  border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20);
+}
+.card-top{background:var(--graphite-60); padding:20px 24px; text-align:center}
+.card-top .eyebrow{font-family:var(--font-body); font-weight:500; font-size:12px; letter-spacing:.12em; color:var(--yellow); text-transform:uppercase}
+.card-top h1{font-family:var(--font-head); font-weight:400; font-size:clamp(24px,4vw,32px); color:#fff; margin-top:6px}
+.card-body{padding:28px 24px; display:flex; flex-direction:column; gap:20px}
+.card-body p{font-family:var(--font-body); font-size:14px; color:var(--graphite-60); line-height:1.5}
+.card-body .note{
+  font-size:12px; color:var(--graphite-30); background:var(--graphite-10);
+  border-radius:8px; padding:12px 14px; line-height:1.5;
+}
+.card-actions{display:flex; flex-direction:column; gap:12px}
+.btn{
+  position:relative; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:14px 24px; font-family:var(--font-head); font-weight:400; font-size:18px; border:none;
+  clip-path:polygon(6% 0,100% 0,94% 100%,0 100%); filter:drop-shadow(4px 4px 0 rgba(0,0,0,.25));
+}
+.btn--primary{background:var(--yellow); color:var(--graphite)}
+.btn--primary:hover{filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); transform:translate(-1px,-1px)}
+.back-link{font-family:var(--font-body); font-size:13px; color:var(--graphite-30); text-align:center}
+.back-link:hover{color:var(--graphite-60)}
+
+footer{padding:20px; text-align:center; font-family:var(--font-body); font-size:12px; color:var(--grey-copy)}
+
+@media (max-width:520px){
+  .brand{position:static; text-align:center; padding-top:24px}
+  main{padding:24px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <a href="p4r-home-hero.html"><img src="assets/logo-p4r.png" alt="Persona 4 Revival"></a>
+</div>
+
+<main>
+  <div class="card">
+    <div class="card-top">
+      <p class="eyebrow">SEGA Account</p>
+      <h1 id="heading">Create your account</h1>
+    </div>
+    <div class="card-body">
+      <p id="body-copy"></p>
+      <p class="note">
+        This step will hand off to SEGA's real account site once that integration is live — this page is a stand-in so the demo has somewhere to go in the meantime. It is not a copy of SEGA's actual site.
+      </p>
+      <div class="card-actions">
+        <!-- BACKEND: swap this for the real SEGA Account OAuth redirect
+             URL. On return, the callback should sync the username +
+             campaign flags from SEGA's DB and send the visitor to
+             p4r-event-page.html (currently via the loading interstitial,
+             p4r-loading.html) — see project notes for the flow. -->
+        <a class="btn btn--primary" href="p4r-loading.html">Continue</a>
+        <a class="back-link" href="p4r-home-hero.html">&larr; Back to the Midnight Channel</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>&copy;ATLUS. &copy;SEGA.</footer>
+
+<script>
+  var mode = new URLSearchParams(window.location.search).get('mode') === 'login' ? 'login' : 'register';
+  document.getElementById('heading').textContent = mode === 'login' ? 'Log in' : 'Create your account';
+  document.getElementById('body-copy').innerHTML = mode === 'login'
+    ? "Logging in to the Midnight Channel campaign happens through your <strong>SEGA Account</strong>, so your mission progress stays tied to the same profile across SEGA and ATLUS titles."
+    : "Creating a Midnight Channel account uses your existing <strong>SEGA Account</strong> — the same login you'd use across SEGA and ATLUS titles. No separate password to remember here.";
+</script>
+</body>
+</html>
