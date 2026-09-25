@@ -733,6 +733,10 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   font-family:var(--font-head); font-weight:400; font-size:20px; line-height:1.4;
   max-width:320px; margin:0; text-shadow:2px 2px 8px #000;
 }
+.rotate-prompt .hint{
+  font-family:var(--font-body); font-weight:400; font-size:13px; line-height:1.5;
+  max-width:280px; margin:0; color:rgba(255,255,255,.6);
+}
 @media (prefers-reduced-motion:reduce){
   .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
 }
@@ -751,6 +755,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
     </svg>
   </div>
   <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
+  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <div id="root"></div>
 

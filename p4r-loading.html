@@ -40,9 +40,55 @@ body{background:var(--black); min-height:100vh; overflow:hidden}
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
 @keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* =========================================================
+   ROTATE-DEVICE PROMPT — see p4r-home-hero.html for the full
+   rationale; identical component, kept in sync by hand. This
+   page has no other responsive work to do (it's already just a
+   full-bleed video + centered logo/text, fluid at any size) —
+   phones just need the same landscape-only gate as every other
+   page in the flow.
+   ========================================================= */
+.rotate-prompt{
+  display:none; position:fixed; inset:0; z-index:9999;
+  flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  background:var(--black); color:#fff; text-align:center; padding:32px;
+}
+.rotate-prompt-icon{width:64px; height:64px; color:var(--yellow); animation:rotate-prompt-spin 2.2s ease-in-out infinite}
+.rotate-prompt-icon svg{width:100%; height:100%; display:block}
+@keyframes rotate-prompt-spin{
+  0%{ transform:rotate(0deg); }
+  40%,60%{ transform:rotate(-90deg); }
+  100%{ transform:rotate(-90deg); }
+}
+.rotate-prompt p{
+  font-family:var(--font-head); font-weight:400; font-size:20px; line-height:1.4;
+  max-width:320px; margin:0; text-shadow:2px 2px 8px #000;
+}
+.rotate-prompt .hint{
+  font-family:'Neue Frutiger World',Helvetica,Arial,sans-serif; font-weight:400; font-size:13px; line-height:1.5;
+  max-width:280px; margin:0; color:rgba(255,255,255,.6);
+}
+@media (prefers-reduced-motion:reduce){
+  .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
+}
+@media (max-width:805px) and (orientation:portrait){
+  .loading-video,.loading-overlay{ display:none; }
+  .rotate-prompt{ display:flex; }
+}
 </style>
 </head>
 <body>
+<div class="rotate-prompt" role="alert" aria-live="polite">
+  <div class="rotate-prompt-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="2" width="12" height="20" rx="2"/>
+      <line x1="6" y1="17.5" x2="18" y2="17.5"/>
+    </svg>
+  </div>
+  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
+  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+</div>
 <!-- disablePictureInPicture/disableRemotePlayback: stop Chrome/Edge's
      automatic hover PiP icon and the cast/remote-playback affordance —
      neither is wanted on a full-bleed decorative background clip. -->

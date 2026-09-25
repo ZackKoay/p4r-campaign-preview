@@ -361,16 +361,38 @@ a{color:inherit;text-decoration:none}
 .toast.visible{opacity:1; transform:translate(-50%,-8px)}
 
 /* =========================================================
-   RESPONSIVE (H5 / mobile) — consolidated at the end, same
-   rule as Home: keeps every override winning the cascade.
-   ========================================================= */
-@media (max-width:960px){
+   RESPONSIVE
+   Below 806px is "phone" territory (see the ROTATE-DEVICE PROMPT
+   section below) — phones never get a stacked mobile redesign,
+   they get this same two-column desktop composition scaled down,
+   in landscape only. This also covers 806-1299px tablets (any
+   orientation), not just phones — it's a general "make the row
+   fit" rule.
+
+   .main-row's mission-card + prize-rail pair is a pixel-tuned
+   design (clip-path buttons, a nowrap "LUCKY DRAW" title, fixed
+   task-row padding, ...) that can't reflow into an actually
+   narrower two-column layout via flex-shrink alone — flex-shrink
+   only shrinks toward each child's min-content width, and that
+   nowrap title alone puts a floor under prize-rail well above
+   what a phone's landscape width has room for. So instead of
+   restyling every element, `zoom` rescales the whole row as one
+   unit — the same way this composition would look shrunk on a
+   smaller monitor, not redesigned for touch. (calc()/vw inside
+   zoom itself doesn't compute reliably across engines, hence
+   fixed steps per width tier rather than one fluid formula — each
+   step's value is sized for the narrowest width in its range, so
+   it's a conservative fit, never an overflow, at every width in
+   between.) */
+@media (max-width:1299px){ .main-row{ zoom:0.62; } }
+@media (max-width:999px){ .main-row{ zoom:0.48; } }
+@media (max-width:805px){
   .event-inner{padding:20px 20px}
-  .main-row{flex-direction:column}
-  .mission-card,.prize-rail{max-width:100%; flex:none; width:100%}
-  .prize-rail{padding:0}
   .event-footer{padding:0 20px; flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:12px; gap:8px}
+  .main-row{ zoom:0.45; }
 }
+@media (max-width:649px){ .main-row{ zoom:0.35; } }
+@media (max-width:519px){ .main-row{ zoom:0.32; } }
 @media (max-width:520px){
   .mission-head{flex-wrap:wrap}
   .task-row{flex-wrap:wrap; gap:8px}
@@ -384,9 +406,51 @@ a{color:inherit;text-decoration:none}
   .share-socials{gap:var(--space-24)}
   .share-link-row{flex-direction:column}
 }
+
+/* =========================================================
+   ROTATE-DEVICE PROMPT — see Home (p4r-home-hero.html) for the
+   full rationale; identical component, kept in sync by hand.
+   ========================================================= */
+.rotate-prompt{
+  display:none; position:fixed; inset:0; z-index:9999;
+  flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  background:var(--black); color:#fff; text-align:center; padding:32px;
+}
+.rotate-prompt-icon{width:64px; height:64px; color:var(--yellow); animation:rotate-prompt-spin 2.2s ease-in-out infinite}
+.rotate-prompt-icon svg{width:100%; height:100%; display:block}
+@keyframes rotate-prompt-spin{
+  0%{ transform:rotate(0deg); }
+  40%,60%{ transform:rotate(-90deg); }
+  100%{ transform:rotate(-90deg); }
+}
+.rotate-prompt p{
+  font-family:var(--font-head); font-weight:400; font-size:20px; line-height:1.4;
+  max-width:320px; margin:0; text-shadow:2px 2px 8px #000;
+}
+.rotate-prompt .hint{
+  font-family:var(--font-body); font-weight:400; font-size:13px; line-height:1.5;
+  max-width:280px; margin:0; color:rgba(255,255,255,.6);
+}
+@media (prefers-reduced-motion:reduce){
+  .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
+}
+@media (max-width:805px) and (orientation:portrait){
+  #root{ display:none; }
+  .rotate-prompt{ display:flex; }
+}
 </style>
 </head>
 <body>
+<div class="rotate-prompt" role="alert" aria-live="polite">
+  <div class="rotate-prompt-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="2" width="12" height="20" rx="2"/>
+      <line x1="6" y1="17.5" x2="18" y2="17.5"/>
+    </svg>
+  </div>
+  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
+  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+</div>
 <div id="root"></div>
 
 <script type="module">
