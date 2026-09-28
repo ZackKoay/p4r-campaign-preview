@@ -121,13 +121,32 @@ a{color:inherit;text-decoration:none}
 .audio-toggle:hover .label{display:inline}
 .audio-toggle:active .label{color:var(--daylight-blue); text-shadow:2px 2px 0 var(--daylight-blue-40)}
 
-.main-row{flex:1; display:flex; gap:var(--space-40); align-items:flex-start}
+/* =========================================================
+   MAIN STAGE
+   The card + rail pair is a fixed 1280x560 composition (Figma node
+   4296:2098 at 1440x810, minus the 80px side padding). Scaling each
+   property separately drifts the proportions apart, so instead
+   .main-fit keeps every size at its Figma px value and is zoomed as
+   one unit by --fit = min(stage w / 1280, stage h / 560), set by
+   useFitScale(). Like object-fit:contain: always the design's exact
+   proportions, as large as the stage allows, centered with the
+   leftover space shared evenly on the non-limiting side. A fixed
+   height (rather than measuring content) also keeps the scale from
+   jumping when Mission 1/2/3 (4/2/3 tasks) are switched.
+   .main-fit is absolutely positioned so its unscaled size never
+   feeds back into .main-row's own measured size.
+   ========================================================= */
+.main-row{flex:1; position:relative; min-height:0}
+.main-fit{
+  position:absolute; inset:0; margin:auto; width:1280px; height:560px;
+  display:flex; gap:var(--space-40); align-items:stretch; zoom:var(--fit, 1);
+}
 
 /* =========================================================
    MISSION CARD
    ========================================================= */
-.mission-card{flex:1 1 630px; max-width:clamp(630px, 40vw + 10vh, 860px); background:#970000; border-radius:24px; padding:8px; box-shadow:0 20px 50px rgba(0,0,0,.55)}
-.mission-screen{position:relative; overflow:hidden; border-radius:14px; background:#520000; padding:clamp(20px, 1.4vw + 1.6vh, 40px); display:flex; flex-direction:column; gap:clamp(18px, 1vw + 1.4vh, 34px)}
+.mission-card{flex:0 0 630px; display:flex; flex-direction:column; background:#970000; border-radius:24px; padding:8px; box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.mission-screen{flex:1; position:relative; overflow:hidden; border-radius:14px; background:#520000; padding:var(--space-24); display:flex; flex-direction:column; gap:var(--space-24)}
 .mission-screen::before{content:""; position:absolute; inset:0; z-index:0; background:url('assets/event-mission-screen.png') center/cover; mix-blend-mode:multiply; opacity:.12}
 .mission-screen::after{ /* faint scanlines, same technique as Home's TV screen */
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
@@ -135,45 +154,45 @@ a{color:inherit;text-decoration:none}
 }
 .mission-screen>*{position:relative; z-index:1}
 
-.mission-head{display:flex; align-items:center; gap:clamp(14px, 0.8vw + 0.8vh, 22px); width:100%}
-.mission-title{flex:1; display:flex; gap:var(--space-8); flex-wrap:wrap; align-items:baseline; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(22px, 1.6vw + 1.2vh, 34px); line-height:1}
+.mission-head{display:flex; align-items:center; gap:var(--space-16); width:100%}
+.mission-title{flex:1; display:flex; gap:var(--space-8); flex-wrap:wrap; align-items:baseline; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(20px,2.4vw,28px); line-height:1}
 
-.mission-toggle{display:flex; gap:clamp(12px, 0.8vw + 0.8vh, 20px)}
+.mission-toggle{display:flex; gap:var(--space-16)}
 .toggle-btn{
-  position:relative; width:clamp(34px, 1.6vw + 1.6vh, 48px); height:clamp(34px, 1.6vw + 1.6vh, 48px); border-radius:999px; border:none; padding:0;
+  position:relative; width:34px; height:34px; border-radius:999px; border:none; padding:0;
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   background:url('assets/icon-btn-outer-border.png') center/cover;
 }
 .toggle-btn::before{content:""; position:absolute; inset:4.17%; border-radius:999px; background:url('assets/icon-btn-inner-border.png') center/cover}
 .toggle-btn::after{content:""; position:absolute; inset:9.17%; border-radius:999px; background:#8B9300; border:1px solid #8B8B8B; transition:background .15s ease}
 .toggle-btn.active::after{background:#EEE843}
-.toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:clamp(16px, 0.9vw + 0.9vh, 22px); color:#2D2D2D}
+.toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#2D2D2D}
 
-.task-list{display:flex; flex-direction:column; gap:clamp(12px, 0.8vw + 1vh, 22px); width:100%}
+.task-list{flex:1; display:flex; flex-direction:column; gap:var(--space-16); width:100%}
 .task-row{
-  position:relative; overflow:hidden; display:flex; align-items:center; gap:clamp(12px, 0.6vw + 0.8vh, 20px); min-height:clamp(60px, 3vw + 5vh, 92px);
-  padding:clamp(10px, 0.6vw + 0.8vh, 18px) clamp(14px, 1vw + 0.6vh, 24px); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
+  position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; min-height:65px;
+  padding:12px var(--space-16); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
   transition:background .15s ease;
 }
 .task-row.done{background:#1B1B1B; opacity:.8; cursor:default}
-.task-row .label{flex:1; font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px); color:#fff; z-index:2; position:relative}
+.task-row .label{flex:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#fff; z-index:2; position:relative}
 .task-row.done .label{color:#636363}
 .task-deco-bottom{position:absolute; pointer-events:none; left:-2px; top:-48px; width:113px; height:112px; z-index:1}
 .task-deco-top{position:absolute; pointer-events:none; right:-2px; top:-8px; width:86px; height:94px; z-index:1}
 
 .task-btn{
   position:relative; z-index:2; flex:none; display:inline-flex; align-items:center; justify-content:center;
-  padding:clamp(8px, 0.5vw + 0.6vh, 14px) clamp(20px, 1.6vw + 0.6vh, 34px); font-family:var(--font-head); font-weight:400; font-size:clamp(14px, 0.8vw + 0.7vh, 18px); border:none;
+  padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px; border:none;
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35));
 }
 .task-btn--go{background:var(--yellow); color:var(--graphite); cursor:pointer}
 .task-btn--done{background:var(--graphite-10); color:var(--graphite-30); cursor:default; filter:none}
 
-.mission-progress{display:flex; align-items:center; gap:clamp(12px, 0.8vw + 0.8vh, 20px); width:100%}
-.mission-progress .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:clamp(6px, 0.4vw + 0.5vh, 12px)}
-.mission-progress .label{font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px); color:var(--yellow); white-space:nowrap}
-.progress-track{display:flex; align-items:stretch; gap:4px; width:100%; max-width:clamp(380px, 24vw + 10vh, 560px); height:clamp(6px, 0.4vw + 0.5vh, 10px)}
+.mission-progress{display:flex; align-items:center; gap:var(--space-16); width:100%}
+.mission-progress .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:var(--space-8)}
+.mission-progress .label{font-family:var(--font-head); font-weight:400; font-size:16px; color:var(--yellow); white-space:nowrap}
+.progress-track{display:flex; align-items:stretch; gap:4px; width:100%; max-width:432px; height:7px}
 /* Figma component (node 4590:3551, "progress bar"): decoded the exported
    SVG paths directly — segments are a light graphite-10 fill (#E2E2E2)
    with a thin dark outline, NOT the dark graphite fill this had before
@@ -192,7 +211,7 @@ a{color:inherit;text-decoration:none}
 .progress-seg.filled{background:var(--yellow)}
 
 .bonus-btn{
-  position:relative; flex:none; padding:clamp(8px, 0.5vw + 0.6vh, 14px) clamp(20px, 1.6vw + 0.6vh, 34px); font-family:var(--font-head); font-weight:400; font-size:clamp(14px, 0.8vw + 0.7vh, 18px);
+  position:relative; flex:none; padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px;
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none; cursor:pointer;
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--yellow); color:var(--graphite);
 }
@@ -207,30 +226,30 @@ a{color:inherit;text-decoration:none}
 /* =========================================================
    PRIZE / LUCKY DRAW RAIL
    ========================================================= */
-.prize-rail{flex:1 1 480px; max-width:clamp(480px, 30vw + 8vh, 640px); display:flex; flex-direction:column; align-items:center; gap:clamp(18px, 1vw + 1.4vh, 32px); padding:0}
-.lucky-draw-block{display:flex; flex-direction:column; align-items:center; gap:clamp(6px, 0.4vw + 0.5vh, 12px); width:100%}
-.lucky-draw-title{background:#1B1B1B; padding:0 clamp(18px, 1vw + 1.2vh, 32px); box-shadow:-4px 4px 0 #520000; transition:box-shadow .2s ease}
+.prize-rail{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--space-24); padding:0}
+.lucky-draw-block{display:flex; flex-direction:column; align-items:center; gap:var(--space-8); width:100%}
+.lucky-draw-title{background:#1B1B1B; padding:0 var(--space-24); box-shadow:-4px 4px 0 #520000; transition:box-shadow .2s ease}
 .lucky-draw-title.glow{box-shadow:-4px 4px 0 var(--yellow-fog-20)}
-.lucky-draw-title span{font-family:var(--font-head); font-weight:400; font-size:clamp(30px, 2.6vw + 1.6vh, 58px); color:#fff; white-space:nowrap}
+.lucky-draw-title span{font-family:var(--font-head); font-weight:400; font-size:clamp(28px,4vw,48px); color:#fff; white-space:nowrap}
 .lucky-draw-copy{text-align:center; color:#fff; text-shadow:0 4px 2px rgba(0,0,0,.25)}
-.lucky-draw-copy p:first-child{font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px)}
-.lucky-draw-copy p:last-child{font-family:var(--font-body); font-weight:400; font-size:clamp(13px, 0.8vw + 0.7vh, 17px); margin-top:2px}
+.lucky-draw-copy p:first-child{font-family:var(--font-head); font-weight:400; font-size:16px}
+.lucky-draw-copy p:last-child{font-family:var(--font-body); font-weight:400; font-size:14px; margin-top:2px}
 
 .prize-merch{
-  flex:1; width:100%; min-height:clamp(180px, 12vw + 14vh, 280px); border-radius:16px; position:relative; overflow:hidden;
+  flex:1; width:100%; min-height:200px; border-radius:16px; position:relative; overflow:hidden;
   display:flex; align-items:center; justify-content:center; box-shadow:4px 4px 0 #450000;
 }
 .prize-merch::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
 .prize-merch::after{content:""; position:absolute; inset:0; background:#b10000; mix-blend-mode:multiply; opacity:.55}
-.prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(22px, 1.4vw + 1.2vh, 32px); text-align:center; line-height:1.3}
+.prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:24px; text-align:center; line-height:1.3}
 
 .enter-draw-btn{
-  position:relative; padding:clamp(12px, 0.8vw + 1vh, 20px) clamp(32px, 2.4vw + 1vh, 56px); font-family:var(--font-head); font-weight:400; font-size:clamp(18px, 1.6vw + 1.2vh, 30px);
+  position:relative; padding:12px var(--space-40); font-family:var(--font-head); font-weight:400; font-size:clamp(18px,2.4vw,24px);
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none;
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--graphite-10); color:var(--graphite-30); cursor:not-allowed;
 }
 .enter-draw-btn.active{background:var(--yellow); color:var(--graphite); cursor:pointer}
-.event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:clamp(12px, 0.7vw + 0.6vh, 15px); text-shadow:0 4px 4px rgba(0,0,0,.25)}
+.event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:12px; text-shadow:0 4px 4px rgba(0,0,0,.25)}
 
 /* =========================================================
    FOOTER — legal links only (no socials on this page per Figma)
@@ -379,30 +398,19 @@ a{color:inherit;text-decoration:none}
    orientation), not just phones — it's a general "make the row
    fit" rule.
 
-   .main-row's mission-card + prize-rail pair is a pixel-tuned
-   design (clip-path buttons, a nowrap "LUCKY DRAW" title, fixed
-   task-row padding, ...) that can't reflow into an actually
-   narrower two-column layout via flex-shrink alone — flex-shrink
-   only shrinks toward each child's min-content width, and that
-   nowrap title alone puts a floor under prize-rail well above
-   what a phone's landscape width has room for. So instead of
-   restyling every element, `zoom` rescales the whole row as one
-   unit — the same way this composition would look shrunk on a
-   smaller monitor, not redesigned for touch. (calc()/vw inside
-   zoom itself doesn't compute reliably across engines, hence
-   fixed steps per width tier rather than one fluid formula — each
-   step's value is sized for the narrowest width in its range, so
-   it's a conservative fit, never an overflow, at every width in
-   between.) */
-@media (max-width:1299px){ .main-row{ zoom:0.62; } }
-@media (max-width:999px){ .main-row{ zoom:0.48; } }
+   The mission-card + prize-rail pair itself needs no breakpoints:
+   .main-fit scales it as one unit to fit .main-row (see MAIN STAGE
+   above), at every width and height. */
 @media (max-width:805px){
   .event-inner{padding:20px max(20px,env(safe-area-inset-right)) 20px max(20px,env(safe-area-inset-left))}
   .event-footer{padding:0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:max(12px,env(safe-area-inset-bottom)); gap:8px}
-  .main-row{ zoom:0.45; }
 }
-@media (max-width:649px){ .main-row{ zoom:0.35; } }
-@media (max-width:519px){ .main-row{ zoom:0.32; } }
+/* Landscape phones: the header's desktop spacing would otherwise eat
+   most of the height .main-fit scales into. */
+@media (max-height:500px){
+  .event-inner{gap:var(--space-12); padding-top:12px; padding-bottom:12px}
+  .event-logo{height:36px}
+}
 @media (max-width:520px){
   .mission-head{flex-wrap:wrap}
   .task-row{flex-wrap:wrap; gap:8px}
@@ -920,7 +928,28 @@ function Toast({ message }) {
   return h('div', { className: `toast${message ? ' visible' : ''}`, role: 'status', 'aria-live': 'polite' }, message || '');
 }
 
+// Sets --fit on the stage element for .main-fit's zoom (see MAIN STAGE
+// in the CSS). Returned as a callback ref so it attaches whenever the
+// stage mounts.
+const FIT_W = 1280, FIT_H = 560;
+function useFitScale() {
+  const [node, setNode] = React.useState(null);
+  React.useLayoutEffect(() => {
+    if (!node) return;
+    const update = () => {
+      const fit = Math.min(node.clientWidth / FIT_W, node.clientHeight / FIT_H);
+      node.style.setProperty('--fit', String(Math.max(fit, 0.05)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [node]);
+  return setNode;
+}
+
 function App() {
+  const stageRef = useFitScale();
   const [active, setActive] = React.useState(1);
   const [state, setState] = React.useState(loadState);
   const [modal, setModal] = React.useState(null); // null | 'lucky-draw' | 'lucky-draw-submitted' | 'logout' | { type:'bonus'|'share'|'password', missionId, taskId?, title? }
@@ -1054,13 +1083,15 @@ function App() {
             h(AudioToggle, { muted: audioMuted, onToggle: toggleAudioMuted })
           )
         ),
-        h('div', { className: 'main-row' },
-          h(MissionCard, {
-            mission: activeMission, active, onSelect: setActive,
-            done: state.done, onTaskGo: handleTaskGo,
-            claimed: state.claimed, onBonusClick: (missionId) => setModal({ type: 'bonus', missionId }),
-          }),
-          h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => setModal('lucky-draw') })
+        h('div', { className: 'main-row', ref: stageRef },
+          h('div', { className: 'main-fit' },
+            h(MissionCard, {
+              mission: activeMission, active, onSelect: setActive,
+              done: state.done, onTaskGo: handleTaskGo,
+              claimed: state.claimed, onBonusClick: (missionId) => setModal({ type: 'bonus', missionId }),
+            }),
+            h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => setModal('lucky-draw') })
+          )
         )
       ),
       h('footer', { className: 'event-footer' },
