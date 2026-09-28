@@ -126,8 +126,8 @@ a{color:inherit;text-decoration:none}
 /* =========================================================
    MISSION CARD
    ========================================================= */
-.mission-card{flex:1 1 630px; max-width:630px; background:#970000; border-radius:24px; padding:8px; box-shadow:0 20px 50px rgba(0,0,0,.55)}
-.mission-screen{position:relative; overflow:hidden; border-radius:14px; background:#520000; padding:var(--space-24); display:flex; flex-direction:column; gap:var(--space-24)}
+.mission-card{flex:1 1 630px; max-width:clamp(630px, 40vw + 10vh, 860px); background:#970000; border-radius:24px; padding:8px; box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.mission-screen{position:relative; overflow:hidden; border-radius:14px; background:#520000; padding:clamp(20px, 1.4vw + 1.6vh, 40px); display:flex; flex-direction:column; gap:clamp(18px, 1vw + 1.4vh, 34px)}
 .mission-screen::before{content:""; position:absolute; inset:0; z-index:0; background:url('assets/event-mission-screen.png') center/cover; mix-blend-mode:multiply; opacity:.12}
 .mission-screen::after{ /* faint scanlines, same technique as Home's TV screen */
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
@@ -135,45 +135,45 @@ a{color:inherit;text-decoration:none}
 }
 .mission-screen>*{position:relative; z-index:1}
 
-.mission-head{display:flex; align-items:center; gap:var(--space-16); width:100%}
-.mission-title{flex:1; display:flex; gap:var(--space-8); flex-wrap:wrap; align-items:baseline; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(20px,2.4vw,28px); line-height:1}
+.mission-head{display:flex; align-items:center; gap:clamp(14px, 0.8vw + 0.8vh, 22px); width:100%}
+.mission-title{flex:1; display:flex; gap:var(--space-8); flex-wrap:wrap; align-items:baseline; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(22px, 1.6vw + 1.2vh, 34px); line-height:1}
 
-.mission-toggle{display:flex; gap:var(--space-16)}
+.mission-toggle{display:flex; gap:clamp(12px, 0.8vw + 0.8vh, 20px)}
 .toggle-btn{
-  position:relative; width:34px; height:34px; border-radius:999px; border:none; padding:0;
+  position:relative; width:clamp(34px, 1.6vw + 1.6vh, 48px); height:clamp(34px, 1.6vw + 1.6vh, 48px); border-radius:999px; border:none; padding:0;
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   background:url('assets/icon-btn-outer-border.png') center/cover;
 }
 .toggle-btn::before{content:""; position:absolute; inset:4.17%; border-radius:999px; background:url('assets/icon-btn-inner-border.png') center/cover}
 .toggle-btn::after{content:""; position:absolute; inset:9.17%; border-radius:999px; background:#8B9300; border:1px solid #8B8B8B; transition:background .15s ease}
 .toggle-btn.active::after{background:#EEE843}
-.toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#2D2D2D}
+.toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:clamp(16px, 0.9vw + 0.9vh, 22px); color:#2D2D2D}
 
-.task-list{display:flex; flex-direction:column; gap:var(--space-16); width:100%}
+.task-list{display:flex; flex-direction:column; gap:clamp(12px, 0.8vw + 1vh, 22px); width:100%}
 .task-row{
-  position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; min-height:65px;
-  padding:12px var(--space-16); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
+  position:relative; overflow:hidden; display:flex; align-items:center; gap:clamp(12px, 0.6vw + 0.8vh, 20px); min-height:clamp(60px, 3vw + 5vh, 92px);
+  padding:clamp(10px, 0.6vw + 0.8vh, 18px) clamp(14px, 1vw + 0.6vh, 24px); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
   transition:background .15s ease;
 }
 .task-row.done{background:#1B1B1B; opacity:.8; cursor:default}
-.task-row .label{flex:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#fff; z-index:2; position:relative}
+.task-row .label{flex:1; font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px); color:#fff; z-index:2; position:relative}
 .task-row.done .label{color:#636363}
 .task-deco-bottom{position:absolute; pointer-events:none; left:-2px; top:-48px; width:113px; height:112px; z-index:1}
 .task-deco-top{position:absolute; pointer-events:none; right:-2px; top:-8px; width:86px; height:94px; z-index:1}
 
 .task-btn{
   position:relative; z-index:2; flex:none; display:inline-flex; align-items:center; justify-content:center;
-  padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px; border:none;
+  padding:clamp(8px, 0.5vw + 0.6vh, 14px) clamp(20px, 1.6vw + 0.6vh, 34px); font-family:var(--font-head); font-weight:400; font-size:clamp(14px, 0.8vw + 0.7vh, 18px); border:none;
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35));
 }
 .task-btn--go{background:var(--yellow); color:var(--graphite); cursor:pointer}
 .task-btn--done{background:var(--graphite-10); color:var(--graphite-30); cursor:default; filter:none}
 
-.mission-progress{display:flex; align-items:center; gap:var(--space-16); width:100%}
-.mission-progress .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:var(--space-8)}
-.mission-progress .label{font-family:var(--font-head); font-weight:400; font-size:16px; color:var(--yellow); white-space:nowrap}
-.progress-track{display:flex; align-items:stretch; gap:4px; width:100%; max-width:432px; height:7px}
+.mission-progress{display:flex; align-items:center; gap:clamp(12px, 0.8vw + 0.8vh, 20px); width:100%}
+.mission-progress .col{flex:1; min-width:0; display:flex; flex-direction:column; gap:clamp(6px, 0.4vw + 0.5vh, 12px)}
+.mission-progress .label{font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px); color:var(--yellow); white-space:nowrap}
+.progress-track{display:flex; align-items:stretch; gap:4px; width:100%; max-width:clamp(380px, 24vw + 10vh, 560px); height:clamp(6px, 0.4vw + 0.5vh, 10px)}
 /* Figma component (node 4590:3551, "progress bar"): decoded the exported
    SVG paths directly — segments are a light graphite-10 fill (#E2E2E2)
    with a thin dark outline, NOT the dark graphite fill this had before
@@ -192,7 +192,7 @@ a{color:inherit;text-decoration:none}
 .progress-seg.filled{background:var(--yellow)}
 
 .bonus-btn{
-  position:relative; flex:none; padding:8px 28px; font-family:var(--font-head); font-weight:400; font-size:14px;
+  position:relative; flex:none; padding:clamp(8px, 0.5vw + 0.6vh, 14px) clamp(20px, 1.6vw + 0.6vh, 34px); font-family:var(--font-head); font-weight:400; font-size:clamp(14px, 0.8vw + 0.7vh, 18px);
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none; cursor:pointer;
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--yellow); color:var(--graphite);
 }
@@ -207,30 +207,30 @@ a{color:inherit;text-decoration:none}
 /* =========================================================
    PRIZE / LUCKY DRAW RAIL
    ========================================================= */
-.prize-rail{flex:1 1 480px; max-width:610px; display:flex; flex-direction:column; align-items:center; gap:var(--space-24); padding:0 var(--space-24)}
-.lucky-draw-block{display:flex; flex-direction:column; align-items:center; gap:var(--space-8); width:100%}
-.lucky-draw-title{background:#1B1B1B; padding:0 var(--space-24); box-shadow:-4px 4px 0 #520000; transition:box-shadow .2s ease}
+.prize-rail{flex:1 1 480px; max-width:clamp(480px, 30vw + 8vh, 640px); display:flex; flex-direction:column; align-items:center; gap:clamp(18px, 1vw + 1.4vh, 32px); padding:0}
+.lucky-draw-block{display:flex; flex-direction:column; align-items:center; gap:clamp(6px, 0.4vw + 0.5vh, 12px); width:100%}
+.lucky-draw-title{background:#1B1B1B; padding:0 clamp(18px, 1vw + 1.2vh, 32px); box-shadow:-4px 4px 0 #520000; transition:box-shadow .2s ease}
 .lucky-draw-title.glow{box-shadow:-4px 4px 0 var(--yellow-fog-20)}
-.lucky-draw-title span{font-family:var(--font-head); font-weight:400; font-size:clamp(28px,4vw,48px); color:#fff; white-space:nowrap}
+.lucky-draw-title span{font-family:var(--font-head); font-weight:400; font-size:clamp(30px, 2.6vw + 1.6vh, 58px); color:#fff; white-space:nowrap}
 .lucky-draw-copy{text-align:center; color:#fff; text-shadow:0 4px 2px rgba(0,0,0,.25)}
-.lucky-draw-copy p:first-child{font-family:var(--font-head); font-weight:400; font-size:16px}
-.lucky-draw-copy p:last-child{font-family:var(--font-body); font-weight:400; font-size:14px; margin-top:2px}
+.lucky-draw-copy p:first-child{font-family:var(--font-head); font-weight:400; font-size:clamp(15px, 0.9vw + 0.9vh, 20px)}
+.lucky-draw-copy p:last-child{font-family:var(--font-body); font-weight:400; font-size:clamp(13px, 0.8vw + 0.7vh, 17px); margin-top:2px}
 
 .prize-merch{
-  flex:1; width:100%; min-height:200px; border-radius:16px; position:relative; overflow:hidden;
+  flex:1; width:100%; min-height:clamp(180px, 12vw + 14vh, 280px); border-radius:16px; position:relative; overflow:hidden;
   display:flex; align-items:center; justify-content:center; box-shadow:4px 4px 0 #450000;
 }
 .prize-merch::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
 .prize-merch::after{content:""; position:absolute; inset:0; background:#b10000; mix-blend-mode:multiply; opacity:.55}
-.prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:24px; text-align:center; line-height:1.3}
+.prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(22px, 1.4vw + 1.2vh, 32px); text-align:center; line-height:1.3}
 
 .enter-draw-btn{
-  position:relative; padding:12px var(--space-40); font-family:var(--font-head); font-weight:400; font-size:clamp(18px,2.4vw,24px);
+  position:relative; padding:clamp(12px, 0.8vw + 1vh, 20px) clamp(32px, 2.4vw + 1vh, 56px); font-family:var(--font-head); font-weight:400; font-size:clamp(18px, 1.6vw + 1.2vh, 30px);
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); border:none;
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--graphite-10); color:var(--graphite-30); cursor:not-allowed;
 }
 .enter-draw-btn.active{background:var(--yellow); color:var(--graphite); cursor:pointer}
-.event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:12px; text-shadow:0 4px 4px rgba(0,0,0,.25)}
+.event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:clamp(12px, 0.7vw + 0.6vh, 15px); text-shadow:0 4px 4px rgba(0,0,0,.25)}
 
 /* =========================================================
    FOOTER — legal links only (no socials on this page per Figma)
