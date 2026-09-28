@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Persona 4 Revival — Midnight Channel (Home / First Visit)</title>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
@@ -123,7 +123,15 @@
   --space-80:80px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* scroll-snap-type lives on html (the actual scrolling box) —
+   snaps onto the hero and info section as the visitor scrolls past
+   them, so each reads as its own full screen rather than an
+   arbitrary scroll position; the footer isn't a snap target (see
+   its own comment below) so scrolling past #info onto it is free,
+   normal scroll. scroll-behavior:smooth was already here for any
+   anchor-jump scrolls — snap's own motion doesn't need it, but
+   they don't conflict either. */
+html{scroll-behavior:smooth; scroll-snap-type:y mandatory}
 /* background matches the footer (--graphite-60), not --black: on a
    browser window taller than the page's actual content, CSS propagates
    body's own background color to fill the whole remaining viewport
@@ -238,7 +246,20 @@ a{color:inherit;text-decoration:none}
      which read as a separate framed box sitting on top of this one
      instead of one continuous surface — removed per design update. */
   width:100%; display:flex; justify-content:center; align-items:center;
-  padding:clamp(10px,2.8vw,40px) 40px; background:linear-gradient(180deg,#f22e29 0%, #b8120f 100%);
+  --pad-v:clamp(10px,2.8vw,40px); --pad-h:40px;
+  /* Without viewport-fit=cover (see the <meta viewport> tag) this
+     wouldn't matter, but with it, a notched/Dynamic-Island phone in
+     landscape only avoids drawing under the rounded corners if the
+     page asks it to via env(safe-area-inset-*) — otherwise Safari
+     letterboxes the whole page away from both edges instead, which
+     read as two stray black bars the full height of the hero. The
+     background still paints edge-to-edge either way (padding never
+     affects background-origin); this only keeps real content
+     (the bezel/control panel) clear of the physical curve. */
+  padding:var(--pad-v) max(var(--pad-h),env(safe-area-inset-right)) var(--pad-v) max(var(--pad-h),env(safe-area-inset-left));
+  background:linear-gradient(180deg,#f22e29 0%, #b8120f 100%);
+  min-height:100vh; min-height:100dvh; box-sizing:border-box;
+  scroll-snap-align:start; scroll-snap-stop:always;
 }
 .tv{
   /* Fixed content width per Figma (Bezel 1144px + 16px gap + Control
@@ -473,8 +494,13 @@ a{color:inherit;text-decoration:none}
    INFO SECTION
    ========================================================= */
 #info{
-  position:relative; padding:clamp(28px,7vw,80px); overflow:hidden;
+  position:relative; overflow:hidden;
+  --pad:clamp(28px,7vw,80px);
+  padding:var(--pad) max(var(--pad),env(safe-area-inset-right)) var(--pad) max(var(--pad),env(safe-area-inset-left));
   background:var(--yellow-tint);
+  min-height:100vh; min-height:100dvh; box-sizing:border-box;
+  display:flex; align-items:center;
+  scroll-snap-align:start; scroll-snap-stop:always;
 }
 #info::before{
   content:""; position:absolute; inset:0; z-index:0;
@@ -483,7 +509,7 @@ a{color:inherit;text-decoration:none}
 #info::after{
   content:""; position:absolute; inset:0; z-index:1; background:rgba(238,232,67,.9);
 }
-.info-inner{position:relative; z-index:2; display:flex; flex-direction:column; gap:24px}
+.info-inner{position:relative; z-index:2; width:100%; display:flex; flex-direction:column; gap:24px}
 .info-top{display:flex; justify-content:flex-end}
 
 /* align-items:stretch (was center) — Figma's "Character Strip" (the
@@ -568,8 +594,21 @@ a{color:inherit;text-decoration:none}
    FOOTER
    ========================================================= */
 footer{
-  background:var(--graphite-60); padding:clamp(24px,4.4vw,64px);
+  background:var(--graphite-60);
+  --pad:clamp(24px,4.4vw,64px);
+  padding:var(--pad) max(var(--pad),env(safe-area-inset-right)) max(var(--pad),env(safe-area-inset-bottom)) max(var(--pad),env(safe-area-inset-left));
   display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  /* scroll-snap-align:end, not a min-height:100dvh section like the
+     hero/info above it — it's short utility content (social icons,
+     copyright), so forcing it to fill the viewport would just leave a
+     lot of empty space around a couple of lines of text. It still
+     needs SOME snap-align though: with mandatory snap type, the
+     scroll container's resting position must always be a registered
+     snap point, and #info is otherwise the last one — without this,
+     scrolling past #info snaps straight back to it and the footer
+     becomes unreachable. `end` lands it flush at the bottom of the
+     page once scrolled to, its own natural height, not stretched. */
+  scroll-snap-align:end;
 }
 .socials{display:flex; gap:14px}
 .socials a{
@@ -707,6 +746,47 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   .modal-body{ align-items:center; text-align:center; }
   .modal-text{ text-align:center; }
   .modal-actions{ justify-content:center; }
+}
+/* Landscape phones are short, not just narrow — the ≤805px block
+   above tightens things enough for a typical ~700-900px-wide phone
+   in landscape, but at the actual floor (~480px wide, which usually
+   means ~300-320px tall) the hero's natural content height (was
+   ~358px measured) still ran past a min-height:100dvh #tv-wrap's
+   own short viewport, undercutting the "each section fills the
+   screen" scroll-snap this hero is now part of. Keyed on height,
+   not width, since that's the dimension actually running out here. */
+@media (max-height:400px){
+  .bezel{ padding:8px; }
+  .screen{ padding:8px 16px; }
+  .screen-inner{ gap:8px; }
+  .title-block{ gap:0; }
+  .logo{ width:clamp(56px,16vw,120px); }
+  .headline{ gap:6px; }
+  .headline h1{ font-size:16px; }
+  .headline h2{ font-size:24px; }
+  .headline p{ font-size:11px; }
+  .cta--start{ padding:4px 16px; }
+
+  /* #info's own overflow was worse than the hero's (734px measured
+     against a 320px-tall viewport) — its row-a wraps col-left under
+     the merch card below ~700px combined min-width, which is normal
+     desktop→mobile fallback behavior but exactly wrong for a *wide*,
+     short landscape phone: stacking two already-tall blocks is what
+     blew past the viewport, not any single element. Keeping them
+     side by side (flex-wrap:nowrap) and letting the merch card's
+     height follow the text column's (min-height:0, row-a still has
+     align-items:stretch) instead of its own 280px floor fixes the
+     actual cause, rather than just shrinking type until a stacked
+     layout happens to fit. */
+  #info{ --pad:16px; }
+  .info-inner{ gap:8px; }
+  .row-a{ gap:16px; flex-wrap:nowrap; }
+  .col-left{ min-width:0; gap:8px; }
+  .col-right{ min-width:0; }
+  .merch-card{ min-height:0; }
+  .heading span{ font-size:16px; line-height:1.4; padding:2px 6px; }
+  .info-copy{ font-size:11px; margin-top:4px; }
+  .tnc{ font-size:9px; }
 }
 
 /* =========================================================

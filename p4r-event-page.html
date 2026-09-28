@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Persona 4 Revival — Midnight Channel (Event / Mission Tracker)</title>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
@@ -89,7 +89,17 @@ a{color:inherit;text-decoration:none}
   background:url('assets/event-bg-decor.png') center/cover no-repeat;
   opacity:.35; pointer-events:none;
 }
-.event-inner{position:relative; z-index:1; flex:1; display:flex; flex-direction:column; gap:var(--space-40); padding:var(--space-40) var(--space-80)}
+.event-inner{
+  position:relative; z-index:1; flex:1; display:flex; flex-direction:column; gap:var(--space-40);
+  /* max(..., env(safe-area-inset-*)) — see the <meta viewport>
+     tag's viewport-fit=cover: without this, a notched/Dynamic-Island
+     phone in landscape either letterboxes the whole page away from
+     both edges (no viewport-fit=cover) or, with it, draws real
+     content right under the physical curve (no safe-area padding).
+     This keeps the background full-bleed either way while pulling
+     content itself clear of the curve. */
+  padding:var(--space-40) max(var(--space-80),env(safe-area-inset-right)) var(--space-40) max(var(--space-80),env(safe-area-inset-left));
+}
 
 .event-top{display:flex; align-items:center; justify-content:space-between}
 .event-logo{height:64px; width:auto; cursor:pointer}
@@ -387,8 +397,8 @@ a{color:inherit;text-decoration:none}
 @media (max-width:1299px){ .main-row{ zoom:0.62; } }
 @media (max-width:999px){ .main-row{ zoom:0.48; } }
 @media (max-width:805px){
-  .event-inner{padding:20px 20px}
-  .event-footer{padding:0 20px; flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:12px; gap:8px}
+  .event-inner{padding:20px max(20px,env(safe-area-inset-right)) 20px max(20px,env(safe-area-inset-left))}
+  .event-footer{padding:0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:max(12px,env(safe-area-inset-bottom)); gap:8px}
   .main-row{ zoom:0.45; }
 }
 @media (max-width:649px){ .main-row{ zoom:0.35; } }
