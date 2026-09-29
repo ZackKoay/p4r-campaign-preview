@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>SEGA Account — Persona 4 Revival</title>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
@@ -44,7 +44,7 @@ main{flex:1; display:flex; align-items:center; justify-content:center; padding:4
 a{color:inherit; text-decoration:none}
 button{font-family:inherit; cursor:pointer}
 
-.brand{position:fixed; top:24px; left:24px; z-index:1}
+.brand{position:fixed; top:max(24px,env(safe-area-inset-top)); left:max(24px,env(safe-area-inset-left)); z-index:1}
 .brand img{height:40px; width:auto}
 
 .card{
@@ -77,9 +77,78 @@ footer{padding:20px; text-align:center; font-family:var(--font-body); font-size:
   .brand{position:static; text-align:center; padding-top:24px}
   main{padding:24px 16px}
 }
+
+/* Landscape phones are short (320-430px tall): the desktop card is
+   ~600px, which pushed Continue below the fold. Keyed on height, and
+   placed after the max-width:520px block so it also wins at ~480px
+   wide (a phone's landscape floor), where that block would otherwise
+   turn the logo static and add more height. */
+@media (max-height:500px){
+  .brand{position:fixed; top:max(10px,env(safe-area-inset-top)); left:max(16px,env(safe-area-inset-left)); text-align:left; padding:0}
+  .brand img{height:28px}
+  main{padding:8px 20px}
+  .card{max-width:min(440px,calc(100vw - 128px))}
+  .card-top{padding:10px 16px}
+  .card-top h1{font-size:20px; margin-top:2px}
+  .card-body{padding:12px 16px; gap:8px}
+  .card-body p{font-size:12px; line-height:1.4}
+  .card-body .note{font-size:11px; padding:6px 10px; line-height:1.4}
+  .card-actions{gap:6px}
+  .btn{padding:8px 24px; font-size:15px}
+  .back-link{font-size:12px}
+  footer{padding:4px 20px; font-size:10px}
+}
+
+/* =========================================================
+   ROTATE-DEVICE PROMPT — see p4r-home-hero.html
+   (ported from prototype/p4r-home-hero.html) for the full
+   rationale; identical component, kept in sync by hand. This
+   page is just a centered card with a 440px max-width, already
+   fine at any width down to a phone's landscape floor — it just
+   needs the same landscape-only gate as the rest of the flow.
+   ========================================================= */
+.rotate-prompt{
+  display:none; position:fixed; inset:0; z-index:9999;
+  flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  background:var(--black); color:#fff; text-align:center; padding:32px;
+}
+.rotate-prompt-icon{width:64px; height:64px; color:var(--yellow); animation:rotate-prompt-spin 2.2s ease-in-out infinite}
+.rotate-prompt-icon svg{width:100%; height:100%; display:block}
+@keyframes rotate-prompt-spin{
+  0%{ transform:rotate(0deg); }
+  40%,60%{ transform:rotate(-90deg); }
+  100%{ transform:rotate(-90deg); }
+}
+.rotate-prompt p{
+  font-family:var(--font-head); font-weight:400; font-size:20px; line-height:1.4;
+  max-width:320px; margin:0; text-shadow:2px 2px 8px #000;
+}
+.rotate-prompt .hint{
+  font-family:var(--font-body); font-weight:400; font-size:13px; line-height:1.5;
+  max-width:280px; margin:0; color:rgba(255,255,255,.6);
+}
+@media (prefers-reduced-motion:reduce){
+  .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
+}
+@media (max-width:805px) and (orientation:portrait){
+  .brand,main,footer{ display:none; }
+  .rotate-prompt{ display:flex; }
+}
 </style>
 </head>
 <body>
+
+<div class="rotate-prompt" role="alert" aria-live="polite">
+  <div class="rotate-prompt-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="2" width="12" height="20" rx="2"/>
+      <line x1="6" y1="17.5" x2="18" y2="17.5"/>
+    </svg>
+  </div>
+  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
+  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+</div>
+
 
 <div class="brand">
   <a href="p4r-home-hero.html"><img src="assets/logo-p4r.png" alt="Persona 4 Revival"></a>
