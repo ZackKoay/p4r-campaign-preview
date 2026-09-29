@@ -378,6 +378,16 @@ a{color:inherit;text-decoration:none}
 .modal-btn:disabled{cursor:not-allowed}
 .modal-btn--empty{background:var(--graphite-10); color:var(--graphite-30); filter:none}
 
+/* ===== Receipt upload modal (Mission 3 "Pre-order") — same field +
+   button pair as the password modal above, so it reads as one family.
+   The native file input is visually hidden; its <label> wears the
+   .password-input look and opens the picker. */
+.receipt-file{position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none}
+.receipt-pick{display:block; text-align:left; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.receipt-pick--empty{color:var(--graphite-20)}
+.receipt-file:focus-visible + .receipt-pick{border-color:var(--yellow-fog-20)}
+.receipt-pick.is-disabled{color:var(--graphite-20); background:var(--graphite-10); border-color:var(--graphite-20); cursor:not-allowed}
+
 /* ===== Toast (Figma "Toaster", node 4633:8141) ===== */
 .toast{
   position:fixed; left:50%; bottom:32px; z-index:60; transform:translate(-50%,0);
@@ -488,6 +498,7 @@ const Api = {
   submitPassword: (taskId, value) => console.log('BACKEND: verify password server-side ->', taskId, value),
   claimBonus: (missionId, platform) => console.log('BACKEND: record prize claim + serve the real download ->', missionId, platform),
   submitEntry: (draws) => console.log('BACKEND: POST Lucky Draw entry — Participated = 1, Number of draws =', draws), // per brief §"Lucky Draw Popup"
+  uploadReceipt: (taskId, file) => console.log('BACKEND: POST /api/upload-image, then mark the task complete ->', taskId, file.name),
   markInviteShared: (missionId, taskId, channel) => console.log('BACKEND: record the share/invite (analytics + anti-abuse, since a click here cant confirm a friend actually joined) ->', missionId, taskId, channel),
 };
 
@@ -613,6 +624,8 @@ function fallbackCopy(text) {
    share = opens the Share modal (Figma "Modal — Share") instead of
            completing instantly; completes once the visitor actually
            shares or copies the link;
+   upload = opens the Receipt modal (ReceiptUploadModal) instead of
+           completing instantly; completes once the file uploads;
    link  = opens task.href in a new tab (a real external site — the
            actual Steam store page, the actual ATLUS SEA Instagram —
            rather than a fake in-site copy of either) and marks complete.
@@ -641,7 +654,7 @@ const MISSIONS = [
     name: 'Reach the Goal',
     tasks: [
       { id: '3.a', label: 'Play the Persona 4 Revival demo', kind: 'api' },
-      { id: '3.b', label: 'Pre-order Persona 4 Revival', kind: 'api' },
+      { id: '3.b', label: 'Pre-order Persona 4 Revival', kind: 'upload', modalTitle: 'Upload Your Pre-order Receipt' },
       { id: '3.c', label: 'Complete the secret message', kind: 'password', modalTitle: 'Enter the Secret Message' },
     ],
   },
@@ -924,6 +937,65 @@ function PasswordModal({ title, onClose, onVerify }) {
   );
 }
 
+/* Mission 3's "Pre-order" proof: the player uploads their receipt
+   (POST /api/upload-image — JPEG, PNG or PDF, at most 10 MB), then the
+   task is marked done. Checked here first so an obviously wrong file
+   fails instantly instead of after a 10 MB upload. onUpload resolves
+   null on success (the parent closes the modal) or an error message to
+   show under the field. */
+const RECEIPT_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
+
+function ReceiptUploadModal({ title, onClose, onUpload }) {
+  const [file, setFile] = React.useState(null);
+  const [status, setStatus] = React.useState('idle'); // idle | uploading | error
+  const [error, setError] = React.useState('');
+  const uploading = status === 'uploading';
+
+  const fail = (message) => { setStatus('error'); setError(message); };
+
+  const handlePick = (e) => {
+    const next = e.target.files && e.target.files[0];
+    e.target.value = ''; // so picking the same file again still fires onChange
+    if (!next) return;
+    if (!RECEIPT_TYPES.includes(next.type)) { setFile(null); fail('Choose a JPEG, PNG or PDF file.'); return; }
+    if (next.size > RECEIPT_MAX_BYTES) { setFile(null); fail('That file is over 10 MB. Choose a smaller one.'); return; }
+    setFile(next); setStatus('idle'); setError('');
+  };
+
+  const handleSubmit = () => {
+    if (!file || uploading) return;
+    setStatus('uploading');
+    Promise.resolve(onUpload(file)).then((message) => { if (message) fail(message); });
+  };
+
+  // Not closable mid-upload — closing wouldn't cancel the request, just
+  // hide whether it worked.
+  return h(Modal, { onClose: () => { if (!uploading) onClose(); }, centered: true },
+    h('div', { className: 'modal-text' },
+      h('h3', null, title),
+      h('p', { className: 'copy' }, 'JPEG, PNG or PDF, up to 10 MB.')
+    ),
+    h('div', { className: 'password-row' },
+      h('div', { className: 'password-field' },
+        h('input', {
+          id: 'receipt-file', type: 'file', className: 'receipt-file',
+          accept: RECEIPT_TYPES.join(','), disabled: uploading, onChange: handlePick,
+        }),
+        h('label', {
+          htmlFor: 'receipt-file',
+          className: `password-input receipt-pick${file ? '' : ' receipt-pick--empty'}${uploading ? ' is-disabled' : ''}`,
+        }, file ? file.name : 'Choose a file'),
+        status === 'error' && h('p', { className: 'password-error' }, error)
+      ),
+      h('button', {
+        type: 'button', className: `modal-btn modal-btn--sm ${file ? 'modal-btn--dark' : 'modal-btn--empty'}`,
+        disabled: !file || uploading, onClick: handleSubmit,
+      }, uploading ? 'Uploading...' : 'Upload')
+    )
+  );
+}
+
 function Toast({ message }) {
   return h('div', { className: `toast${message ? ' visible' : ''}`, role: 'status', 'aria-live': 'polite' }, message || '');
 }
@@ -997,6 +1069,10 @@ function App() {
       setToastMessage("We'll mark this done once you're back!");
       return;
     }
+    if (task.kind === 'upload') {
+      setModal({ type: 'upload', missionId, taskId: task.id, title: task.modalTitle });
+      return; // completes once the receipt uploads — see handleReceiptUpload
+    }
     if (task.kind === 'password') {
       setModal({ type: 'password', missionId, taskId: task.id, title: task.modalTitle });
       return; // completes once the visitor enters a value that verifies — see handlePasswordVerify
@@ -1023,6 +1099,18 @@ function App() {
     copyToClipboard(shareUrl);
     setToastMessage('Link copied to clipboard !');
   };
+
+  // Mock upload: a short "Uploading..." then success, like the password
+  // mock below. Resolves null so the modal closes.
+  const handleReceiptUpload = (taskId, file) => new Promise((resolve) => {
+    setTimeout(() => {
+      Api.uploadReceipt(taskId, file);
+      setState((s) => ({ ...s, done: { ...s.done, [taskId]: true } }));
+      setModal(null);
+      setToastMessage('Receipt uploaded!');
+      resolve(null);
+    }, 1200);
+  });
 
   // BACKEND: verify server-side, not client-side. This mock always
   // accepts any non-empty value after a short "Verifying..." delay —
@@ -1122,6 +1210,11 @@ function App() {
       key: modal.taskId, title: modal.title,
       onClose: () => setModal(null),
       onVerify: (value) => handlePasswordVerify(modal.missionId, modal.taskId, value),
+    }),
+    modal && modal.type === 'upload' && h(ReceiptUploadModal, {
+      key: modal.taskId, title: modal.title,
+      onClose: () => setModal(null),
+      onUpload: (file) => handleReceiptUpload(modal.taskId, file),
     }),
     h(Toast, { message: toastMessage })
   );
