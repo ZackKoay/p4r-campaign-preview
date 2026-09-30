@@ -737,16 +737,15 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
      the screen (zoom:var(--tv-fit), set by fitTvToScreen() in the
      script; same approach as the Event page's mission card). The hero
      is the phone's full landscape height (100lvh = the viewport with
-     the browser bars retracted). On first load, with Safari's bars
-     showing, the TV fits the visible part above them (--tv-top
-     centres it there); the first scroll tucks the bars away, the TV
-     grows to fill the screen, and scroll-snap holds it there the
-     same as #info. Every width-based (vw) size
+     the browser bars retracted), and the TV is always sized to it: on
+     first load, with Safari's bars showing, its bottom runs under
+     them; the first scroll tucks them away and the whole TV shows at
+     the same size, held there by scroll-snap the same as #info. Every width-based (vw) size
      inside the TV is pinned to its desktop value, so the scaled copy
      is the desktop layout rather than a squeezed one. overflow:hidden
      only covers the moment before the script sets --tv-fit, when the
      TV is still full size. */
-  #tv-wrap{ height:100vh; height:100lvh; min-height:0; overflow:hidden; align-items:flex-start; padding-top:var(--tv-top, var(--pad-v)); }
+  #tv-wrap{ height:100vh; height:100lvh; min-height:0; overflow:hidden; }
   .tv{ width:1360px; height:747px; max-width:none; flex:none; gap:16px; zoom:var(--tv-fit,1); }
   .bezel{ padding:56px; }
   .screen{ padding:40px 80px; }
@@ -1276,23 +1275,17 @@ function ControlPanel() {
 /* Phones only (see the RESPONSIVE block): the TV there is the fixed
    1360x747 desktop composition, zoomed to fit. zoom needs a plain
    number, which CSS can't derive from lengths, so it's measured here.
-   #tv-wrap is the full landscape screen (100lvh), but while Safari's
-   bars are showing only the part above them is visible — so the TV
-   fits and centres in that visible part (innerHeight), and grows to
-   the full screen once a scroll tucks the bars away. */
+   #tv-wrap is the full landscape screen (100lvh), and the TV is sized
+   to that, not to the part left visible while Safari's bars show — it
+   stays the same size whether the bars are out or tucked away. */
 const TV_W = 1360, TV_H = 747;
 function fitTvToScreen(wrap) {
   const update = () => {
     const cs = getComputedStyle(wrap);
     const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    // Pinch-zoomed in, innerHeight tracks the zoomed view — keep the
-    // TV as it was rather than resizing it under the player's fingers.
-    if (window.visualViewport && window.visualViewport.scale > 1.01) return;
-    const visibleH = Math.min(wrap.clientHeight, window.innerHeight);
-    const padV = parseFloat(cs.paddingBottom);
-    const fit = Math.max(Math.min(w / TV_W, (visibleH - padV * 2) / TV_H), 0.05);
+    const hgt = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const fit = Math.max(Math.min(w / TV_W, hgt / TV_H), 0.05);
     wrap.style.setProperty('--tv-fit', String(fit));
-    wrap.style.setProperty('--tv-top', `${Math.max((visibleH - TV_H * fit) / 2, 0)}px`);
     // The controls don't shrink with the rest: each stays at least this
     // fraction of its desktop size on screen, so it can still be read
     // and tapped. The language hint sits inside the Language button's
@@ -1303,7 +1296,6 @@ function fitTvToScreen(wrap) {
   };
   update();
   new ResizeObserver(update).observe(wrap);
-  window.addEventListener('resize', update); // Safari's bars showing/hiding changes innerHeight, not #tv-wrap
 }
 
 function Hero() {
