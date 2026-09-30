@@ -258,7 +258,7 @@ a{color:inherit;text-decoration:none}
      (the bezel/control panel) clear of the physical curve. */
   padding:var(--pad-v) max(var(--pad-h),env(safe-area-inset-right)) var(--pad-v) max(var(--pad-h),env(safe-area-inset-left));
   background:linear-gradient(180deg,#f22e29 0%, #b8120f 100%);
-  min-height:100vh; min-height:100dvh; box-sizing:border-box;
+  min-height:100vh; min-height:100lvh; box-sizing:border-box;
   scroll-snap-align:start; scroll-snap-stop:always;
 }
 .tv{
@@ -705,7 +705,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    Consolidated at the end on purpose so every override here wins
    the cascade regardless of where its base rule is declared above.
    ========================================================= */
-@media (max-width:1279px){
+@media (min-width:806px) and (max-width:1279px) and (min-height:501px){
   /* Screen headline text steps down in fixed sizes rather than scaling
      fluidly — per spec, not pulled from Figma at this exact tier for
      "MIDNIGHT CHANNEL"/tagline (Figma keeps those flat at 64/24 through
@@ -714,36 +714,41 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   .headline h2{ font-size:56px; }
   .headline p{ font-size:16px; }
 }
-@media (max-width:1023px){
+@media (min-width:806px) and (max-width:1023px) and (min-height:501px){
   .headline h1{ font-size:28px; }
   .headline h2{ font-size:40px; } /* was 48px — even "MIDNIGHT" alone broke mid-word on narrow phones (~390px) */
   .headline p{ font-size:14px; }
 }
-/* max-height too: big landscape phones (iPhone 14 at 844x390, Pro
-   Max at 932x430) are wider than 805px, and the desktop control
-   panel's vent grille alone made the TV ~726px tall there. */
 @media (max-width:805px), (max-height:500px){
-  /* Same fixed-size headline/CTA steps the old ≤820px breakpoint used —
-     kept as-is, they're just font-size/spacing tweaks, nothing to do
-     with the stacking that used to happen here. */
-  .screen{ padding:12px 16px; }
-  .title-block{ gap:4px; }
-  .logo{ width:clamp(70px,20vw,160px); }
-  .headline h1{ font-size:22px; }
-  .headline h2{ font-size:32px; }
-  .headline p{ font-size:13px; margin-top:0; }
-  .cta--start{ padding:6px 18px; font-size:13px; gap:6px; }
-  .cta--start svg{ width:14px; height:14px; }
-  /* .control-panel was a fixed 200px — fine down to ~820px, but left too
-     little room for .bezel once a landscape phone's full width is only
-     ~480-805px. Fluid width instead of a breakpoint-specific stacked
-     layout keeps it a proportional slice of whatever width is actually
-     available, same idea as .turn-knob's own clamp() just above. */
-  .control-panel{ width:clamp(84px,20vw,200px); gap:10px; }
-  .grille{ display:none; } /* decorative vents — cut first, same as before */
-  .dial-panel{ padding:12px; gap:10px; }
-  .icon-btn-wrap label{ display:none; } /* "Mute"/"Unmute" captions — dial stays operable via the icon alone */
-  .dial-labels{ display:none; }
+  /* Landscape phones get the desktop TV itself — the full 1360x747
+     composition, speaker grille and all — scaled as one piece to fit
+     the screen (zoom:var(--tv-fit), set by fitTvToScreen() in the
+     script; same approach as the Event page's mission card). The hero
+     is the phone's full landscape height (100lvh = the viewport with
+     the browser bars retracted), so on first load, with the address
+     bar showing, it runs a little past the bottom; the first scroll
+     tucks the bar away, the TV fills the screen, and scroll-snap
+     holds it there the same as #info. Every width-based (vw) size
+     inside the TV is pinned to its desktop value, so the scaled copy
+     is the desktop layout rather than a squeezed one. overflow:hidden
+     only covers the moment before the script sets --tv-fit, when the
+     TV is still full size. */
+  #tv-wrap{ height:100vh; height:100lvh; min-height:0; overflow:hidden; }
+  .tv{ width:1360px; height:747px; max-width:none; flex:none; gap:16px; zoom:var(--tv-fit,1); }
+  .bezel{ padding:56px; }
+  .screen{ padding:40px 80px; }
+  .title-block{ gap:24px; }
+  .logo{ width:300px; }
+  .turn-knob{ width:152px; }
+  /* ...except the controls, which get a counter-zoom (--tv-boost-*,
+     also set by fitTvToScreen) so they stay readable and tappable
+     however far the TV itself shrinks. */
+  .cta--start{ font-size:28px; zoom:var(--tv-boost-cta,1); } /* 28px = its desktop clamp() max */
+  .icon-btn-wrap{ zoom:var(--tv-boost-btn,1); }
+  /* Boosted, the two button labels ("Unmute", "Language") need more
+     room than the desktop panel's 20px side padding leaves them. */
+  .dial-panel{ padding:20px 10px; }
+  .icon-btn-wrap label{ font-size:11px; }
   /* Right-aligned to the button (tail still over it) instead of
      centered — centered, half the bubble hung past the screen's right
      edge, since the button sits near it here. */
@@ -754,26 +759,18 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   .modal-text{ text-align:center; }
   .modal-actions{ justify-content:center; }
 }
-/* Landscape phones are short, not just narrow — the ≤805px block
-   above tightens things enough for a typical ~700-900px-wide phone
-   in landscape, but at the actual floor (~480px wide, which usually
-   means ~300-320px tall) the hero's natural content height (was
-   ~358px measured) still ran past a min-height:100dvh #tv-wrap's
-   own short viewport, undercutting the "each section fills the
-   screen" scroll-snap this hero is now part of. Keyed on height,
-   not width, since that's the dimension actually running out here. */
+/* Narrower landscape phones: the panel gets too narrow for both
+   button labels at the boosted size, so they step down. */
+@media (max-width:700px){
+  .icon-btn-wrap label{ font-size:10px; }
+}
+@media (max-width:600px){
+  .icon-btn-wrap label{ font-size:9px; }
+}
+/* Very short landscape phones (~320px tall). The hero needs nothing
+   here any more — it scales to whatever height there is — but #info
+   still has to be tightened to fit. */
 @media (max-height:440px){
-  .bezel{ padding:8px; }
-  .screen{ padding:8px 16px; }
-  .screen-inner{ gap:8px; }
-  .title-block{ gap:0; }
-  .logo{ width:clamp(56px,16vw,120px); }
-  .headline{ gap:6px; }
-  .headline h1{ font-size:16px; }
-  .headline h2{ font-size:24px; }
-  .headline p{ font-size:11px; }
-  .cta--start{ padding:4px 16px; }
-
   /* #info's own overflow was worse than the hero's (734px measured
      against a 320px-tall viewport) — its row-a wraps col-left under
      the merch card below ~700px combined min-width, which is normal
@@ -1146,8 +1143,34 @@ function ControlPanel() {
   );
 }
 
+/* Phones only (see the RESPONSIVE block): the TV there is the fixed
+   1360x747 desktop composition, zoomed to fit #tv-wrap's content box.
+   zoom needs a plain number, which CSS can't derive from lengths, so
+   it's measured here. #tv-wrap is a fixed 100lvh on phones, so the
+   browser bar showing/hiding doesn't resize it — only rotation does. */
+const TV_W = 1360, TV_H = 747;
+function fitTvToScreen(wrap) {
+  const update = () => {
+    const cs = getComputedStyle(wrap);
+    const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const hgt = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const fit = Math.max(Math.min(w / TV_W, hgt / TV_H), 0.05);
+    wrap.style.setProperty('--tv-fit', String(fit));
+    // The controls don't shrink with the rest: each stays at least this
+    // fraction of its desktop size on screen, so it can still be read
+    // and tapped. The language hint sits inside the Language button's
+    // column, so it's boosted along with it.
+    const boost = (min) => Math.max(1, min / fit);
+    wrap.style.setProperty('--tv-boost-cta', String(boost(0.6)));
+    wrap.style.setProperty('--tv-boost-btn', String(boost(0.8)));
+  };
+  update();
+  new ResizeObserver(update).observe(wrap);
+}
+
 function Hero() {
-  return h('section', { id: 'tv-wrap' },
+  const fitRef = React.useCallback((node) => { if (node) fitTvToScreen(node); }, []);
+  return h('section', { id: 'tv-wrap', ref: fitRef },
     h('div', { className: 'tv' },
       h('div', { className: 'bezel' },
         h('div', { className: 'bezel-facets', 'aria-hidden': 'true' },
