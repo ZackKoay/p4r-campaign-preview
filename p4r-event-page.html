@@ -50,10 +50,10 @@
    to — it was blowing modal copy up well past the sizes set here. */
 html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 /* Neue Frutiger World — self-hosted webfont (same as Home) */
-@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Medium.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Medium.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Medium.ttf') format('truetype');font-weight:500;font-style:normal;font-display:swap}
-@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Bold.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Bold.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Medium.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Medium.woff') format('woff');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Bold.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
 :root{
   --yellow:#FFFC00; --yellow-tint:#EEE843; --cyan:#00C8E2; --black:#0b0b0b;
   --graphite-60:#1B1B1B; --graphite:#2D2D2D; --graphite-40:#636363; --graphite-30:#8B8B8B;
@@ -105,7 +105,8 @@ a{color:inherit;text-decoration:none}
 }
 
 .event-top{display:flex; align-items:center; justify-content:space-between}
-.event-logo{height:64px; width:auto; cursor:pointer}
+.event-logo-link{display:block; line-height:0}
+.event-logo{height:64px; width:auto}
 .event-id{display:flex; align-items:center; gap:var(--space-8); padding:var(--space-8) var(--space-24)}
 .event-id .name{font-family:var(--font-body); font-weight:500; color:var(--yellow); font-size:14px; text-shadow:2px 2px 4px rgba(0,0,0,.25)}
 .event-id .sep{width:1px; height:20px; background:rgba(255,255,255,.4)}
@@ -277,6 +278,7 @@ a{color:inherit;text-decoration:none}
    button sits outside the box's own edges (top:-14px right:-14px per
    Figma node 4484:3349), so the box itself has to stay overflow:visible
    or it clips its own close button. */
+.modal-box:focus{outline:none}
 .modal-box{
   position:relative; background:#fff; border:4px solid var(--graphite);
   box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible;
@@ -814,9 +816,26 @@ function PrizeRail({ entries, total, onEnterDraw }) {
    ========================================================= */
 // actions: the dialog's CTA button(s), kept in a fixed row under the
 // scrolling body so they're always on screen.
+// Esc closes it (through onClose, so a dialog that can't close right
+// now still can't), and focus moves into it on open unless something
+// inside already took it (e.g. an autoFocus input), then goes back to
+// whatever opened it.
 function Modal({ onClose, header, centered, children, actions, dismissOnOverlayClick = true }) {
+  const boxRef = React.useRef(null);
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
+  React.useEffect(() => {
+    const opener = document.activeElement;
+    if (boxRef.current && !boxRef.current.contains(document.activeElement)) boxRef.current.focus();
+    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      if (opener && opener.focus && document.contains(opener)) opener.focus();
+    };
+  }, []);
   return h('div', { className: 'modal-overlay', onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
-    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
+    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', tabIndex: -1, ref: boxRef },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, h('span', null, header)),
       h('div', { className: 'modal-scroll' },
@@ -827,15 +846,17 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
   );
 }
 
-function LuckyDrawRevealModal({ draws, drawsTotal, onSubmit, onClose }) {
+// The draw opens after any one mission, so the heading only claims
+// "all the missions" when that's actually true.
+function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, onSubmit, onClose }) {
   return h(Modal, {
     onClose, header: 'LUCKY DRAW',
-    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onSubmit }, 'SUBMIT ENTRY'),
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? 'SUBMITTING...' : 'SUBMIT ENTRY'),
   },
     h('div', { className: 'modal-content-row' },
       h('div', { className: 'modal-text' },
         h('div', null,
-          h('h3', null, "You've completed all the missions!"),
+          h('h3', null, entries >= entriesTotal ? "You've completed all the missions!" : `You've completed ${entries} of ${entriesTotal} missions!`),
           h('p', { className: 'copy' }, `This gives you ${draws}/${drawsTotal} total draws.`),
           h('p', { className: 'copy' }, 'Join us in lorem ipsum dolor sit amet, consectetur adipiscing elit.')
         ),
@@ -862,7 +883,7 @@ function LogoutConfirmModal({ onConfirm, onCancel }) {
   return h(Modal, {
     onClose: onCancel, centered: true,
     actions: h(React.Fragment, null,
-      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, 'Yes,  log me out'),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, 'Yes, log me out'),
       h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--dark', onClick: onCancel }, 'No, bring me back')
     ),
   },
@@ -872,12 +893,12 @@ function LogoutConfirmModal({ onConfirm, onCancel }) {
   );
 }
 
-function BonusModal({ onDownload, onClose }) {
+function BonusModal({ busy, onDownload, onClose }) {
   return h(Modal, {
     onClose, header: 'BONUS', centered: true,
     actions: h(React.Fragment, null,
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), 'DESKTOP'),
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), 'MOBILE')
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), 'DESKTOP'),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), 'MOBILE')
     ),
   },
     h('p', { className: 'copy' }, "Here's an exclusive Persona 4 Revival Merch!"),
@@ -1081,6 +1102,12 @@ function App() {
   const [state, setState] = React.useState(loadState);
   const [modal, setModal] = React.useState(null); // null | 'lucky-draw' | 'lucky-draw-submitted' | 'logout' | { type:'bonus'|'share'|'password', missionId, taskId?, title? }
   const [toastMessage, setToastMessage] = React.useState(null);
+  // Submit Entry / Bonus request in flight. The ref blocks a second
+  // click before React re-renders; the state disables the buttons.
+  const [saving, setSaving] = React.useState(false);
+  const savingRef = React.useRef(false);
+  const startSaving = () => { if (savingRef.current) return false; savingRef.current = true; setSaving(true); return true; };
+  const stopSaving = () => { savingRef.current = false; setSaving(false); };
   const [audioMuted, toggleAudioMuted] = useBackgroundMusic('assets/bgm-event.m4a', false); // default on, per Figma
   // 'link' tasks (Wishlist, Instagram, Discord, ...) send the visitor to a
   // real external site — GO no longer marks them done on click. It only
@@ -1152,7 +1179,7 @@ function App() {
 
   const handleCopyLink = () => {
     copyToClipboard(shareUrl);
-    setToastMessage('Link copied to clipboard !');
+    setToastMessage('Link copied to clipboard!');
   };
 
   // Mock upload: a short "Uploading..." then success, like the password
@@ -1213,10 +1240,9 @@ function App() {
     h('div', { id: 'event-wrap' },
       h('div', { className: 'event-inner' },
         h('div', { className: 'event-top' },
-          h('img', {
-            className: 'event-logo', src: 'assets/event-logo-mark.png', alt: 'Persona 4 Revival logo',
-            onClick: () => { window.location.href = 'p4r-home-hero.html'; },
-          }),
+          h('a', { className: 'event-logo-link', href: 'p4r-home-hero.html' },
+            h('img', { className: 'event-logo', src: 'assets/event-logo-mark.png', alt: 'Persona 4 Revival — back to Home' })
+          ),
           h('div', { className: 'event-top-right' },
             h('div', { className: 'event-id' },
               h('span', { className: 'name' }, 'Protaginist_67'), // BACKEND: real username from SEGA Account
@@ -1247,11 +1273,13 @@ function App() {
       )
     ),
     modal === 'lucky-draw' && h(LuckyDrawRevealModal, {
-      draws, drawsTotal, onSubmit: handleSubmitEntry, onClose: () => setModal(null),
+      entries, entriesTotal: MISSIONS.length, draws, drawsTotal, busy: saving,
+      onSubmit: handleSubmitEntry, onClose: () => setModal(null),
     }),
     modal === 'lucky-draw-submitted' && h(LuckyDrawSubmittedModal, { onReturn: () => setModal(null) }),
     modal === 'logout' && h(LogoutConfirmModal, { onConfirm: Api.logOut, onCancel: () => setModal(null) }),
     modal && modal.type === 'bonus' && h(BonusModal, {
+      busy: saving,
       onDownload: (platform) => handleBonusDownload(modal.missionId, platform),
       onClose: () => setModal(null),
     }),

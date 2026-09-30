@@ -13,8 +13,8 @@
   ------------------------------------------------------------
   That frame names its placeholder shape "〇テレビ入り演出_汎用_4K 1"
   ("TV entrance effect, general, 4K") but had no asset attached in
-  Figma — now wired to the real file of that name (video/〇テレビ入り
-  演出_汎用_4K.mp4): an old CRT screen collapsing to black, ~5s, which
+  Figma — now wired to the real file of that name, renamed to ASCII
+  (assets/tv-entrance.mp4): an old CRT screen collapsing to black, ~5s, which
   is exactly the "pulled into the TV" beat this page needs. It plays
   once (not looped — the clip already ends on black, which is this
   page's own background color, so there's no last-frame jump) at full
@@ -28,7 +28,7 @@
 /* iOS Safari enlarges text on its own in landscape unless told not
    to — it was blowing modal copy up well past the sizes set here. */
 html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
-@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 :root{ --yellow:#FFFC00; --black:#0b0b0b; --font-head:'NFW Display','Neue Frutiger World',Impact,sans-serif; }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--black); min-height:100vh; overflow:hidden}
@@ -96,7 +96,7 @@ body{background:var(--black); min-height:100vh; overflow:hidden}
      automatic hover PiP icon and the cast/remote-playback affordance —
      neither is wanted on a full-bleed decorative background clip. -->
 <video class="loading-video" autoplay muted playsinline disablePictureInPicture disableRemotePlayback>
-  <source src="assets/〇テレビ入り演出_汎用_4K.mp4" type="video/mp4">
+  <source src="assets/tv-entrance.mp4" type="video/mp4">
 </video>
 <div class="loading-overlay">
   <img src="assets/logo-p4r.png" alt="Persona 4 Revival">
