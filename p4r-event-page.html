@@ -46,6 +46,9 @@
               look (skewed segments, same colors) and stays dynamic.
   ============================================================ -->
 <style>
+/* iOS Safari enlarges text on its own in landscape unless told not
+   to — it was blowing modal copy up well past the sizes set here. */
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 /* Neue Frutiger World — self-hosted webfont (same as Home) */
 @font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
@@ -279,7 +282,11 @@ a{color:inherit;text-decoration:none}
   box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible;
   display:flex; flex-direction:column;
 }
+/* Header and CTA row stay put; only the content between them
+   scrolls when the dialog is taller than the screen (landscape phones). */
 .modal-scroll{overflow:auto; flex:1; min-height:0}
+.modal-header{flex:none}
+.modal-foot{flex:none; display:flex; gap:var(--space-12); flex-wrap:wrap; justify-content:center; padding:0 var(--space-24) var(--space-24)}
 .modal-close{
   position:absolute; top:-14px; right:-14px; z-index:2; width:48px; height:48px; border-radius:999px;
   background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center;
@@ -290,7 +297,9 @@ a{color:inherit;text-decoration:none}
 .modal-content-row{display:flex; gap:var(--space-24); align-items:stretch; flex-wrap:wrap; justify-content:center}
 .modal-text{display:flex; flex-direction:column; gap:var(--space-16); text-align:left; max-width:284px}
 .modal-text h3{font-family:var(--font-head); font-weight:400; font-size:24px; color:#1B1B1B; margin:0 0 8px}
-.modal-text .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:#3E3E3E; margin:0}
+/* .modal-body > .copy: the Bonus modal's line sits straight in the body,
+   not in a .modal-text, and was inheriting the page's white text. */
+.modal-text .copy, .modal-body > .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:#3E3E3E; margin:0}
 .modal-text .tnc{font-family:var(--font-body); font-weight:400; font-size:12px; color:#636363; margin:0}
 .modal-body--centered .modal-text{align-items:center; text-align:center; max-width:342px}
 
@@ -420,6 +429,23 @@ a{color:inherit;text-decoration:none}
 @media (max-height:500px){
   .event-inner{gap:var(--space-12); padding-top:12px; padding-bottom:12px}
   .event-logo{height:36px}
+}
+/* Landscape phones: tighter chrome and 1-2px smaller type, so most
+   dialogs fit without scrolling; the rest scroll between the fixed
+   header and CTA row. */
+@media (max-height:500px){
+  .modal-overlay{padding:12px 20px}
+  .modal-box{max-height:calc(100dvh - 24px)}
+  .modal-header{padding:var(--space-8) var(--space-16)}
+  .modal-header span{font-size:24px}
+  .modal-body{padding:var(--space-16) var(--space-24); gap:var(--space-16)}
+  .modal-text{gap:var(--space-8)}
+  .modal-text h3{font-size:20px; margin-bottom:4px}
+  .modal-text .copy, .modal-body > .copy{font-size:13px}
+  .modal-text .tnc{font-size:11px}
+  .modal-merch{min-height:140px}
+  .modal-merch--wide{min-height:120px}
+  .modal-foot{padding:0 var(--space-24) var(--space-16)}
 }
 @media (max-width:520px){
   .mission-head{flex-wrap:wrap}
@@ -774,20 +800,26 @@ function PrizeRail({ entries, total, onEnterDraw }) {
    4484:2930 submitted, 4484:3348 logout, 4810:7393 bonus).
    One shared chrome component, one content component per dialog.
    ========================================================= */
-function Modal({ onClose, header, centered, children, dismissOnOverlayClick = true }) {
+// actions: the dialog's CTA button(s), kept in a fixed row under the
+// scrolling body so they're always on screen.
+function Modal({ onClose, header, centered, children, actions, dismissOnOverlayClick = true }) {
   return h('div', { className: 'modal-overlay', onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
+      header && h('div', { className: 'modal-header' }, h('span', null, header)),
       h('div', { className: 'modal-scroll' },
-        header && h('div', { className: 'modal-header' }, h('span', null, header)),
         h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children)
-      )
+      ),
+      actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
 }
 
 function LuckyDrawRevealModal({ draws, drawsTotal, onSubmit, onClose }) {
-  return h(Modal, { onClose, header: 'LUCKY DRAW' },
+  return h(Modal, {
+    onClose, header: 'LUCKY DRAW',
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onSubmit }, 'SUBMIT ENTRY'),
+  },
     h('div', { className: 'modal-content-row' },
       h('div', { className: 'modal-text' },
         h('div', null,
@@ -798,41 +830,46 @@ function LuckyDrawRevealModal({ draws, drawsTotal, onSubmit, onClose }) {
         h('p', { className: 'tnc' }, '*T&Cs apply.')
       ),
       h('div', { className: 'modal-merch' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER'))
-    ),
-    h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onSubmit }, 'SUBMIT ENTRY')
+    )
   );
 }
 
 function LuckyDrawSubmittedModal({ onReturn }) {
-  return h(Modal, { onClose: onReturn, centered: true },
+  return h(Modal, {
+    onClose: onReturn, centered: true,
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onReturn }, 'RETURN TO MISSION'),
+  },
     h('div', { className: 'modal-text' },
       h('h3', null, 'Your entry has been submitted!'),
       h('p', { className: 'copy' }, '*Please note that your entry may be forfeited if you do not meet the requirements for any of the missions e.g. Wrong email, invalid receipt, etc.')
-    ),
-    h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onReturn }, 'RETURN TO MISSION')
+    )
   );
 }
 
 function LogoutConfirmModal({ onConfirm, onCancel }) {
-  return h(Modal, { onClose: onCancel, centered: true },
-    h('div', { className: 'modal-text' },
-      h('h3', null, 'Are you sure', h('br'), 'you want to logout?')
-    ),
-    h('div', { className: 'modal-actions' },
+  return h(Modal, {
+    onClose: onCancel, centered: true,
+    actions: h(React.Fragment, null,
       h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, 'Yes,  log me out'),
       h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--dark', onClick: onCancel }, 'No, bring me back')
+    ),
+  },
+    h('div', { className: 'modal-text' },
+      h('h3', null, 'Are you sure', h('br'), 'you want to logout?')
     )
   );
 }
 
 function BonusModal({ onDownload, onClose }) {
-  return h(Modal, { onClose, header: 'BONUS', centered: true },
-    h('p', { className: 'copy' }, "Here's an exclusive Persona 4 Revival Merch!"),
-    h('div', { className: 'modal-merch modal-merch--wide' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
-    h('div', { className: 'modal-actions' },
+  return h(Modal, {
+    onClose, header: 'BONUS', centered: true,
+    actions: h(React.Fragment, null,
       h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), 'DESKTOP'),
       h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), 'MOBILE')
-    )
+    ),
+  },
+    h('p', { className: 'copy' }, "Here's an exclusive Persona 4 Revival Merch!"),
+    h('div', { className: 'modal-merch modal-merch--wide' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER'))
   );
 }
 

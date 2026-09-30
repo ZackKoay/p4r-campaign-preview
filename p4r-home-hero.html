@@ -41,6 +41,9 @@
   });
 </script>
 <style>
+/* iOS Safari enlarges text on its own in landscape unless told not
+   to — it was blowing modal copy up well past the sizes set here. */
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 /* Neue Frutiger World — self-hosted webfont (replaces the Anton/Archivo stand-in) */
 @font-face{font-family:'NFW Display';src:url('assets/fonts/NeueFrutigerWorld-Black.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Black.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Black.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Neue Frutiger World';src:url('assets/fonts/NeueFrutigerWorld-Regular.woff2') format('woff2'),url('assets/fonts/NeueFrutigerWorld-Regular.woff') format('woff'),url('assets/fonts/NeueFrutigerWorld-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
@@ -665,7 +668,11 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    Figma), so the box itself has to stay overflow:visible or it clips
    its own close button. */
 .modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible; display:flex; flex-direction:column}
+/* Header and CTA row stay put; only the copy between them scrolls
+   when the dialog is taller than the screen (landscape phones). */
 .modal-scroll{overflow:auto; flex:1; min-height:0}
+.modal-header{flex:none}
+.modal-foot{flex:none; display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 24px}
 .modal-close{position:absolute; top:-12px; right:-12px; z-index:2; width:48px; height:48px; border-radius:999px; background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center}
 .modal-close svg{color:#0B0B0B}
 .modal-header{background:var(--graphite-60); padding:16px; text-align:center}
@@ -674,6 +681,18 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 .modal-text h3{font-family:var(--font-head); font-weight:400; font-size:24px; color:var(--graphite-60); margin:0 0 8px}
 .modal-text .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:var(--graphite-60); margin:0 0 8px}
 .modal-actions{display:flex; gap:12px; flex-wrap:wrap}
+/* Landscape phones: 1-2px smaller type and tighter chrome (after the
+   base rules above, so it wins). */
+@media (max-width:805px), (max-height:500px){
+  .modal-overlay{padding:12px 20px}
+  .modal-box{max-height:calc(100dvh - 24px)}
+  .modal-header{padding:10px 16px}
+  .modal-header p{font-size:14px}
+  .modal-body{padding:16px 24px; gap:16px}
+  .modal-text h3{font-size:22px; margin-bottom:6px}
+  .modal-text .copy{font-size:12px}
+  .modal-foot{justify-content:center; padding:0 24px 16px}
+}
 .cta--outline{color:var(--graphite)}
 /* The outline is the same 22deg shape (the mask above), with its 2px
    border painted inside it: two plain 2px bands along the top and
@@ -1106,14 +1125,17 @@ const IconLogin2 = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke:
    MODAL — SEGA Account (Figma node 4217:3714). Same shared-chrome
    pattern the Event page's Lucky Draw modal family uses.
    ========================================================= */
-function Modal({ onClose, header, children }) {
+// actions: the CTA button(s), kept in a fixed row under the scrolling
+// body so they're always on screen.
+function Modal({ onClose, header, children, actions }) {
   return h('div', { className: 'modal-overlay', onClick: (e) => { if (e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
+      header && h('div', { className: 'modal-header' }, header),
       h('div', { className: 'modal-scroll' },
-        header && h('div', { className: 'modal-header' }, header),
         h('div', { className: 'modal-body' }, children)
-      )
+      ),
+      actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
 }
@@ -1125,17 +1147,17 @@ function SegaAccountModal({ onClose }) {
       h('p', null, 'Welcome to SEGA Account! Sign up to receive'),
       h('p', null, 'in-game rewards exclusive to members!')
     ),
+    actions: h(React.Fragment, null,
+      h('button', { type: 'button', className: 'cta cta--outline cta--sm', onClick: Api.goToRegister }, h('span', null, 'Register')),
+      h('button', { type: 'button', className: 'cta cta--dark cta--sm', onClick: Api.goToLogin },
+        h('span', null, 'Log in'), h(IconLogin2, { width: 24, height: 24 })
+      )
+    ),
   },
     h('div', { className: 'modal-text' },
       h('h3', null, 'WHAT IS A SEGA ACCOUNT?'),
       h('p', { className: 'copy' }, "A SEGA Account is a profile that lets you maximise SEGA's online services and offers a ton of benefits. Anyone can sign up, and it's free to use!"),
       h('p', { className: 'copy' }, 'Create an account today to get bonus items for hit titles!')
-    ),
-    h('div', { className: 'modal-actions' },
-      h('button', { type: 'button', className: 'cta cta--outline cta--sm', onClick: Api.goToRegister }, h('span', null, 'Register')),
-      h('button', { type: 'button', className: 'cta cta--dark cta--sm', onClick: Api.goToLogin },
-        h('span', null, 'Log in'), h(IconLogin2, { width: 24, height: 24 })
-      )
     )
   );
 }
