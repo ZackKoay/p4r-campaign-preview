@@ -736,25 +736,30 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    Consolidated at the end on purpose so every override here wins
    the cascade regardless of where its base rule is declared above.
    ========================================================= */
+/* Tablets (806-1279px) — #info only. The TV is handled by the block
+   below like phones'. Here the info column is too narrow for the
+   desktop 48px heading (3 lines at 1024px), and the desktop gaps
+   (32/24/24) read as uneven at this size, so: a 32px heading, a JOIN
+   NOW in proportion to it, and one even 20px step. */
 @media (min-width:806px) and (max-width:1279px) and (min-height:501px){
-  /* Screen headline text steps down in fixed sizes rather than scaling
-     fluidly — per spec, not pulled from Figma at this exact tier for
-     "MIDNIGHT CHANNEL"/tagline (Figma keeps those flat at 64/24 through
-     this range; these are deliberate smaller overrides). */
-  .headline h1{ font-size:32px; }
-  .headline h2{ font-size:56px; }
-  .headline p{ font-size:16px; }
+  .col-left{ gap:20px; }
+  .heading span{ font-size:32px; line-height:1.75; }
+  .info-copy{ font-size:15px; margin-top:0; }
+  .cta--join{ font-size:22px; padding:12px 36px; }
 }
-@media (min-width:806px) and (max-width:1023px) and (min-height:501px){
-  .headline h1{ font-size:28px; }
-  .headline h2{ font-size:40px; } /* was 48px — even "MIDNIGHT" alone broke mid-word on narrow phones (~390px) */
-  .headline p{ font-size:14px; }
-}
-@media (max-width:805px), (max-height:500px){
-  /* Landscape phones get the desktop TV itself — the full 1360x747
+@media (max-width:1279px), (max-height:500px){
+  /* Phones and tablets (anything under the desktop TV's own 1280px+
+     width) get the desktop TV itself — the full 1360x747
      composition, speaker grille and all — scaled as one piece to fit
-     the screen (zoom:var(--tv-fit), set by fitTvToScreen() in the
-     script; same approach as the Event page's mission card). The hero
+     the screen (transform:scale(var(--tv-fit)), set by fitTvToScreen()
+     in the script; same approach as the Event page's mission card).
+     A transform, not CSS zoom: iOS Safari didn't shrink text inside a
+     zoomed element along with the boxes around it, so the headline
+     wrapped and overflowed, labels spilled out of the panel and the dial
+     lever drew off the dial. A transform lays the TV out at its real
+     desktop size, then shrinks the finished picture — the same in every
+     browser. The negative right/bottom margins make the layout box match
+     the scaled size, so #tv-wrap still centres it. The hero
      is the phone's full landscape height (100lvh = the viewport with
      the browser bars retracted), and the TV is always sized to it: on
      first load, with Safari's bars showing, its bottom runs under
@@ -765,25 +770,39 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
      only covers the moment before the script sets --tv-fit, when the
      TV is still full size. */
   #tv-wrap{ height:100vh; height:100lvh; min-height:0; overflow:hidden; }
-  .tv{ width:1360px; height:747px; max-width:none; flex:none; gap:16px; zoom:var(--tv-fit,1); }
+  .tv{
+    width:1360px; height:747px; max-width:none; flex:none; gap:16px;
+    transform:scale(var(--tv-fit,1)); transform-origin:0 0;
+    margin:0 calc(1360px * (var(--tv-fit,1) - 1)) calc(747px * (var(--tv-fit,1) - 1)) 0;
+  }
   .bezel{ padding:56px; }
   .screen{ padding:40px 80px; }
   .title-block{ gap:24px; }
   .logo{ width:300px; }
   .turn-knob{ width:152px; }
-  /* ...except the controls, which get a counter-zoom (--tv-boost-*,
-     also set by fitTvToScreen) so they stay readable and tappable
-     however far the TV itself shrinks. */
-  .cta--start{ font-size:28px; zoom:var(--tv-boost-cta,1); } /* 28px = its desktop clamp() max */
-  .icon-btn-wrap{ zoom:var(--tv-boost-btn,1); }
+  /* ...except the controls, which are drawn bigger than desktop by the
+     boost factor (--tv-boost-*, also set by fitTvToScreen) so that after
+     the TV is shrunk they're still readable and tappable. Real sizes, not
+     zoom, for the same iOS reason as above. */
+  .cta--start{
+    --b:var(--tv-boost-cta,1);
+    font-size:calc(28px * var(--b)); /* 28px = its desktop clamp() max */
+    padding:calc(12px * var(--b)) calc(40px * var(--b)); gap:calc(16px * var(--b));
+  }
+  .cta--start svg{ width:calc(24px * var(--b)); height:calc(24px * var(--b)); }
+  .icon-btn-wrap{ --b:var(--tv-boost-btn,1); width:calc(34px * var(--b)); gap:calc(8px * var(--b)); }
+  .icon-btn{ width:calc(34px * var(--b)); height:calc(34px * var(--b)); }
+  .icon-btn svg{ width:calc(16px * var(--b)); height:calc(16px * var(--b)); }
+  .icon-btn.lang span{ font-size:calc(11px * var(--b)); }
   /* Boosted, the two button labels ("Unmute", "Language") need more
      room than the desktop panel's 20px side padding leaves them. */
   .dial-panel{ padding:20px 10px; }
-  .icon-btn-wrap label{ font-size:11px; }
+  .icon-btn-wrap label{ font-size:calc(11px * var(--b)); }
   /* Right-aligned to the button (tail still over it) instead of
      centered — centered, half the bubble hung past the screen's right
-     edge, since the button sits near it here. */
-  .lang-hint{ right:-8px; }
+     edge, since the button sits near it here. Scaled up by the same
+     boost as its button, from its bottom-right corner (by the button). */
+  .lang-hint{ right:calc(-8px * var(--b)); bottom:calc(100% + 14px * var(--b)); transform:scale(var(--b)); transform-origin:100% 100%; }
   .lang-hint::after{ right:17px; }
   .lang-hint::before{ right:19px; }
   .modal-body{ align-items:center; text-align:center; }
@@ -793,15 +812,22 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 /* Narrower landscape phones: the panel gets too narrow for both
    button labels at the boosted size, so they step down. */
 @media (max-width:700px){
-  .icon-btn-wrap label{ font-size:10px; }
+  .icon-btn-wrap label{ font-size:calc(10px * var(--b, 1)); }
 }
-@media (max-width:600px){
-  .icon-btn-wrap label{ font-size:9px; }
+/* ...and on the narrowest or shortest phones (the TV is smallest there,
+   so its buttons are boosted most), the panel's side padding gives the
+   labels a little more room too. */
+@media (max-width:640px), (max-height:300px){
+  .icon-btn-wrap label{ font-size:calc(9px * var(--b, 1)); }
+  .dial-panel{ padding:20px 6px; }
 }
-/* Very short landscape phones (~320px tall). The hero needs nothing
-   here any more — it scales to whatever height there is — but #info
-   still has to be tightened to fit. */
-@media (max-height:440px){
+/* Landscape phones (up to 500px tall — the same line the TV's phone
+   layout uses). The hero needs nothing here — it scales to whatever
+   height there is — but #info has to be tightened to fit. This used to
+   stop at 440px, which left 441-500px phones (e.g. a 1000x462 iPhone)
+   with the desktop type: a heading wrapping onto several lines and an
+   info section far taller than the screen. */
+@media (max-height:500px){
   /* #info's own overflow was worse than the hero's (734px measured
      against a 320px-tall viewport) — its row-a wraps col-left under
      the merch card below ~700px combined min-width, which is normal
@@ -816,12 +842,17 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   #info{ --pad:16px; }
   .info-inner{ gap:8px; }
   .row-a{ gap:16px; flex-wrap:nowrap; }
-  .col-left{ min-width:0; gap:8px; }
+  /* One even 12px step between heading, copy, JOIN NOW and the T&C
+     note (the copy's own top margin used to make the first step bigger),
+     and a JOIN NOW sized to sit under the heading strip rather than
+     dwarf it. */
+  .col-left{ min-width:0; gap:12px; }
   .col-right{ min-width:0; }
   .merch-card{ min-height:0; }
-  .heading span{ font-size:16px; line-height:1.4; padding:2px 6px; }
-  .info-copy{ font-size:11px; margin-top:4px; }
-  .tnc{ font-size:9px; }
+  .heading span{ font-size:18px; line-height:1.4; padding:3px 8px; }
+  .info-copy{ font-size:12px; line-height:1.5; margin-top:0; }
+  .cta--join{ font-size:16px; padding:8px 28px; }
+  .tnc{ font-size:10px; }
 }
 
 /* =========================================================
@@ -1370,7 +1401,7 @@ function InfoSection({ onOpenAccountModal }) {
       h('div', { className: 'row-a' },
         h('div', { className: 'col-left' },
           h('div', { className: 'heading' },
-            h('span', null, 'COMPLETE MISSIONS, WIN BIG!')
+            h('span', null, 'COMPLETE\u00a0MISSIONS, WIN\u00a0BIG!') // non-breaking spaces: wraps only after the comma
           ),
           h('p', { className: 'info-copy' }, 'Clear all the Midnight Channel missions to unlock prizes and enter the Lucky Draw for exclusive Persona 4 Revival merch.'),
           h('button', { className: 'cta cta--dark cta--join', onClick: onOpenAccountModal }, h('span', null, 'JOIN NOW')),
