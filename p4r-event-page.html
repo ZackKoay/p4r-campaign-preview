@@ -69,7 +69,9 @@ html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
   --space-8:8px; --space-12:12px; --space-16:16px; --space-24:24px; --space-40:40px; --space-80:80px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* Snaps between the header + card screen and the footer below it,
+   like Home's sections. */
+html{scroll-behavior:smooth; scroll-snap-type:y mandatory}
 body{background:var(--black);color:var(--white);font-family:var(--font-body);overflow-x:hidden}
 img{max-width:100%;display:block}
 button,a{font-family:inherit;cursor:pointer}
@@ -102,6 +104,12 @@ a{color:inherit;text-decoration:none}
      This keeps the background full-bleed either way while pulling
      content itself clear of the curve. */
   padding:var(--space-40) max(var(--space-80),env(safe-area-inset-right)) var(--space-40) max(var(--space-80),env(safe-area-inset-left));
+  /* The header + card fill exactly one screen at every size, and the
+     footer follows below it (scroll to reach it, like Home's). dvh, the
+     part of the screen the browser leaves visible, so the whole card
+     always shows and refits as Safari's bars come and go. */
+  flex:none; height:100vh; height:100dvh;
+  scroll-snap-align:start; scroll-snap-stop:always;
 }
 
 .event-top{display:flex; align-items:center; justify-content:space-between}
@@ -262,7 +270,9 @@ a{color:inherit;text-decoration:none}
 /* =========================================================
    FOOTER — legal links only (no socials on this page per Figma)
    ========================================================= */
-.event-footer{position:relative; z-index:1; background:#1B1B1B; height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 clamp(24px,10vw,163px)}
+/* snap-align:end — see html above: the footer has to be a snap point
+   to be reachable, at its own height. */
+.event-footer{scroll-snap-align:end; position:relative; z-index:1; background:#1B1B1B; height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 clamp(24px,10vw,163px)}
 .event-footer .links{display:flex; align-items:center; gap:var(--space-12)}
 .event-footer .links a{font-family:var(--font-body); font-size:12px; color:#fff; padding:4px 8px}
 .event-footer .links a:hover{color:var(--yellow)}
@@ -276,21 +286,24 @@ a{color:inherit;text-decoration:none}
    ========================================================= */
 .modal-overlay{
   position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
-  display:flex; align-items:center; justify-content:center; padding:20px;
+  display:flex; padding:20px;
+  /* A dialog taller than the screen scrolls as a whole — header,
+     content, buttons and close button move together, nothing is
+     clipped. margin:auto on .modal-box centres it when it fits and
+     pins it to the top when it doesn't (align-items:center would push
+     its top off-screen). contain: scrolling it never scrolls the page
+     behind. */
+  overflow-y:auto; overscroll-behavior:contain;
 }
-/* overflow lives on .modal-scroll (below), not this box — the close
-   button sits outside the box's own edges (top:-14px right:-14px per
-   Figma node 4484:3349), so the box itself has to stay overflow:visible
-   or it clips its own close button. */
+/* The close button sits outside the box's own edges (top:-14px
+   right:-14px per Figma node 4484:3349), so the box stays
+   overflow:visible; the overlay's padding leaves room for it. */
 .modal-box:focus{outline:none}
 .modal-box{
   position:relative; background:#fff; border:4px solid var(--graphite);
-  box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible;
-  display:flex; flex-direction:column;
+  box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible;
+  margin:auto; flex:none; display:flex; flex-direction:column;
 }
-/* Header and CTA row stay put; only the content between them
-   scrolls when the dialog is taller than the screen (landscape phones). */
-.modal-scroll{overflow:auto; flex:1; min-height:0}
 .modal-header{flex:none}
 .modal-foot{flex:none; display:flex; gap:var(--space-12); flex-wrap:wrap; justify-content:center; padding:0 var(--space-24) var(--space-24)}
 .modal-close{
@@ -447,11 +460,6 @@ a{color:inherit;text-decoration:none}
 @media (max-height:500px){
   .event-inner{gap:var(--space-12); padding-top:12px; padding-bottom:12px}
   .event-logo{height:36px}
-  /* The header + card take exactly one screen and the footer follows
-     below it (scroll to reach it, like Home's) — its ~50px go to the
-     card, which is height-bound on a landscape phone. dvh, so the card
-     refits as Safari's bars come and go. */
-  .event-inner{flex:none; height:100vh; height:100dvh}
 }
 /* Phones and tablets: the card is shrunk to roughly 30-70% here, so its
    smallest text is drawn a step larger (inside the same composition —
@@ -465,11 +473,9 @@ a{color:inherit;text-decoration:none}
   .event-date{font-size:15px}
 }
 /* Landscape phones: tighter chrome and 1-2px smaller type, so most
-   dialogs fit without scrolling; the rest scroll between the fixed
-   header and CTA row. */
+   dialogs fit without scrolling; the rest scroll as a whole. */
 @media (max-height:500px){
-  .modal-overlay{padding:12px 20px}
-  .modal-box{max-height:calc(100dvh - 24px)}
+  .modal-overlay{padding:16px 20px}
   .modal-header{padding:var(--space-8) var(--space-16)}
   .modal-header span{font-size:24px}
   .modal-body{padding:var(--space-16) var(--space-24); gap:var(--space-16)}
@@ -597,6 +603,10 @@ function loadAudioMuted(fallback) {
     return saved === null ? fallback : saved === '1';
   } catch (e) { return fallback; }
 }
+// Android phones start muted: the music plays only once the visitor
+// taps Unmute. (Elsewhere it's on by default and starts on the first
+// tap anywhere.) A choice the visitor made earlier still wins.
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
 function saveAudioMuted(muted) {
   try { localStorage.setItem(AUDIO_MUTED_KEY, muted ? '1' : '0'); } catch (e) {}
 }
@@ -606,23 +616,44 @@ function saveAudioMuted(muted) {
    hook + note about browser autoplay policy in p4r-home-hero.html. */
 function useBackgroundMusic(src, initialMuted) {
   const audioRef = React.useRef(null);
-  const [muted, setMuted] = React.useState(() => loadAudioMuted(initialMuted));
+  const [muted, setMuted] = React.useState(() => loadAudioMuted(IS_ANDROID ? true : initialMuted));
   React.useEffect(() => {
     const audio = new Audio(src);
     audio.loop = true;
     audio.muted = muted;
     audioRef.current = audio;
-    const tryPlay = () => audio.play().catch(() => {});
+    // Only plays while unmuted: muted, the track simply stays paused.
+    const tryPlay = () => { if (audio.paused && !audio.muted && !document.hidden) audio.play().catch(() => {}); };
+    // Sound may only start from a tap, click or key press. These are
+    // the events every browser accepts for that: Android Chrome does
+    // NOT accept touchstart (the old trigger here, which iOS does
+    // accept), so on Android the first try failed and, since the
+    // listeners then removed themselves, the music never started.
+    // They now stay on (a no-op while the music plays), so any later
+    // tap starts it if an earlier one couldn't.
+    const events = ['pointerup', 'touchend', 'click', 'keydown'];
+    events.forEach((e) => document.addEventListener(e, tryPlay, true));
+    // Pause while the tab or app is in the background (otherwise the
+    // music keeps playing on phones after switching apps) and resume
+    // on return.
+    const onVisibility = () => { if (document.hidden) audio.pause(); else tryPlay(); };
+    document.addEventListener('visibilitychange', onVisibility);
     tryPlay();
-    const events = ['click', 'keydown', 'touchstart'];
-    const onFirstInteract = () => { tryPlay(); events.forEach((e) => document.removeEventListener(e, onFirstInteract)); };
-    events.forEach((e) => document.addEventListener(e, onFirstInteract, { once: true }));
     return () => {
-      events.forEach((e) => document.removeEventListener(e, onFirstInteract));
+      events.forEach((e) => document.removeEventListener(e, tryPlay, true));
+      document.removeEventListener('visibilitychange', onVisibility);
       audio.pause();
     };
   }, [src]);
-  React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
+  React.useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = muted;
+    // Muting pauses the track; unmuting is itself a tap, so it can
+    // start (or resume) the music right away.
+    if (muted) audio.pause();
+    else if (audio.paused && !document.hidden) audio.play().catch(() => {});
+  }, [muted]);
   const toggleMuted = () => setMuted((m) => { const next = !m; saveAudioMuted(next); return next; });
   return [muted, toggleMuted];
 }
@@ -734,12 +765,10 @@ function loadState() {
 }
 
 function TaskRow({ task, isDone, onGo }) {
-  // 'share' (Invite a friend) stays repeatable — there's no one-time
-  // "did it" to lock once done, the visitor can keep inviting more
-  // friends, so its row/button never freeze the way a one-shot task's
-  // does. It still reads DONE once completed once, just not disabled.
-  const repeatable = task.kind === 'share';
-  const locked = isDone && !repeatable;
+  // Every task locks once done, Invite a friend included (it completes
+  // on the first share or copied link; the Share pop-up stays open
+  // until closed, so more friends can still be invited from it then).
+  const locked = isDone;
   return h('div', { className: `task-row${locked ? ' done' : ''}`, onClick: locked ? undefined : onGo },
     !locked && h('img', { className: 'task-deco-bottom', src: 'assets/event-task-deco-bottom.png', alt: '', 'aria-hidden': 'true' }),
     !locked && h('img', { className: 'task-deco-top', src: 'assets/event-task-deco-top.png', alt: '', 'aria-hidden': 'true' }),
@@ -834,8 +863,7 @@ function PrizeRail({ entries, total, onEnterDraw }) {
    4484:2930 submitted, 4484:3348 logout, 4810:7393 bonus).
    One shared chrome component, one content component per dialog.
    ========================================================= */
-// actions: the dialog's CTA button(s), kept in a fixed row under the
-// scrolling body so they're always on screen.
+// actions: the dialog's CTA button(s), in a row under the body.
 // Esc closes it (through onClose, so a dialog that can't close right
 // now still can't), and focus moves into it on open unless something
 // inside already took it (e.g. an autoFocus input), then goes back to
@@ -858,9 +886,7 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', tabIndex: -1, ref: boxRef },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, h('span', null, header)),
-      h('div', { className: 'modal-scroll' },
-        h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children)
-      ),
+      h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children),
       actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
@@ -934,7 +960,7 @@ function BonusModal({ busy, onDownload, onClose }) {
    pressed any number of times. None of these close the modal — only
    the [x] does, so the visitor can share to multiple platforms or copy
    repeatedly in one visit. Any of them completes the "Invite a friend
-   to join" task, but the task stays repeatable (see TaskRow). */
+   to join" task, which then locks like the others (see TaskRow). */
 function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
   return h(Modal, { onClose, centered: true, dismissOnOverlayClick: false },
     h('div', { className: 'modal-text' }, h('h3', null, 'Share to your friends!')),

@@ -579,10 +579,11 @@ a{color:inherit;text-decoration:none}
 }
 .info-copy{
   font-family:var(--font-body); font-weight:500; color:var(--graphite-60); font-size:clamp(13px,1.6vw,16px);
-  /* was max-width:46ch — capped the line width well short of .col-left's
-     actual space, leaving a dead gap to the right instead of using it.
-     Letting it fill the container means it re-wraps to fewer, wider
-     lines whenever there's room, instead of a fixed 3-line block. */
+  /* Always 3 lines, at every size: the copy is ~56.5em long in this
+     font, so 20em is too short for 2 lines and enough for 3 ("…Channel
+     missions" / "…the Lucky Draw" / "…Revival merch."). Balanced, so
+     the three come out about even. */
+  max-width:20em; text-wrap:balance;
   margin-top:8px; /* extra breathing room between the heading and this copy */
 }
 .tnc{font-family:var(--font-body); color:#636363; font-size:12px}
@@ -662,15 +663,15 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    outline modifiers) instead of importing Event's button set,
    since every other CTA on this page already goes through .cta.
    ========================================================= */
-.modal-overlay{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:20px}
-/* overflow lives on .modal-scroll (below), not this box — the close
-   button sits outside the box's own edges (top:-12px right:-12px per
-   Figma), so the box itself has to stay overflow:visible or it clips
-   its own close button. */
-.modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow:visible; display:flex; flex-direction:column}
-/* Header and CTA row stay put; only the copy between them scrolls
-   when the dialog is taller than the screen (landscape phones). */
-.modal-scroll{overflow:auto; flex:1; min-height:0}
+/* Taller than the screen, the whole dialog scrolls (header, copy,
+   buttons and close button together), nothing clipped. margin:auto on
+   the box centres it when it fits and pins it to the top when it
+   doesn't. contain: scrolling it never scrolls the page behind. */
+.modal-overlay{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:flex; padding:20px; overflow-y:auto; overscroll-behavior:contain}
+/* The close button sits outside the box's own edges (top:-12px
+   right:-12px per Figma), so the box stays overflow:visible; the
+   overlay's padding leaves room for it. */
+.modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible; margin:auto; flex:none; display:flex; flex-direction:column}
 .modal-header{flex:none}
 .modal-foot{flex:none; display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 24px}
 .modal-close{position:absolute; top:-12px; right:-12px; z-index:2; width:48px; height:48px; border-radius:999px; background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center}
@@ -684,8 +685,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 /* Landscape phones: 1-2px smaller type and tighter chrome (after the
    base rules above, so it wins). */
 @media (max-width:805px), (max-height:500px){
-  .modal-overlay{padding:12px 20px}
-  .modal-box{max-height:calc(100dvh - 24px)}
+  .modal-overlay{padding:16px 20px}
   .modal-header{padding:10px 16px}
   .modal-header p{font-size:14px}
   .modal-body{padding:16px 24px; gap:16px}
@@ -790,36 +790,39 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
     padding:calc(12px * var(--b)) calc(40px * var(--b)); gap:calc(16px * var(--b));
   }
   .cta--start svg{ width:calc(24px * var(--b)); height:calc(24px * var(--b)); }
-  .icon-btn-wrap{ --b:var(--tv-boost-btn,1); width:calc(34px * var(--b)); gap:calc(8px * var(--b)); }
+  /* Each button's column is as wide as its own label (--lw, in em:
+     "Unmute" is 3.8em in this font, "Language" 4.65em), so a label can
+     never stick out of its column toward the panel's edge. Labels grow
+     with the boost but stop at 18.5px, the most both fit side by side
+     in the panel (172px inside its 10px padding, with 10px between
+     them) — so there's always a clear gap to each side, at every
+     screen size. */
+  .icon-btn-wrap{
+    --b:var(--tv-boost-btn,1);
+    --lf:min(calc(11px * var(--b)), 18.5px);
+    --ww:max(calc(34px * var(--b)), calc(var(--lw, 4.7) * var(--lf)));
+    width:var(--ww); gap:calc(8px * var(--b));
+  }
+  .icon-btn-wrap:first-child{ --lw:3.85; } /* Mute / Unmute */
   .icon-btn{ width:calc(34px * var(--b)); height:calc(34px * var(--b)); }
   .icon-btn svg{ width:calc(16px * var(--b)); height:calc(16px * var(--b)); }
   .icon-btn.lang span{ font-size:calc(11px * var(--b)); }
-  /* Boosted, the two button labels ("Unmute", "Language") need more
-     room than the desktop panel's 20px side padding leaves them. */
+  /* Boosted, the two button columns need more room than the desktop
+     panel's 20px side padding leaves them. */
   .dial-panel{ padding:20px 10px; }
-  .icon-btn-wrap label{ font-size:calc(11px * var(--b)); }
+  .icon-btn-wrap label{ font-size:var(--lf); }
   /* Right-aligned to the button (tail still over it) instead of
      centered — centered, half the bubble hung past the screen's right
      edge, since the button sits near it here. Scaled up by the same
      boost as its button, from its bottom-right corner (by the button). */
-  .lang-hint{ right:calc(-8px * var(--b)); bottom:calc(100% + 14px * var(--b)); transform:scale(var(--b)); transform-origin:100% 100%; }
+  /* (right: the same spot relative to the button as before its column
+     was widened to its label) */
+  .lang-hint{ right:calc(var(--ww) / 2 - 25px * var(--b)); bottom:calc(100% + 14px * var(--b)); transform:scale(var(--b)); transform-origin:100% 100%; }
   .lang-hint::after{ right:17px; }
   .lang-hint::before{ right:19px; }
   .modal-body{ align-items:center; text-align:center; }
   .modal-text{ text-align:center; }
   .modal-actions{ justify-content:center; }
-}
-/* Narrower landscape phones: the panel gets too narrow for both
-   button labels at the boosted size, so they step down. */
-@media (max-width:700px){
-  .icon-btn-wrap label{ font-size:calc(10px * var(--b, 1)); }
-}
-/* ...and on the narrowest or shortest phones (the TV is smallest there,
-   so its buttons are boosted most), the panel's side padding gives the
-   labels a little more room too. */
-@media (max-width:640px), (max-height:300px){
-  .icon-btn-wrap label{ font-size:calc(9px * var(--b, 1)); }
-  .dial-panel{ padding:20px 6px; }
 }
 /* Landscape phones (up to 500px tall — the same line the TV's phone
    layout uses). The hero needs nothing here — it scales to whatever
@@ -890,10 +893,16 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 /* ----- Privacy Preference Center (dialog) ----- */
 .pref-overlay{
   position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.6);
-  display:flex; align-items:center; justify-content:center; padding:24px;
+  display:flex; padding:24px;
+  /* Taller than the screen, the whole dialog scrolls (header, body,
+     buttons and close button together) rather than a clipped middle.
+     margin:auto on the box centres it when it fits and pins it to the
+     top when it doesn't (align-items:center would push its top
+     off-screen). */
+  overflow-y:auto; overscroll-behavior:contain;
 }
 .pref-box{
-  position:relative; width:min(640px, 100%); max-height:calc(100dvh - 48px);
+  position:relative; width:min(640px, 100%); margin:auto; flex:none;
   display:flex; flex-direction:column;
   background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20);
   font-family:var(--font-body); color:var(--graphite-60);
@@ -907,7 +916,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   background:var(--yellow); border:3px solid var(--graphite-60); border-radius:999px; color:var(--graphite-60);
 }
 .pref-close svg{width:20px; height:20px}
-.pref-body{flex:1; min-height:0; overflow:auto; padding:24px}
+.pref-body{padding:24px}
 .pref-body h2{font-family:var(--font-head); font-weight:400; font-size:22px; margin:0 0 12px}
 .pref-body h3{font-family:var(--font-head); font-weight:400; font-size:18px; margin:28px 0 12px}
 .pref-body p{font-size:14px; line-height:1.6; margin:0}
@@ -957,7 +966,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
   .cookie-actions .cta--sm{ padding:6px 16px; font-size:11px; }
   .cookie-close{ top:4px; right:4px; }
   .pref-overlay{ padding:12px 20px; }
-  .pref-box{ max-height:calc(100dvh - 24px); border-width:3px; }
+  .pref-box{ border-width:3px; }
   .pref-head{ padding:8px 16px; }
   .pref-head img{ height:24px; }
   .pref-close{ top:-12px; right:-12px; width:36px; height:36px; }
@@ -1109,37 +1118,61 @@ function loadAudioMuted(fallback) {
     return saved === null ? fallback : saved === '1';
   } catch (e) { return fallback; }
 }
+// Android phones start muted: the music plays only once the visitor
+// taps Unmute. (Elsewhere it's on by default and starts on the first
+// tap anywhere.) A choice the visitor made earlier still wins.
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
 function saveAudioMuted(muted) {
   try { localStorage.setItem(AUDIO_MUTED_KEY, muted ? '1' : '0'); } catch (e) {}
 }
 
 /* ---------------------------------------------------------------
    Background music (Figma nodes 4600:15914 / 4946:9347). Loops the
-   page's BGM track, defaulting to on. Most browsers block audio
-   autoplay-with-sound until a user gesture, so this also retries once
-   on the first click/keydown/touch anywhere on the page — "on by
-   default" still holds, it just may need that first interaction to
-   actually start audibly, per browser autoplay policy, not a bug here.
+   page's BGM track, defaulting to on. Browsers block sound until the
+   visitor first taps, clicks or presses a key, so it starts on the
+   first of those anywhere on the page — "on by default" still holds,
+   it just needs that first interaction, per browser autoplay policy.
 --------------------------------------------------------------- */
 function useBackgroundMusic(src, initialMuted) {
   const audioRef = React.useRef(null);
-  const [muted, setMuted] = React.useState(() => loadAudioMuted(initialMuted));
+  const [muted, setMuted] = React.useState(() => loadAudioMuted(IS_ANDROID ? true : initialMuted));
   React.useEffect(() => {
     const audio = new Audio(src);
     audio.loop = true;
     audio.muted = muted;
     audioRef.current = audio;
-    const tryPlay = () => audio.play().catch(() => {});
+    // Only plays while unmuted: muted, the track simply stays paused.
+    const tryPlay = () => { if (audio.paused && !audio.muted && !document.hidden) audio.play().catch(() => {}); };
+    // Sound may only start from a tap, click or key press. These are
+    // the events every browser accepts for that: Android Chrome does
+    // NOT accept touchstart (the old trigger here, which iOS does
+    // accept), so on Android the first try failed and, since the
+    // listeners then removed themselves, the music never started.
+    // They now stay on (a no-op while the music plays), so any later
+    // tap starts it if an earlier one couldn't.
+    const events = ['pointerup', 'touchend', 'click', 'keydown'];
+    events.forEach((e) => document.addEventListener(e, tryPlay, true));
+    // Pause while the tab or app is in the background (otherwise the
+    // music keeps playing on phones after switching apps) and resume
+    // on return.
+    const onVisibility = () => { if (document.hidden) audio.pause(); else tryPlay(); };
+    document.addEventListener('visibilitychange', onVisibility);
     tryPlay();
-    const events = ['click', 'keydown', 'touchstart'];
-    const onFirstInteract = () => { tryPlay(); events.forEach((e) => document.removeEventListener(e, onFirstInteract)); };
-    events.forEach((e) => document.addEventListener(e, onFirstInteract, { once: true }));
     return () => {
-      events.forEach((e) => document.removeEventListener(e, onFirstInteract));
+      events.forEach((e) => document.removeEventListener(e, tryPlay, true));
+      document.removeEventListener('visibilitychange', onVisibility);
       audio.pause();
     };
   }, [src]);
-  React.useEffect(() => { if (audioRef.current) audioRef.current.muted = muted; }, [muted]);
+  React.useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = muted;
+    // Muting pauses the track; unmuting is itself a tap, so it can
+    // start (or resume) the music right away.
+    if (muted) audio.pause();
+    else if (audio.paused && !document.hidden) audio.play().catch(() => {});
+  }, [muted]);
   const toggleMuted = () => setMuted((m) => { const next = !m; saveAudioMuted(next); return next; });
   return [muted, toggleMuted];
 }
@@ -1156,16 +1189,13 @@ const IconLogin2 = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke:
    MODAL — SEGA Account (Figma node 4217:3714). Same shared-chrome
    pattern the Event page's Lucky Draw modal family uses.
    ========================================================= */
-// actions: the CTA button(s), kept in a fixed row under the scrolling
-// body so they're always on screen.
+// actions: the CTA button(s), in a row under the body.
 function Modal({ onClose, header, children, actions }) {
   return h('div', { className: 'modal-overlay', onClick: (e) => { if (e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, header),
-      h('div', { className: 'modal-scroll' },
-        h('div', { className: 'modal-body' }, children)
-      ),
+      h('div', { className: 'modal-body' }, children),
       actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
