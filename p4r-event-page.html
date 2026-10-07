@@ -130,8 +130,12 @@ a{color:inherit;text-decoration:none}
 .audio-toggle{background:none; border:none; padding:0; cursor:pointer; display:inline-flex; align-items:center; gap:var(--space-8); filter:drop-shadow(2px 2px 2px rgba(0,0,0,.25))}
 .audio-toggle svg{width:24px; height:24px; color:#fff; flex:none}
 .audio-toggle .label{font-family:var(--font-body); font-weight:400; font-size:14px; color:var(--yellow); text-shadow:2px 2px 0 var(--yellow-fog-40); display:none; white-space:nowrap}
-.audio-toggle:hover .label{display:inline}
-.audio-toggle:active .label{color:var(--daylight-blue); text-shadow:2px 2px 0 var(--daylight-blue-40)}
+/* Hover only on devices with a real pointer: on phones a tap counts as
+   a hover that stays on, which left "Mute" stuck beside the icon. */
+@media (hover:hover){
+  .audio-toggle:hover .label{display:inline}
+  .audio-toggle:active .label{color:var(--daylight-blue); text-shadow:2px 2px 0 var(--daylight-blue-40)}
+}
 
 /* =========================================================
    MAIN STAGE
