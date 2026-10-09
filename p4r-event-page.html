@@ -1383,7 +1383,9 @@ function App() {
         h('div', { className: 'links' },
           h('a', { href: 'https://www.sega.co.jp/en/privacypolicy/', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
           h('div', { className: 'sep' }),
-          h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, 'Terms of Service')
+          h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
+          h('div', { className: 'sep' }),
+          h('a', { href: '#', 'data-cookie-settings': '' }, 'Cookie settings')
         ),
         h('p', { className: 'copyright' }, '©ATLUS. ©SEGA.')
       )
@@ -1421,5 +1423,6 @@ function App() {
 
 createRoot(document.getElementById('root')).render(h(App));
 </script>
+<script src="cookie-control-preview.js"></script>
 </body>
 </html>
