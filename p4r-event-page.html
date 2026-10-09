@@ -128,6 +128,11 @@ a{color:inherit;text-decoration:none}
 .lead-in{display:none}
 @media (max-height:500px){
   .lead-in{display:block; flex:none; height:40px; scroll-snap-align:start}
+  /* Locked (see the script at the end of <body>) until the visitor has
+     rested on the full-screen card once: the footer isn't a place the
+     page can stop at, so a hard first swipe that overshoots is snapped
+     back to the card instead of landing on the footer. */
+  html.snap-locked .event-footer{scroll-snap-align:none}
 }
 
 .event-top{display:flex; align-items:center; justify-content:space-between}
@@ -1424,5 +1429,50 @@ function App() {
 createRoot(document.getElementById('root')).render(h(App));
 </script>
 <script src="cookie-control-preview.js"></script>
+<script>
+/* Phones: the first swipe down the Event page should land on the
+   full-screen card, not fly past it to the footer. The footer is locked
+   as a snap point (html.snap-locked) until the visitor has rested on the
+   card once. CSS alone snaps an overshoot back; this also pulls it back
+   when the browser's momentum scrolling doesn't, waits for the scroll to
+   settle first, and unlocks the footer once the card is reached (so the
+   next swipe shows it). Back at the very top, it locks again. */
+(function () {
+  var root = document.documentElement;
+  var phone = window.matchMedia('(max-height:500px)');
+  var still = window.matchMedia('(prefers-reduced-motion:reduce)');
+  var timer = null;
+
+  function cardTop() {
+    var el = document.querySelector('.event-inner');
+    return el ? el.getBoundingClientRect().top + window.scrollY : 0;
+  }
+  function lock() { root.classList.add('snap-locked'); }
+  function unlock() { root.classList.remove('snap-locked'); }
+
+  function settled() {
+    if (!phone.matches) { unlock(); return; }
+    var y = window.scrollY, top = cardTop();
+    if (!root.classList.contains('snap-locked')) {
+      if (y < 4) lock();                 // back at the top: start over
+      return;
+    }
+    if (y > top + 4) {                   // overshot the card: pull back
+      window.scrollTo({ top: top, behavior: still.matches ? 'auto' : 'smooth' });
+    } else if (Math.abs(y - top) <= 4) { // rested on the card: footer next
+      unlock();
+    }
+  }
+
+  // Start locked on a phone, unless the browser restored a scroll
+  // position past the card (e.g. a reload at the footer).
+  if (phone.matches && window.scrollY < 4) lock();
+  window.addEventListener('scroll', function () {
+    clearTimeout(timer);
+    timer = setTimeout(settled, 140);
+  }, { passive: true });
+  if (phone.addEventListener) phone.addEventListener('change', settled);
+})();
+</script>
 </body>
 </html>

@@ -9,12 +9,18 @@
    (Analytics) plus the Privacy Policy link. Colours, sizes and text
    are taken from Cookie Control's own default stylesheet and text.
 
+   The round cookie button shows only on Home (the script tag there
+   has data-icon); Loading and Event have none, just the footer's
+   "Cookie settings" link on Event. On small screens the panel is
+   about a third of the screen wide, with smaller text.
+
    Nothing is tracked: the choice is only remembered in this browser
    (localStorage) so the panel doesn't reopen on every page. Anything
    with data-cookie-settings reopens it, like on the real site.
    ========================================================= */
 (function () {
   var KEY = 'p4r_cookie_control_preview';
+  var showIcon = !!(document.currentScript && document.currentScript.hasAttribute('data-icon'));
   var css = [
     '#ccp{font-family:Arial,sans-serif;font-size:16px;line-height:1.4em;position:fixed;z-index:2147483647}',
     '#ccp *{box-sizing:border-box}',
@@ -43,11 +49,28 @@
     '#ccp .ccp-toggle input:checked~.ccp-on{color:#111125}',
     '#ccp .ccp-toggle:focus-within{outline:3px solid #fff;outline-offset:2px}',
     '#ccp-end{margin:16px 0 32px;font-size:.8em;opacity:.8}',
-    '#ccp-icon{position:fixed;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;width:56px;height:56px;border:0;border-radius:50%;background:#000025;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}',
+    '#ccp-icon{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:2147483646;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}',
     '#ccp-icon[hidden]{display:none}',
-    '#ccp-icon svg{width:30px;height:30px}',
+    '#ccp-icon img{display:block;width:100%;height:100%}',
+    '#ccp-icon:focus-visible{outline:3px solid #fff;outline-offset:2px}',
     '@keyframes ccp-fade{from{opacity:0}to{opacity:1}}',
     '@keyframes ccp-slide{from{transform:translateX(100%)}to{transform:none}}',
+    '@media (max-width:805px),(max-height:500px){',
+    '#ccp{font-size:12px}',
+    '#ccp-module{width:33.34vw;min-width:240px;max-width:340px}',
+    '#ccp-content{padding:14px}',
+    '#ccp-close{top:10px;right:10px}',
+    '#ccp-close svg{width:20px;height:20px}',
+    '#ccp h2{padding-right:26px}',
+    '#ccp h3{padding-right:86px}',
+    '#ccp p{margin-top:10px}',
+    '#ccp a svg{width:12px;height:12px;margin-left:4px;top:1px}',
+    '#ccp hr{margin:14px 0}',
+    '#ccp-buttons{margin-top:10px}',
+    '#ccp .ccp-button{margin:2px 6px 8px 0;padding:6px 12px}',
+    '#ccp .ccp-toggle{width:80px;height:26px;border-width:3px}',
+    '#ccp-icon{width:36px;height:36px}',
+    '}',
     '@media (prefers-reduced-motion:reduce){#ccp-overlay,#ccp-module{animation:none}#ccp .ccp-toggle i{transition:none}}'
   ].join('\n');
 
@@ -88,13 +111,17 @@
   root.innerHTML = html;
   document.body.appendChild(root);
 
-  var icon = document.createElement('button');
-  icon.type = 'button';
-  icon.id = 'ccp-icon';
-  icon.hidden = true;
-  icon.setAttribute('aria-label', 'Cookie settings');
-  icon.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.6 6.1 6.6.5-5 4.4 1.5 6.5L12 16.6 6.3 20l1.5-6.5-5-4.4 6.6-.5z"/></svg>';
-  document.body.appendChild(icon);
+  // The round cookie button: Home only.
+  var icon = null;
+  if (showIcon) {
+    icon = document.createElement('button');
+    icon.type = 'button';
+    icon.id = 'ccp-icon';
+    icon.hidden = true;
+    icon.setAttribute('aria-label', 'Cookie settings');
+    icon.innerHTML = '<img src="assets/icons/cookie-button.svg" alt="" width="44" height="44">';
+    document.body.appendChild(icon);
+  }
 
   var analytics = root.querySelector('#ccp-analytics');
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
@@ -105,12 +132,12 @@
     analytics.checked = !!(c && c.analytics);
     opener = document.activeElement;
     root.hidden = false;
-    icon.hidden = true;
+    if (icon) icon.hidden = true;
     root.querySelector('#ccp-close').focus();
   }
   function close() {
     root.hidden = true;
-    icon.hidden = false;
+    if (icon) icon.hidden = false;
     if (opener && opener.focus && document.contains(opener)) opener.focus();
   }
   function choose(on) {
@@ -129,13 +156,13 @@
   });
   analytics.addEventListener('change', function () { save({ analytics: analytics.checked, interacted: true }); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !root.hidden) close(); });
-  icon.addEventListener('click', open);
+  if (icon) icon.addEventListener('click', open);
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-cookie-settings]')) { e.preventDefault(); open(); }
   });
 
   // Like the real one with its default initialState ('open'): the panel
   // opens on a first visit; afterwards only the small icon shows.
-  if (load()) icon.hidden = false;
+  if (load()) { if (icon) icon.hidden = false; }
   else open();
 })();
