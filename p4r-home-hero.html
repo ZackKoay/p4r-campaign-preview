@@ -296,6 +296,17 @@ a{color:inherit;text-decoration:none}
   min-height:100vh; min-height:100lvh; box-sizing:border-box;
   scroll-snap-align:start; scroll-snap-stop:always;
 }
+/* Phones: a short strip above the first screen, plus a snap point at
+   the screen's own top. A small scroll down snaps past the strip, and
+   because the visitor scrolled down the browser slides its address bar
+   away at the same moment, so the first screen (already sized to the
+   full screen, 100lvh) fills the display. A bigger scroll moves on to
+   the next section as before. Browsers decide themselves when to hide
+   their bars (a page can't), so this is the closest a page can get. */
+.lead-in{display:none}
+@media (max-height:500px){
+  .lead-in{display:block; height:40px; background:#f22e29; scroll-snap-align:start}
+}
 .tv{
   /* Fixed content width per Figma (Bezel 1144px + 16px gap + Control
      Panel 200px = 1360px) — not fluid up to a max-width like before.
@@ -1424,7 +1435,9 @@ function fitTvToScreen(wrap) {
 
 function Hero() {
   const fitRef = React.useCallback((node) => { if (node) fitTvToScreen(node); }, []);
-  return h('section', { id: 'tv-wrap', ref: fitRef },
+  return h(React.Fragment, null,
+    h('div', { className: 'lead-in', 'aria-hidden': 'true' }),
+    h('section', { id: 'tv-wrap', ref: fitRef },
     h('div', { className: 'tv' },
       h('div', { className: 'bezel' },
         h('div', { className: 'bezel-facets', 'aria-hidden': 'true' },
@@ -1453,7 +1466,7 @@ function Hero() {
       ),
       h(ControlPanel, null)
     )
-  );
+  ));
 }
 
 function InfoSection({ onOpenAccountModal }) {
