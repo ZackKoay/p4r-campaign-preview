@@ -655,6 +655,20 @@ footer{
 .socials a svg{width:24px; height:24px}
 .socials a:hover svg path{fill:var(--graphite)}
 footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); text-align:right}
+/* Phones: one short row (icons left, copyright right, wrapping to two
+   lines if needed) instead of two padded rows that took 30-40% of a
+   landscape screen. 56px, the same as the Event page's footer, plus
+   the home-bar space on iPhones. */
+@media (max-width:805px), (max-height:500px){
+  footer{
+    height:calc(56px + env(safe-area-inset-bottom)); flex-wrap:nowrap; gap:16px;
+    padding:0 max(20px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(20px,env(safe-area-inset-left));
+  }
+  .socials{ gap:8px; flex:none; }
+  .socials a{ width:32px; height:32px; }
+  .socials a svg{ width:16px; height:16px; }
+  footer p{ font-size:11px; line-height:1.35; min-width:0; }
+}
 
 /* =========================================================
    MODAL — SEGA Account (Figma node 4217:3714). Same modal
@@ -667,11 +681,11 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    buttons and close button together), nothing clipped. margin:auto on
    the box centres it when it fits and pins it to the top when it
    doesn't. contain: scrolling it never scrolls the page behind. */
-.modal-overlay{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:flex; padding:20px; overflow-y:auto; overscroll-behavior:contain}
+.modal-overlay{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden; overscroll-behavior:contain}
 /* The close button sits outside the box's own edges (top:-12px
    right:-12px per Figma), so the box stays overflow:visible; the
    overlay's padding leaves room for it. */
-.modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible; margin:auto; flex:none; display:flex; flex-direction:column}
+.modal-box{position:relative; background:#fff; border:4px solid var(--graphite); box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible; flex:none; display:flex; flex-direction:column; transform:scale(var(--modal-fit, 1))}
 .modal-header{flex:none}
 .modal-foot{flex:none; display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 24px}
 .modal-close{position:absolute; top:-12px; right:-12px; z-index:2; width:48px; height:48px; border-radius:999px; background:var(--yellow); border:3px solid #0B0B0B; padding:0; display:flex; align-items:center; justify-content:center}
@@ -1190,9 +1204,36 @@ const IconLogin2 = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke:
    pattern the Event page's Lucky Draw modal family uses.
    ========================================================= */
 // actions: the CTA button(s), in a row under the body.
+// Shrinks a dialog (as one picture, like the mission card) until all of
+// it fits on screen: phones in landscape don't have the height for most
+// dialogs at their real size. Re-measured whenever the screen (e.g.
+// Safari's bars) or the dialog's own content (an error line) changes.
+// offsetWidth/Height ignore the transform, so this never feeds back.
+function useFitToScreen(overlayRef, boxRef) {
+  React.useLayoutEffect(() => {
+    const overlay = overlayRef.current, box = boxRef.current;
+    if (!overlay || !box) return;
+    const fit = () => {
+      const cs = getComputedStyle(overlay);
+      const w = overlay.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const hgt = overlay.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const s = Math.min(1, w / box.offsetWidth, hgt / box.offsetHeight);
+      box.style.setProperty('--modal-fit', String(Math.max(s, 0.3)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(overlay);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, []);
+}
+
 function Modal({ onClose, header, children, actions }) {
-  return h('div', { className: 'modal-overlay', onClick: (e) => { if (e.target === e.currentTarget) onClose(); } },
-    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true' },
+  const overlayRef = React.useRef(null);
+  const boxRef = React.useRef(null);
+  useFitToScreen(overlayRef, boxRef);
+  return h('div', { className: 'modal-overlay', ref: overlayRef, onClick: (e) => { if (e.target === e.currentTarget) onClose(); } },
+    h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', ref: boxRef },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, header),
       h('div', { className: 'modal-body' }, children),

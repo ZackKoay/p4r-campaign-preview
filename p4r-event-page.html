@@ -104,11 +104,13 @@ a{color:inherit;text-decoration:none}
      This keeps the background full-bleed either way while pulling
      content itself clear of the curve. */
   padding:var(--space-40) max(var(--space-80),env(safe-area-inset-right)) var(--space-40) max(var(--space-80),env(safe-area-inset-left));
-  /* The header + card fill exactly one screen at every size, and the
-     footer follows below it (scroll to reach it, like Home's). dvh, the
-     part of the screen the browser leaves visible, so the whole card
-     always shows and refits as Safari's bars come and go. */
-  flex:none; height:100vh; height:100dvh;
+  /* The header + card fill exactly one full screen at every size, and
+     the footer follows below it — the same as Home's TV. lvh, the full
+     screen with the browser's bars tucked away: once the visitor
+     scrolls and Safari's bars slide away, this screen fills the whole
+     display and snaps there, instead of being sized to the smaller
+     area left while the bars show. */
+  flex:none; height:100vh; height:100lvh;
   scroll-snap-align:start; scroll-snap-stop:always;
 }
 
@@ -290,14 +292,11 @@ a{color:inherit;text-decoration:none}
    ========================================================= */
 .modal-overlay{
   position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
-  display:flex; padding:20px;
-  /* A dialog taller than the screen scrolls as a whole — header,
-     content, buttons and close button move together, nothing is
-     clipped. margin:auto on .modal-box centres it when it fits and
-     pins it to the top when it doesn't (align-items:center would push
-     its top off-screen). contain: scrolling it never scrolls the page
-     behind. */
-  overflow-y:auto; overscroll-behavior:contain;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  /* Every dialog fits on screen whole: one taller than the space is
+     shrunk to fit (--modal-fit, from useFitToScreen), so nothing needs
+     scrolling. contain: a swipe on it never scrolls the page behind. */
+  overflow:hidden; overscroll-behavior:contain;
 }
 /* The close button sits outside the box's own edges (top:-14px
    right:-14px per Figma node 4484:3349), so the box stays
@@ -306,7 +305,8 @@ a{color:inherit;text-decoration:none}
 .modal-box{
   position:relative; background:#fff; border:4px solid var(--graphite);
   box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible;
-  margin:auto; flex:none; display:flex; flex-direction:column;
+  flex:none; display:flex; flex-direction:column;
+  transform:scale(var(--modal-fit, 1));
 }
 .modal-header{flex:none}
 .modal-foot{flex:none; display:flex; gap:var(--space-12); flex-wrap:wrap; justify-content:center; padding:0 var(--space-24) var(--space-24)}
@@ -459,6 +459,15 @@ a{color:inherit;text-decoration:none}
   .event-inner{padding:20px max(20px,env(safe-area-inset-right)) 20px max(20px,env(safe-area-inset-left))}
   .event-footer{padding:0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left)); flex-wrap:wrap; height:auto; padding-top:12px; padding-bottom:max(12px,env(safe-area-inset-bottom)); gap:8px}
 }
+/* Phones: 56px, the same height as Home's footer, plus the home-bar
+   space on iPhones; one row, slightly smaller text. */
+@media (max-width:805px), (max-height:500px){
+  .event-footer{
+    height:calc(56px + env(safe-area-inset-bottom)); flex-wrap:nowrap; gap:16px;
+    padding:0 max(20px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(20px,env(safe-area-inset-left));
+  }
+  .event-footer .links a, .event-footer .copyright{font-size:11px}
+}
 /* Landscape phones: the header's desktop spacing would otherwise eat
    most of the height .main-fit scales into. */
 @media (max-height:500px){
@@ -476,20 +485,34 @@ a{color:inherit;text-decoration:none}
   .lucky-draw-copy p:last-child{font-size:17px}
   .event-date{font-size:15px}
 }
-/* Landscape phones: tighter chrome and 1-2px smaller type, so most
-   dialogs fit without scrolling; the rest scroll as a whole. */
+/* Landscape phones: one smaller type scale and tighter chrome for every
+   dialog — title 20, heading 18, button 16, copy 13, small print 11 —
+   so they share the same sizes and most fit at full size. Any that
+   still don't are shrunk to fit as a whole (see .modal-box). */
 @media (max-height:500px){
   .modal-overlay{padding:16px 20px}
+  .modal-close{top:-12px; right:-12px; width:40px; height:40px}
   .modal-header{padding:var(--space-8) var(--space-16)}
-  .modal-header span{font-size:24px}
-  .modal-body{padding:var(--space-16) var(--space-24); gap:var(--space-16)}
+  .modal-header span{font-size:20px}
+  .modal-body{padding:var(--space-16) var(--space-24); gap:var(--space-12)}
+  /* Text and merch stay side by side (the text column narrows) rather
+     than stacking, which made the dialog twice as tall. */
+  .modal-content-row{gap:var(--space-16); flex-wrap:nowrap}
+  .modal-content-row .modal-text{flex:1 1 200px; min-width:0}
   .modal-text{gap:var(--space-8)}
-  .modal-text h3{font-size:20px; margin-bottom:4px}
-  .modal-text .copy, .modal-body > .copy{font-size:13px}
+  .modal-text h3{font-size:18px; line-height:1.25; margin-bottom:2px}
+  .modal-text .copy, .modal-body > .copy{font-size:13px; line-height:1.45}
   .modal-text .tnc{font-size:11px}
-  .modal-merch{min-height:140px}
-  .modal-merch--wide{min-height:120px}
+  .modal-merch{width:auto; flex:0 1 240px; min-width:150px; min-height:120px}
+  .modal-merch--wide{width:100%; flex:none}
+  .modal-merch--wide{min-height:100px}
+  .modal-merch span{font-size:18px}
+  .modal-btn{font-size:16px; padding:8px 28px}
+  .modal-btn--sm{font-size:13px; padding:6px 22px}
   .modal-foot{padding:0 var(--space-24) var(--space-16)}
+  .share-social-circle{width:40px; height:40px}
+  .share-social-label{font-size:13px}
+  .share-link-box, .password-input{font-size:13px}
 }
 @media (max-width:520px){
   .mission-head{flex-wrap:wrap}
@@ -872,8 +895,34 @@ function PrizeRail({ entries, total, onEnterDraw }) {
 // now still can't), and focus moves into it on open unless something
 // inside already took it (e.g. an autoFocus input), then goes back to
 // whatever opened it.
+// Shrinks a dialog (as one picture, like the mission card) until all of
+// it fits on screen: phones in landscape don't have the height for most
+// dialogs at their real size. Re-measured whenever the screen (e.g.
+// Safari's bars) or the dialog's own content (an error line) changes.
+// offsetWidth/Height ignore the transform, so this never feeds back.
+function useFitToScreen(overlayRef, boxRef) {
+  React.useLayoutEffect(() => {
+    const overlay = overlayRef.current, box = boxRef.current;
+    if (!overlay || !box) return;
+    const fit = () => {
+      const cs = getComputedStyle(overlay);
+      const w = overlay.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const hgt = overlay.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const s = Math.min(1, w / box.offsetWidth, hgt / box.offsetHeight);
+      box.style.setProperty('--modal-fit', String(Math.max(s, 0.3)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(overlay);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, []);
+}
+
 function Modal({ onClose, header, centered, children, actions, dismissOnOverlayClick = true }) {
+  const overlayRef = React.useRef(null);
   const boxRef = React.useRef(null);
+  useFitToScreen(overlayRef, boxRef);
   const onCloseRef = React.useRef(onClose);
   onCloseRef.current = onClose;
   React.useEffect(() => {
@@ -886,7 +935,7 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
       if (opener && opener.focus && document.contains(opener)) opener.focus();
     };
   }, []);
-  return h('div', { className: 'modal-overlay', onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
+  return h('div', { className: 'modal-overlay', ref: overlayRef, onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', tabIndex: -1, ref: boxRef },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, h('span', null, header)),
