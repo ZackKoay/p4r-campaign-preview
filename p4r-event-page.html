@@ -1438,7 +1438,6 @@ function App() {
     if (task.kind === 'platform') {
       window.open(task.href, '_blank', 'noopener'); // SEGA Account's own "link your platforms" page
       pendingLinkTasksRef.current.add(task.id); // mock: done on return (real site: asks the API)
-      setToastMessage("We'll check your linked platforms once you're back!");
       return;
     }
     if (task.kind === 'demo') {
