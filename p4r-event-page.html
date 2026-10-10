@@ -440,18 +440,45 @@ a{color:inherit;text-decoration:none}
 .modal-btn:disabled{cursor:not-allowed}
 .modal-btn--empty{background:var(--graphite-10); color:var(--graphite-30); filter:none}
 
-/* ===== Receipt upload modal (Mission 3 "Pre-order") — same field +
-   button pair as the password modal above, so it reads as one family.
-   The native file input is visually hidden; its <label> wears the
-   .password-input look and opens the picker. */
+/* ===== Demo pop-up (Mission 3 "Play the demo") — numbered steps,
+   then Play Demo (one platform) or a button per platform. */
+.demo-steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-8); text-align:left; width:100%; max-width:342px}
+.demo-steps li{display:flex; gap:var(--space-12); align-items:baseline; font-family:var(--font-body); font-size:14px; line-height:1.4; color:#3E3E3E}
+.demo-step-label{flex:none; min-width:52px; font-family:var(--font-head); font-weight:400; font-size:13px; color:#1B1B1B}
+.demo-platforms{display:flex; flex-direction:column; align-items:center; gap:var(--space-12)}
+.demo-platforms .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:#3E3E3E; margin:0}
+a.modal-btn{text-decoration:none}
+
+/* ===== Receipt upload modal (Mission 3 "Pre-order") — a standard
+   upload field in this site's language: a dashed graphite drop area
+   (the native file input is visually hidden; the area is its <label>),
+   with the hint below; once an image is chosen, it shows there as a
+   thumbnail with a yellow delete button on its corner. */
 .receipt-file{position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none}
-.receipt-pick{display:flex; align-items:center; gap:8px; text-align:left; cursor:pointer}
-.receipt-pick span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.receipt-pick svg{flex:none; width:20px; height:20px; color:var(--graphite)}
-.receipt-pick.is-disabled svg{color:var(--graphite-20)}
-.receipt-pick--empty{color:var(--graphite-20)}
-.receipt-file:focus-visible + .receipt-pick{border-color:var(--yellow-fog-20)}
-.receipt-pick.is-disabled{color:var(--graphite-20); background:var(--graphite-10); border-color:var(--graphite-20); cursor:not-allowed}
+.upload-field{width:100%; max-width:420px; display:flex; flex-direction:column; gap:var(--space-8)}
+.upload-zone{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  min-height:150px; padding:var(--space-16); background:#fff; color:var(--graphite);
+  border:2px dashed var(--graphite); cursor:pointer; text-align:center;
+  transition:background .15s ease, border-color .15s ease;
+}
+.upload-zone:hover, .upload-zone.is-dragging{background:var(--yellow-fog-10, #FFFDE0); border-color:var(--yellow-fog-20)}
+.receipt-file:focus-visible + .upload-zone{outline:3px solid var(--yellow-fog-20); outline-offset:2px}
+.upload-zone.is-busy{cursor:progress; color:var(--graphite-30)}
+.upload-zone--filled{cursor:default; border-style:solid}
+.upload-zone--filled:hover{background:#fff; border-color:var(--graphite)}
+.upload-zone-icon{width:32px; height:32px; margin-bottom:4px}
+.upload-zone-title{font-family:var(--font-head); font-weight:400; font-size:16px; color:#1B1B1B}
+.upload-zone-hint{font-family:var(--font-body); font-size:13px; color:var(--graphite-30)}
+.upload-thumb{position:relative; display:inline-block; line-height:0}
+.upload-thumb img{max-width:220px; max-height:116px; width:auto; height:auto; border:2px solid var(--graphite); object-fit:contain; background:#F4F4F4}
+.upload-remove{
+  position:absolute; top:-10px; right:-10px; width:26px; height:26px; padding:0; border-radius:999px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  background:var(--yellow); border:2px solid #0B0B0B;
+}
+.upload-remove:disabled{cursor:not-allowed; opacity:.5}
+.upload-hint{font-family:var(--font-body); font-weight:400; font-size:13px; line-height:1.4; color:#636363; margin:0; text-align:center}
 
 /* ===== Toast (Figma "Toaster", node 4633:8141) ===== */
 .toast{
@@ -534,6 +561,13 @@ a{color:inherit;text-decoration:none}
   .share-social-circle{width:40px; height:40px}
   .share-social-label{font-size:13px}
   .share-link-box, .password-input{font-size:13px}
+  .demo-steps{gap:6px}
+  .demo-steps li{font-size:13px}
+  .demo-step-label{font-size:12px; min-width:46px}
+  .upload-zone{min-height:96px; padding:var(--space-12)}
+  .upload-zone-icon{width:24px; height:24px}
+  .upload-zone-title{font-size:14px}
+  .upload-thumb img{max-height:72px; max-width:160px}
 }
 @media (max-width:520px){
   .mission-head{flex-wrap:wrap}
@@ -792,7 +826,10 @@ const MISSIONS = [
     id: 3,
     name: 'Reach the Goal',
     tasks: [
-      { id: '3.a', label: 'Play the Persona 4 Revival demo', kind: 'api' },
+      // Mock: coming back from SEGA's link page counts as linked (the
+      // real site asks the API — see the Laravel event view).
+      { id: '3.link', label: 'Link Platform Account', kind: 'platform', href: 'https://sega-account.com/auth/content/link' },
+      { id: '3.a', label: 'Play the Persona 4 Revival demo', kind: 'demo' },
       { id: '3.b', label: 'Pre-order Persona 4 Revival', kind: 'upload', modalTitle: 'Upload Your Pre-order Receipt' },
       { id: '3.c', label: 'Complete the secret message', kind: 'password', modalTitle: 'Enter the Secret Message', placeholder: 'Enter Secret Message' },
     ],
@@ -1127,67 +1164,194 @@ function PasswordModal({ title, placeholder = 'Enter Password', onClose, onVerif
   );
 }
 
-/* Mission 3's "Pre-order" proof: the player uploads their receipt
-   (POST /api/upload-image — JPEG, PNG or PDF, at most 10 MB), then the
-   task is marked done. Checked here first so an obviously wrong file
-   fails instantly instead of after a 10 MB upload. onUpload resolves
-   null on success (the parent closes the modal) or an error message to
-   show under the field. */
-const RECEIPT_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
-const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
+/* Mission 3's "Play the demo": how to get the demo, and a way to it.
+   With the SEGA Account's default platform known (BACKEND: the
+   linked-platforms endpoint's default_platform) it's one Play Demo
+   button to that platform's demo page; without one, a button per
+   platform. onPlay fires as the player follows a link: the page then
+   checks their play history when they come back. */
+// CONTENT: each platform's demo page — placeholders until the client
+// sends the real links. The ids are what the API's default_platform
+// should return.
+const DEMO_PLATFORMS = [
+  { id: 'steam', label: 'Steam', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
+  { id: 'playstation', label: 'PlayStation', href: 'https://store.playstation.com/' },
+  { id: 'xbox', label: 'Xbox', href: 'https://www.xbox.com/games/store' },
+  { id: 'nintendo', label: 'Nintendo Switch', href: 'https://www.nintendo.com/store/' },
+];
+const DEMO_STEPS = [
+  'Open your preferred platform.',
+  'Search "Persona 4 Revival"',
+  'Select "Play Demo"',
+];
 
-/* Tabler "file" icon, copied 1:1 from assets/icons/file.svg. */
-const IconFile = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
-  h('path', { d: 'M14 3v4a1 1 0 0 0 1 1h4' }),
-  h('path', { d: 'M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z' })
+function DemoModal({ defaultPlatform, onPlay, onClose }) {
+  const platform = DEMO_PLATFORMS.find((p) => p.id === defaultPlatform);
+  const playLink = (p, label, cls) => h('a', {
+    key: p.id, href: p.href, target: '_blank', rel: 'noopener',
+    className: `modal-btn ${cls}`, onClick: () => onPlay(p.id),
+  }, label);
+  return h(Modal, {
+    onClose, header: 'Experience the Demo Now', centered: true,
+    actions: platform ? playLink(platform, 'Play Demo', 'modal-btn--dark') : null,
+  },
+    h('div', { className: 'modal-text' }, h('h3', null, 'How to get the demo')),
+    h('ol', { className: 'demo-steps' },
+      DEMO_STEPS.map((step, i) => h('li', { key: i },
+        h('span', { className: 'demo-step-label' }, `Step ${i + 1}`), h('span', null, step)
+      ))
+    ),
+    !platform && h('div', { className: 'demo-platforms' },
+      h('p', { className: 'copy' }, 'Play Demo on:'),
+      h('div', { className: 'modal-actions' }, DEMO_PLATFORMS.map((p) => playLink(p, p.label, 'modal-btn--dark modal-btn--sm')))
+    )
+  );
+}
+
+/* Mission 3's "Pre-order" proof: one image of the receipt
+   (POST /api/upload-image), then the task is marked done. A standard
+   upload field: a dashed drop area (tap to choose — on phones that's the
+   phone's own menu: photo library, camera or files — or drop an image on
+   it) with the hint below it; once chosen, a thumbnail with a delete
+   button takes the area's place.
+   Photos are shrunk on the device to fit RECEIPT_MAX_BYTES (phone photos
+   are usually 2-5 MB) and sent as JPEG; a JPEG/PNG already small enough
+   is sent as is. onUpload resolves null on success (the parent closes
+   the modal) or an error message to show.
+   BACKEND: the API itself still allows JPEG/PNG/PDF up to 10 MB — align
+   it with 1 MB images if that's the rule (README §5). */
+const RECEIPT_MAX_BYTES = 1024 * 1024;
+const RECEIPT_KEEP_TYPES = ['image/jpeg', 'image/png'];
+
+/* Tabler "upload" icon, copied 1:1 from assets/icons. */
+const IconUpload = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
+  h('path', { d: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2' }),
+  h('path', { d: 'M7 9l5 -5l5 5' }),
+  h('path', { d: 'M12 4l0 12' })
 );
+
+// Any image the browser can open (iPhone photos included) -> a JPEG of
+// at most maxBytes: first at up to 2400px on the long side, stepping
+// quality and then size down until it fits. Rejects if it can't be read.
+function shrinkImage(file, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('unreadable')); };
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let scale = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+      const qualities = [0.86, 0.76, 0.66, 0.56];
+      const attempt = (qi) => {
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; // PNG transparency -> white, not black
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('encode')); return; }
+          if (blob.size <= maxBytes || (scale < 0.15 && qi === qualities.length - 1)) {
+            const name = (file.name || 'receipt').replace(/\.[^.]+$/, '') + '.jpg';
+            resolve(new File([blob], name, { type: 'image/jpeg' }));
+          } else if (qi < qualities.length - 1) {
+            attempt(qi + 1);
+          } else {
+            scale *= 0.75;
+            attempt(0);
+          }
+        }, 'image/jpeg', qualities[qi]);
+      };
+      attempt(0);
+    };
+    img.src = url;
+  });
+}
 
 function ReceiptUploadModal({ title, onClose, onUpload }) {
   const [file, setFile] = React.useState(null);
-  const [status, setStatus] = React.useState('idle'); // idle | uploading | error
+  const [preview, setPreview] = React.useState(null);
+  const [status, setStatus] = React.useState('idle'); // idle | preparing | uploading | error
   const [error, setError] = React.useState('');
-  const uploading = status === 'uploading';
+  const [dragging, setDragging] = React.useState(false);
+  const inputRef = React.useRef(null);
+  const busy = status === 'preparing' || status === 'uploading';
+
+  React.useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   const fail = (message) => { setStatus('error'); setError(message); };
+  const clear = () => { setFile(null); setPreview(null); setStatus('idle'); setError(''); };
+
+  const takeFile = (next) => {
+    if (!next || busy) return;
+    if (!next.type.startsWith('image/')) { clear(); fail('Choose an image (JPEG or PNG).'); return; }
+    setStatus('preparing'); setError('');
+    const ready = RECEIPT_KEEP_TYPES.includes(next.type) && next.size <= RECEIPT_MAX_BYTES
+      ? Promise.resolve(next)
+      : shrinkImage(next, RECEIPT_MAX_BYTES);
+    ready
+      .then((out) => {
+        if (out.size > RECEIPT_MAX_BYTES) { clear(); fail('That image is too large. Choose another one.'); return; }
+        setFile(out); setPreview(URL.createObjectURL(out)); setStatus('idle');
+      })
+      .catch(() => { clear(); fail("That image couldn't be opened. Choose a JPEG or PNG."); });
+  };
 
   const handlePick = (e) => {
     const next = e.target.files && e.target.files[0];
     e.target.value = ''; // so picking the same file again still fires onChange
-    if (!next) return;
-    if (!RECEIPT_TYPES.includes(next.type)) { setFile(null); fail('Choose a JPEG, PNG or PDF file.'); return; }
-    if (next.size > RECEIPT_MAX_BYTES) { setFile(null); fail('That file is over 10 MB. Choose a smaller one.'); return; }
-    setFile(next); setStatus('idle'); setError('');
+    takeFile(next);
+  };
+  const handleDrop = (e) => {
+    e.preventDefault(); setDragging(false);
+    takeFile(e.dataTransfer.files && e.dataTransfer.files[0]);
   };
 
   const handleSubmit = () => {
-    if (!file || uploading) return;
+    if (!file || busy) return;
     setStatus('uploading');
     Promise.resolve(onUpload(file)).then((message) => { if (message) fail(message); });
   };
 
   // Not closable mid-upload — closing wouldn't cancel the request, just
   // hide whether it worked.
-  return h(Modal, { onClose: () => { if (!uploading) onClose(); }, centered: true },
-    h('div', { className: 'modal-text' },
-      h('h3', null, title),
-      h('p', { className: 'copy' }, 'JPEG, PNG or PDF, up to 10 MB.')
-    ),
-    h('div', { className: 'password-row' },
-      h('div', { className: 'password-field' },
-        h('input', {
-          id: 'receipt-file', type: 'file', className: 'receipt-file',
-          accept: RECEIPT_TYPES.join(','), disabled: uploading, onChange: handlePick,
-        }),
-        h('label', {
-          htmlFor: 'receipt-file',
-          className: `password-input receipt-pick${file ? '' : ' receipt-pick--empty'}${uploading ? ' is-disabled' : ''}`,
-        }, h('span', null, file ? file.name : 'Choose a file'), h(IconFile, { 'aria-hidden': 'true' })),
-        status === 'error' && h('p', { className: 'password-error' }, error)
-      ),
-      h('button', {
-        type: 'button', className: `modal-btn modal-btn--sm ${file ? 'modal-btn--dark' : 'modal-btn--empty'}`,
-        disabled: !file || uploading, onClick: handleSubmit,
-      }, uploading ? 'Uploading...' : 'Upload')
+  return h(Modal, {
+    onClose: () => { if (status !== 'uploading') onClose(); }, centered: true,
+    actions: h('button', {
+      type: 'button', className: `modal-btn modal-btn--sm ${file && !busy ? 'modal-btn--dark' : 'modal-btn--empty'}`,
+      disabled: !file || busy, onClick: handleSubmit,
+    }, status === 'uploading' ? 'Uploading...' : 'Upload Receipt'),
+  },
+    h('div', { className: 'modal-text' }, h('h3', null, title)),
+    h('div', { className: 'upload-field' },
+      h('input', {
+        id: 'receipt-file', type: 'file', className: 'receipt-file', ref: inputRef,
+        accept: 'image/*', disabled: busy, onChange: handlePick,
+      }),
+      preview
+        ? h('div', { className: 'upload-zone upload-zone--filled' },
+            h('div', { className: 'upload-thumb' },
+              h('img', { src: preview, alt: `Your receipt: ${file.name}` }),
+              h('button', {
+                type: 'button', className: 'upload-remove', onClick: clear, disabled: busy,
+                'aria-label': 'Remove this image',
+              }, h(IconClose, { width: 14, height: 14 }))
+            )
+          )
+        : h('label', {
+            htmlFor: 'receipt-file',
+            className: `upload-zone${dragging ? ' is-dragging' : ''}${busy ? ' is-busy' : ''}`,
+            onDragOver: (e) => { e.preventDefault(); if (!busy) setDragging(true); },
+            onDragLeave: () => setDragging(false),
+            onDrop: handleDrop,
+          },
+            h(IconUpload, { className: 'upload-zone-icon', 'aria-hidden': 'true' }),
+            h('span', { className: 'upload-zone-title' }, status === 'preparing' ? 'Preparing your image...' : 'Choose an image'),
+            h('span', { className: 'upload-zone-hint' }, 'or drag it here')
+          ),
+      h('p', { className: 'upload-hint' }, 'Upload 1 image of your pre-order receipt (JPEG or PNG, up to 1 MB).'),
+      status === 'error' && h('p', { className: 'password-error' }, error)
     )
   );
 }
@@ -1270,6 +1434,16 @@ function App() {
       pendingLinkTasksRef.current.add(task.id); // completes on return — see the visibilitychange effect above
       setToastMessage("We'll mark this done once you're back!");
       return;
+    }
+    if (task.kind === 'platform') {
+      window.open(task.href, '_blank', 'noopener'); // SEGA Account's own "link your platforms" page
+      pendingLinkTasksRef.current.add(task.id); // mock: done on return (real site: asks the API)
+      setToastMessage("We'll check your linked platforms once you're back!");
+      return;
+    }
+    if (task.kind === 'demo') {
+      setModal({ type: 'demo', missionId, taskId: task.id });
+      return; // mock: done once they come back from a Play Demo link
     }
     if (task.kind === 'upload') {
       setModal({ type: 'upload', missionId, taskId: task.id, title: task.modalTitle });
@@ -1416,6 +1590,14 @@ function App() {
       key: modal.taskId, title: modal.title, placeholder: modal.placeholder,
       onClose: () => setModal(null),
       onVerify: (value) => handlePasswordVerify(modal.missionId, modal.taskId, value),
+    }),
+    modal && modal.type === 'demo' && h(DemoModal, {
+      // Mock: no linked-platforms API here, so no default platform and a
+      // button per platform. Add ?platform=steam (or playstation, xbox,
+      // nintendo) to the URL to see the single Play Demo button instead.
+      defaultPlatform: new URLSearchParams(window.location.search).get('platform'),
+      onClose: () => setModal(null),
+      onPlay: () => { pendingLinkTasksRef.current.add(modal.taskId); setModal(null); },
     }),
     modal && modal.type === 'upload' && h(ReceiptUploadModal, {
       key: modal.taskId, title: modal.title,
