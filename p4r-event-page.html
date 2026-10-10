@@ -1432,7 +1432,6 @@ function App() {
     if (task.kind === 'link') {
       window.open(task.href, '_blank', 'noopener'); // real external site (Steam) — no fake in-site copy of it
       pendingLinkTasksRef.current.add(task.id); // completes on return — see the visibilitychange effect above
-      setToastMessage("We'll mark this done once you're back!");
       return;
     }
     if (task.kind === 'platform') {
