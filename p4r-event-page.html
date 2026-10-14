@@ -1263,7 +1263,10 @@ function DemoModal({ defaultPlatform, onPlay, onClose }) {
     const logo = PLATFORM_ICONS[p.id];
     return h('a', {
       key: p.id, href: p.href, target: '_blank', rel: 'noopener',
-      className: `cta cta--dark ${cls}`, onClick: () => onPlay(p.id),
+      className: `cta cta--dark ${cls}`,
+      // Always a new tab: opened here rather than left to the link,
+      // since onPlay closes this pop-up (removing the link) mid-click.
+      onClick: (e) => { e.preventDefault(); window.open(p.href, '_blank', 'noopener'); onPlay(p.id); },
     },
       logo && h('svg', { className: `cta-icon cta-icon--${p.id}`, viewBox: logo.viewBox, 'aria-hidden': 'true', focusable: 'false' },
         logo.paths.map((d, i) => h('path', { key: i, d }))
