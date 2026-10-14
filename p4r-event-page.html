@@ -442,12 +442,70 @@ a{color:inherit;text-decoration:none}
 
 /* ===== Demo pop-up (Mission 3 "Play the demo") — numbered steps,
    then Play Demo (one platform) or a button per platform. */
+/* The heading and its steps read as one block (instructions); the
+   platform buttons (the action) sit further down, apart from them. */
+.demo-howto{display:flex; flex-direction:column; align-items:center; gap:var(--space-12); width:100%}
+.demo-howto h3{margin:0}
 .demo-steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-8); text-align:left; width:100%; max-width:342px}
 .demo-steps li{display:flex; gap:var(--space-12); align-items:baseline; font-family:var(--font-body); font-size:14px; line-height:1.4; color:#3E3E3E}
 .demo-step-label{flex:none; min-width:52px; font-family:var(--font-head); font-weight:400; font-size:13px; color:#1B1B1B}
 .demo-platforms{display:flex; flex-direction:column; align-items:center; gap:var(--space-12)}
-.demo-platforms .copy{font-family:var(--font-body); font-weight:400; font-size:14px; color:#3E3E3E; margin:0}
+.demo-platforms{margin-top:var(--space-16)}
+/* Four platforms with logos don't fit one row in the pop-up, so they're
+   a 2x2 grid of equal-width buttons (one column on narrow phones). */
+.demo-platforms .modal-actions{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-12) var(--space-16); width:100%; max-width:440px}
+.demo-platforms .cta{width:100%; white-space:nowrap}
+@media (max-width:400px){.demo-platforms .modal-actions{grid-template-columns:minmax(0,1fr); max-width:260px}}
+.demo-platforms .copy{font-family:var(--font-body); font-weight:700; font-size:14px; color:#1B1B1B; margin:0}
 a.modal-btn{text-decoration:none}
+
+/* ===== The demo pop-up's buttons: the Home page's black button
+   (.cta .cta--dark, Figma node 4217:3764), same shape and states.
+   - One slant for every button, 22deg from vertical whatever its width:
+     the corners are cut by two triangles sized to the button's HEIGHT
+     (masks, since clip-path can't take a height-relative length), so
+     "Xbox" and "Nintendo Switch 2" lean the same way.
+   - The face is ::before and the hard shadow ::after (see Home's .cta
+     for why not filter/clip-path on the button itself).
+   - Enable #1B1B1B with yellow text; Hover lifts 2px and turns
+     daylight-blue-10 with dark text; Pressed turns cyan; disabled
+     (aria-disabled, or :disabled on a <button>) fades like Home's. */
+.cta{
+  position:relative; display:inline-flex; align-items:center; justify-content:center; gap:var(--space-8);
+  padding:12px var(--space-40); font-family:var(--font-head); font-weight:400; font-size:clamp(16px,2.4vw,24px);
+  color:var(--graphite); appearance:none; background:none; border:none; cursor:pointer; text-decoration:none;
+  isolation:isolate; transition:transform .15s ease;
+  --cta-cut-tl:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40.4 100'%3E%3Cpath d='M0 0H40.4L0 100Z'/%3E%3C/svg%3E");
+  --cta-cut-br:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40.4 100'%3E%3Cpath d='M40.4 0V100H0Z'/%3E%3C/svg%3E");
+  --cta-shape:
+    var(--cta-cut-tl) left -1px top -1px / auto calc(100% + 2px) no-repeat,
+    var(--cta-cut-br) right -1px bottom -1px / auto calc(100% + 2px) no-repeat,
+    linear-gradient(#000 0 0);
+}
+.cta::before, .cta::after{
+  content:""; position:absolute; inset:0;
+  -webkit-mask:var(--cta-shape); -webkit-mask-composite:xor;
+  mask:var(--cta-shape); mask-composite:exclude;
+}
+.cta::before{z-index:-1}
+.cta::after{z-index:-2; background:rgba(0,0,0,.35); transform:translate(4px,4px)}
+.cta:hover{transform:translate(-2px,-2px)}
+.cta:focus-visible{outline:3px solid var(--daylight-blue-30); outline-offset:3px}
+.cta svg{flex:none; fill:currentColor}
+.cta--dark{color:var(--yellow)}
+.cta--dark::before{background:var(--graphite-60)}
+.cta--dark:hover{color:var(--graphite-60)}
+.cta--dark:hover::before{background:var(--daylight-blue-10)}
+.cta--dark:active{color:var(--graphite-60)}
+.cta--dark:active::before{background:var(--cyan)}
+.cta--sm{padding:8px 28px; font-size:14px}
+.cta[aria-disabled="true"], .cta:disabled{pointer-events:none; opacity:.6}
+/* Platform logos, in the button's text colour (so they follow its
+   states). Same height for all; the Switch 2 logo carries its own small
+   wordmark, so it's a little taller to stay legible. */
+.cta-icon{width:18px; height:18px}
+.cta-icon--nintendo{width:22px; height:22px}
+@media (prefers-reduced-motion:reduce){.cta{transition:none}}
 
 /* ===== Receipt upload modal (Mission 3 "Pre-order") — a standard
    upload field in this site's language: a dashed graphite drop area
@@ -561,6 +619,12 @@ a.modal-btn{text-decoration:none}
   .share-social-circle{width:40px; height:40px}
   .share-social-label{font-size:13px}
   .share-link-box, .password-input{font-size:13px}
+  .demo-howto{gap:var(--space-8)}
+  .demo-platforms{margin-top:var(--space-8)}
+  .cta{font-size:16px; padding:8px 28px}
+  .cta--sm{font-size:13px; padding:6px 22px}
+  .cta-icon{width:16px; height:16px}
+  .cta-icon--nintendo{width:20px; height:20px}
   .demo-steps{gap:6px}
   .demo-steps li{font-size:13px}
   .demo-step-label{font-size:12px; min-width:46px}
@@ -1177,8 +1241,16 @@ const DEMO_PLATFORMS = [
   { id: 'steam', label: 'Steam', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
   { id: 'playstation', label: 'PlayStation', href: 'https://store.playstation.com/' },
   { id: 'xbox', label: 'Xbox', href: 'https://www.xbox.com/games/store' },
-  { id: 'nintendo', label: 'Nintendo Switch', href: 'https://www.nintendo.com/store/' },
+  { id: 'nintendo', label: 'Nintendo Switch 2', href: 'https://www.nintendo.com/store/' },
 ];
+// Platform logos (assets/icons/steam.svg, ps.svg, xbox.svg, ns2.svg),
+// inlined so they take the button's text colour.
+const PLATFORM_ICONS = {
+  steam: { viewBox: '0 0 43.22 43.3', paths: ["M21.57,0C10.2,0,.89,8.77,0,19.91l11.6,4.8c.98-.67,2.17-1.07,3.45-1.07.11,0,.23,0,.34,0l5.16-7.48s0-.07,0-.11c0-4.5,3.66-8.16,8.16-8.16s8.16,3.66,8.16,8.16-3.66,8.17-8.16,8.17c-.06,0-.12,0-.19,0l-7.36,5.25c0,.1,0,.19,0,.29,0,3.38-2.75,6.13-6.13,6.13-2.97,0-5.45-2.12-6.01-4.92L.75,27.55c2.57,9.09,10.92,15.75,20.83,15.75,11.96,0,21.65-9.69,21.65-21.65S33.53,0,21.57,0Z", "M13.57,32.85l-2.66-1.1c.47.98,1.29,1.8,2.37,2.25,2.34.97,5.04-.14,6.01-2.48.47-1.13.48-2.38,0-3.52-.47-1.14-1.35-2.02-2.48-2.49-1.13-.47-2.33-.45-3.39-.05l2.75,1.14c1.73.72,2.54,2.7,1.82,4.43-.72,1.73-2.7,2.54-4.43,1.82Z", "M34.16,16.07c0-3-2.44-5.44-5.44-5.44s-5.44,2.44-5.44,5.44,2.44,5.44,5.44,5.44,5.44-2.44,5.44-5.44ZM24.64,16.06c0-2.26,1.83-4.09,4.09-4.09s4.09,1.83,4.09,4.09-1.83,4.09-4.09,4.09-4.09-1.83-4.09-4.09Z"] },
+  playstation: { viewBox: '0 0 47.57 36.71', paths: ["M17.78,0v34.26l7.76,2.46V7.99c0-1.35.6-2.25,1.57-1.94,1.26.35,1.51,1.6,1.51,2.94v11.47c4.83,2.34,8.63,0,8.63-6.17s-2.23-9.11-8.79-11.36c-2.59-.86-7.38-2.31-10.68-2.92", "M27.01,31.7l12.46-4.43c1.41-.52,1.63-1.23.48-1.6-1.16-.38-3.23-.27-4.65.24l-8.29,2.93v-4.67l.47-.16s2.4-.85,5.77-1.21c3.37-.37,7.5.05,10.75,1.27,3.66,1.16,4.07,2.86,3.14,4.04-.94,1.17-3.22,2.01-3.22,2.01l-16.92,6.08v-4.49Z", "M3.57,31.23c-3.75-1.05-4.38-3.25-2.67-4.53,1.58-1.17,4.27-2.04,4.27-2.04l11.11-3.96v4.51l-7.99,2.86c-1.41.51-1.63,1.22-.49,1.59,1.16.39,3.22.28,4.64-.24l3.84-1.38v4.03c-.25.04-.52.08-.77.13-3.83.64-7.91.38-11.94-.96", "M44.52,33.04c1.09,0,1.83.81,1.83,1.83s-.74,1.83-1.83,1.83-1.84-.8-1.84-1.83.75-1.83,1.84-1.83M44.52,36.44c.93,0,1.54-.7,1.54-1.56s-.62-1.56-1.54-1.56-1.55.7-1.55,1.56.61,1.56,1.55,1.56M43.8,33.81h.84c.39,0,.68.11.68.55,0,.25-.12.44-.39.52h0c.14.04.23.15.3.39.07.24.15.46.21.66h-.39c-.05-.16-.12-.43-.17-.58-.06-.25-.13-.32-.45-.32h-.25v.9h-.38v-2.12ZM44.18,34.76h.34c.27,0,.43-.1.43-.35,0-.29-.2-.33-.41-.33h-.36v.68Z"] },
+  xbox: { viewBox: '0 0 40.71 40.71', paths: ["M20.36,16.33s.05.02.07.03c6.09,4.63,16.51,16.09,13.33,19.32-3.58,3.13-8.27,5.03-13.4,5.03-5.13,0-9.82-1.9-13.4-5.03-3.18-3.24,7.24-14.69,13.33-19.32.02-.01.04-.03.07-.03Z", "M30.96,2.98c-3.12-1.85-6.5-2.98-10.6-2.98s-7.49,1.13-10.6,2.98c-.04.02-.05.06-.03.1.02.04.06.04.1.04,3.94-.85,9.93,2.55,10.5,2.89.01,0,.03.02.04.02s.03,0,.04-.02c.57-.34,6.55-3.75,10.5-2.89.04,0,.08,0,.1-.04.02-.04,0-.08-.03-.1Z", "M6.11,5.84s-.06.04-.09.07C2.3,9.6,0,14.71,0,20.36c0,4.64,1.55,8.91,4.16,12.33.03.03.07.05.11.03.04-.02.04-.07.02-.1-1.55-4.8,6.38-16.43,10.48-21.31.01-.02.03-.04.03-.06,0-.03-.02-.05-.04-.07C8.56,5.01,6.45,5.66,6.11,5.84Z", "M25.95,11.18s-.04.04-.04.07c0,.02.01.04.03.06,4.1,4.88,12.03,16.51,10.48,21.31-.01.04-.01.08.02.1.04.02.08,0,.11-.03,2.61-3.42,4.16-7.7,4.16-12.33,0-5.65-2.3-10.76-6.02-14.45-.03-.03-.06-.05-.09-.07-.34-.18-2.45-.83-8.66,5.34Z"] },
+  nintendo: { viewBox: '0 0 142.86 127.63', paths: ["M8.6,93.44l5.42,7.3h2.15v-10.91h-2.21v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3ZM61.87,89.82h-9.25v2.32h3.49v8.6h2.35v-8.6h3.41v-2.32ZM61.2,126.91h4.58v-20.59h-4.58v20.59ZM37.28,93.44l5.42,7.3h2.16v-10.91h-2.22v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3ZM47.63,121.26l-4.36-14.94h-3.65l-4.34,14.89-3.96-14.89h-4.48l5.83,20.59h4.95l3.84-13.57,3.81,13.57h4.97l5.86-20.59h-4.48l-3.98,14.94ZM14.93,114.4c-2.98-.49-4.9-1.04-4.9-2.43,0-1.6,2.14-2.22,5.01-2.22,2.67,0,5.35,1.02,6.3,1.42l1.46-3.56c-1.04-.41-4.33-1.59-7.97-1.59-4.45,0-9.18,2.17-9.18,6.19,0,3.26,2.3,4.93,8.2,5.94,4.16.72,6.45,1.11,6.39,2.9-.04.99-.8,2.64-5.49,2.64-3.77,0-6.43-1.37-7.36-1.92l-1.95,3.52c1.04.55,4.52,2.18,9.01,2.18,6.55,0,10.01-2.27,10.01-6.56,0-2.49-.84-5.08-9.55-6.51M26.83,89.82h-2.43v10.91h2.43v-10.91ZM97.18,100.74v-10.91h-2.22v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3l5.42,7.3h2.15ZM78.35,98.72h-6.27v-2.56h5.8v-1.97h-5.8v-2.36h6.27v-2h-8.49v10.91h8.49v-2.02ZM136.43,124.44h.94v2.48h.6v-2.48h.92v-.59h-2.46v.59ZM129.41,89.46c-3.21,0-5.81,2.61-5.81,5.83s2.61,5.82,5.81,5.82,5.81-2.61,5.81-5.82-2.61-5.83-5.81-5.83M129.41,98.68c-1.87,0-3.39-1.52-3.39-3.4s1.52-3.4,3.39-3.4,3.39,1.52,3.39,3.4-1.52,3.4-3.39,3.4M142.01,123.85l-.77,2.24-.77-2.24h-.85v3.06h.55v-2.35l.8,2.33v.03h.54v-.03s.81-2.33.81-2.33v2.35h.55v-3.06h-.85ZM130.16,114.44h-9.62v-8.12h-4.26v20.59h4.26v-8.21h9.62v8.21h4.26v-20.59h-4.26v8.12ZM70.81,110.69h6.58v16.22h4.43v-16.22h6.43v-4.37h-17.44v4.37ZM102.57,110.23c2.33,0,4.49,1.24,5.65,3.2l3.35-2.91c-2.05-3.05-5.44-4.86-9.12-4.86-6.06,0-10.99,4.93-10.99,10.99s4.93,10.99,10.99,10.99c3.69,0,7.07-1.81,9.12-4.86l-3.35-2.91c-1.16,1.96-3.33,3.2-5.65,3.2-3.6,0-6.53-2.88-6.53-6.41s2.93-6.41,6.53-6.41M110.93,89.82h-4.51v10.91h4.51c3.09,0,5.61-2.45,5.61-5.46s-2.52-5.46-5.61-5.46M111.04,98.45h-2.38v-6.33h2.38c1.74,0,3.16,1.42,3.16,3.16s-1.42,3.16-3.16,3.16M34.93,1.17h-16.07C8.44,1.17,0,9.61,0,20.02v35.83c0,10.41,8.44,18.86,18.86,18.86h16.07c.3,0,.54-.24.54-.54V1.7c0-.3-.24-.54-.54-.54M29.54,68.78h-10.68c-3.45,0-6.7-1.34-9.14-3.79-2.44-2.44-3.79-5.69-3.79-9.14V20.02c0-3.46,1.34-6.7,3.78-9.14,2.44-2.44,5.69-3.79,9.14-3.79h10.68v61.68ZM18.36,16.31c3.82,0,6.91,3.1,6.91,6.91s-3.1,6.92-6.91,6.92-6.91-3.1-6.91-6.92,3.1-6.91,6.91-6.91M54.68,1.17h-11.38c-.27,0-.48.21-.48.48v72.52c0,.3.24.54.54.54h11.32c10.41,0,18.86-8.44,18.86-18.86V20.02c0-10.41-8.44-18.86-18.86-18.86M57.38,49.05c-4.11,0-7.44-3.33-7.44-7.44s3.33-7.44,7.44-7.44,7.43,3.33,7.43,7.44-3.33,7.44-7.43,7.44M85.93,74.71v-12.64c1.31-1.07,6.25-5.32,11.47-9.82,4.7-4.04,9.39-8.09,14.18-12.03,3.61-2.97,10.46-8.41,10.68-13.74.26-6.27-4.19-10.34-10.84-10.34-3.96,0-8.61,2.2-11.42,4.6-2.86,2.43-6.43,5.49-6.43,5.49l-10.41-11.29C91.99,5.03,101.49,0,111.4,0c21.11-.52,37.01,23,20.96,41.45-5.83,6.42-12.44,12.43-19.24,17.78h27.56v15.47h-54.76Z"] },
+};
 const DEMO_STEPS = [
   'Open your preferred platform.',
   'Search "Persona 4 Revival"',
@@ -1187,23 +1259,33 @@ const DEMO_STEPS = [
 
 function DemoModal({ defaultPlatform, onPlay, onClose }) {
   const platform = DEMO_PLATFORMS.find((p) => p.id === defaultPlatform);
-  const playLink = (p, label, cls) => h('a', {
-    key: p.id, href: p.href, target: '_blank', rel: 'noopener',
-    className: `modal-btn ${cls}`, onClick: () => onPlay(p.id),
-  }, label);
+  const playLink = (p, label, cls) => {
+    const logo = PLATFORM_ICONS[p.id];
+    return h('a', {
+      key: p.id, href: p.href, target: '_blank', rel: 'noopener',
+      className: `cta cta--dark ${cls}`, onClick: () => onPlay(p.id),
+    },
+      logo && h('svg', { className: `cta-icon cta-icon--${p.id}`, viewBox: logo.viewBox, 'aria-hidden': 'true', focusable: 'false' },
+        logo.paths.map((d, i) => h('path', { key: i, d }))
+      ),
+      h('span', null, label)
+    );
+  };
   return h(Modal, {
     onClose, header: 'Experience the Demo Now', centered: true,
-    actions: platform ? playLink(platform, 'Play Demo', 'modal-btn--dark') : null,
+    actions: platform ? playLink(platform, 'Play Demo', '') : null,
   },
-    h('div', { className: 'modal-text' }, h('h3', null, 'How to get the demo')),
-    h('ol', { className: 'demo-steps' },
-      DEMO_STEPS.map((step, i) => h('li', { key: i },
-        h('span', { className: 'demo-step-label' }, `Step ${i + 1}`), h('span', null, step)
-      ))
+    h('div', { className: 'modal-text demo-howto' },
+      h('h3', null, 'How to get the demo'),
+      h('ol', { className: 'demo-steps' },
+        DEMO_STEPS.map((step, i) => h('li', { key: i },
+          h('span', { className: 'demo-step-label' }, `Step ${i + 1}`), h('span', null, step)
+        ))
+      )
     ),
     !platform && h('div', { className: 'demo-platforms' },
       h('p', { className: 'copy' }, 'Play Demo on:'),
-      h('div', { className: 'modal-actions' }, DEMO_PLATFORMS.map((p) => playLink(p, p.label, 'modal-btn--dark modal-btn--sm')))
+      h('div', { className: 'modal-actions' }, DEMO_PLATFORMS.map((p) => playLink(p, p.label, 'cta--sm')))
     )
   );
 }
