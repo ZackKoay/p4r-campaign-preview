@@ -212,6 +212,23 @@ a{color:inherit;text-decoration:none}
 .toggle-btn span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; font-size:16px; color:#2D2D2D}
 
 .task-list{flex:1; display:flex; flex-direction:column; gap:var(--space-16); width:100%}
+/* Mission change (the 1/2/3 toggle, the move to the next mission after
+   its bonus is claimed, and the first load): the title drops in from
+   just above itself while fading in, and the task rows slide in from
+   the left one after another, 50ms apart. All of it stays inside the
+   mission box (.mission-screen clips it). MissionCard keys the title,
+   the task list and the stamp by mission, so they're new elements on
+   every change and the animations replay. --i is the row's position;
+   the COMPLETED!/CLAIMED! stamp fades in once the last row is in. */
+@keyframes mission-title-in{from{opacity:0; transform:translateY(-12px)} to{opacity:1; transform:none}}
+@keyframes mission-task-in{from{opacity:0; transform:translateX(-40px)} to{opacity:1; transform:none}}
+@keyframes mission-stamp-in{from{opacity:0} to{opacity:1}}
+.mission-title{animation:mission-title-in .3s ease-out both}
+.task-row{animation:mission-task-in .3s ease-out both; animation-delay:calc(var(--i, 0) * 50ms)}
+.stamp-wrap{animation:mission-stamp-in .2s ease-out both; animation-delay:var(--stamp-delay, 0ms)}
+@media (prefers-reduced-motion:reduce){
+  .mission-title, .task-row, .stamp-wrap{animation:none}
+}
 .task-row{
   position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; min-height:65px;
   padding:12px var(--space-16); border:2px solid #3E3E3E; background:#520000; cursor:pointer;
@@ -913,12 +930,12 @@ function loadState() {
   }
 }
 
-function TaskRow({ task, isDone, onGo }) {
+function TaskRow({ task, isDone, onGo, index = 0 }) {
   // Every task locks once done, Invite a friend included (it completes
   // on the first share or copied link; the Share pop-up stays open
   // until closed, so more friends can still be invited from it then).
   const locked = isDone;
-  return h('div', { className: `task-row${locked ? ' done' : ''}`, onClick: locked ? undefined : onGo },
+  return h('div', { className: `task-row${locked ? ' done' : ''}`, style: { '--i': index }, onClick: locked ? undefined : onGo },
     !locked && h('img', { className: 'task-deco-bottom', src: 'assets/event-task-deco-bottom.png', alt: '', 'aria-hidden': 'true' }),
     !locked && h('img', { className: 'task-deco-top', src: 'assets/event-task-deco-top.png', alt: '', 'aria-hidden': 'true' }),
     h('p', { className: 'label' }, task.label),
@@ -931,6 +948,20 @@ function TaskRow({ task, isDone, onGo }) {
   );
 }
 
+// The mission to show on arrival: the first one whose bonus isn't
+// claimed yet, so a returning player picks up where they left off (the
+// last mission once every bonus is claimed).
+function firstUnclaimedMission(isClaimed) {
+  const m = MISSIONS.find((x) => !isClaimed(x.id));
+  return (m || MISSIONS[MISSIONS.length - 1]).id;
+}
+
+// After a mission's bonus is claimed for the first time, the card moves
+// on to the next mission whose bonus isn't claimed, once the stamp has
+// had a moment to read CLAIMED! (ADVANCE_DELAY_MS). Only if the player
+// is still on that mission by then.
+const ADVANCE_DELAY_MS = 800;
+
 function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBonusClick }) {
   const doneCount = mission.tasks.filter((t) => done[t.id]).length;
   const total = mission.tasks.length;
@@ -940,7 +971,7 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
   return h('div', { className: 'mission-card' },
     h('div', { className: 'mission-screen' },
       h('div', { className: 'mission-head' },
-        h('div', { className: 'mission-title' },
+        h('div', { className: 'mission-title', key: `title-${mission.id}` }, // new element per mission: replays its animation
           h('span', null, `MISSION ${mission.id}:`),
           h('span', null, mission.name)
         ),
@@ -953,9 +984,9 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
           }, h('span', null, String(m.id))))
         )
       ),
-      h('div', { className: 'task-list' },
-        mission.tasks.map((t) => h(TaskRow, {
-          key: t.id, task: t, isDone: !!done[t.id],
+      h('div', { className: 'task-list', key: `tasks-${mission.id}` },
+        mission.tasks.map((t, i) => h(TaskRow, {
+          key: t.id, task: t, index: i, isDone: !!done[t.id],
           onGo: () => onTaskGo(mission.id, t),
         }))
       ),
@@ -981,7 +1012,10 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
           onClick: () => onBonusClick(mission.id),
         }, 'BONUS')
       ),
-      isComplete && h('div', { className: 'stamp-wrap' },
+      isComplete && h('div', {
+        className: 'stamp-wrap', key: `stamp-${mission.id}`,
+        style: { '--stamp-delay': `${300 + (total - 1) * 50}ms` }, // after the last row is in
+      },
         h('div', { className: 'stamp' }, isClaimed ? 'CLAIMED!' : 'COMPLETED!')
       )
     )
@@ -1467,8 +1501,10 @@ function useFitScale() {
 
 function App() {
   const stageRef = useFitScale();
-  const [active, setActive] = React.useState(1);
   const [state, setState] = React.useState(loadState);
+  const [active, setActive] = React.useState(() => firstUnclaimedMission((id) => state.claimed[id]));
+  const advanceTimer = React.useRef(null);
+  React.useEffect(() => () => clearTimeout(advanceTimer.current), []);
   const [modal, setModal] = React.useState(null); // null | 'lucky-draw' | 'lucky-draw-submitted' | 'logout' | { type:'bonus'|'share'|'password', missionId, taskId?, title? }
   const [toastMessage, setToastMessage] = React.useState(null);
   // Submit Entry / Bonus request in flight. The ref blocks a second
@@ -1591,10 +1627,19 @@ function App() {
   // BONUS is a two-step confirm: the button opens the modal, the modal's
   // download action is what actually records the claim (matches the
   // brief: "Claim Prize opens a popup to download digital prizes").
+  const advanceAfterClaim = (missionId, isClaimed) => {
+    const next = MISSIONS.find((m) => m.id > missionId && !isClaimed(m.id));
+    if (!next) return;
+    clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => setActive((a) => (a === missionId ? next.id : a)), ADVANCE_DELAY_MS);
+  };
+
   const handleBonusDownload = (missionId, platform) => {
+    const firstClaim = !state.claimed[missionId];
     Api.claimBonus(missionId, platform);
     setState((s) => ({ ...s, claimed: { ...s.claimed, [missionId]: true } }));
     setModal(null);
+    if (firstClaim) advanceAfterClaim(missionId, (id) => id === missionId || state.claimed[id]);
   };
 
   const handleSubmitEntry = () => {
