@@ -133,7 +133,7 @@ footer{padding:20px; text-align:center; font-family:var(--font-body); font-size:
 @media (prefers-reduced-motion:reduce){
   .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
 }
-@media (max-width:805px) and (orientation:portrait){
+@media (max-width:805px) and (orientation:portrait) and (pointer:coarse){ /* touch-only phones and tablets */
   .brand,main,footer{ display:none; }
   .rotate-prompt{ display:flex; }
 }

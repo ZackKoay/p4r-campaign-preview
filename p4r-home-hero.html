@@ -154,6 +154,16 @@ html{scroll-behavior:smooth; scroll-snap-type:y mandatory}
    overflow blend in as if the footer just continues, instead of
    reading as a stray black rectangle. */
 body{background:var(--graphite-60);color:var(--white);font-family:var(--font-body);overflow-x:hidden}
+/* PCs (anything with a mouse or trackpad, touchscreen laptops
+   included) never get the phone treatment: no rotate prompt and no
+   phone layout, whatever the window size. A PC window narrower than
+   806px keeps the desktop layout at 806px and scrolls sideways. The
+   page's own clipping moves from the viewport to body (overflow-x:clip
+   doesn't make body a scroller), so the page can scroll sideways. */
+@media (max-width:805px) and (pointer:fine), (max-width:805px) and (pointer:none){
+  html{min-width:806px; overflow-x:auto}
+  body{overflow-x:clip}
+}
 img{max-width:100%;display:block}
 button,a{font-family:inherit;cursor:pointer}
 a{color:inherit;text-decoration:none}
@@ -670,7 +680,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
    lines if needed) instead of two padded rows that took 30-40% of a
    landscape screen. 56px, the same as the Event page's footer, plus
    the home-bar space on iPhones. */
-@media (max-width:805px), (max-height:500px){
+@media (max-width:805px) and (pointer:coarse), (max-height:500px){
   footer{
     height:calc(56px + env(safe-area-inset-bottom)); flex-wrap:nowrap; gap:16px;
     padding:0 max(20px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(20px,env(safe-area-inset-left));
@@ -915,7 +925,7 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 @media (prefers-reduced-motion:reduce){
   .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
 }
-@media (max-width:805px) and (orientation:portrait){
+@media (max-width:805px) and (orientation:portrait) and (pointer:coarse){ /* touch-only phones and tablets */
   #root{ display:none; }
   .rotate-prompt{ display:flex; }
 }

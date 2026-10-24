@@ -75,7 +75,7 @@ body{background:var(--black); min-height:100vh; overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .rotate-prompt-icon{ animation:none; transform:rotate(-90deg); }
 }
-@media (max-width:805px) and (orientation:portrait){
+@media (max-width:805px) and (orientation:portrait) and (pointer:coarse){ /* touch-only phones and tablets */
   .loading-video,.loading-overlay{ display:none; }
   .rotate-prompt{ display:flex; }
 }
