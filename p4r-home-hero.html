@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Persona 4 Revival — Midnight Channel (Home / First Visit)</title>
+<script src="assets/i18n.js"></script>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
   Home hero (first-visit) — built from Figma
@@ -939,8 +940,8 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
       <line x1="6" y1="17.5" x2="18" y2="17.5"/>
     </svg>
   </div>
-  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
-  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
+  <p class="hint" data-i18n="common.rotate.hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <div id="root"></div>
 
@@ -948,6 +949,17 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 import React from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 const h = React.createElement;
+
+// Thai / English (assets/i18n.js): L(key, english) is the Thai text for
+// that sheet key in Thai mode, otherwise the English given here.
+const I18N = window.P4R_I18N;
+const L = I18N.t;
+// Re-renders on the EN/TH toggle.
+function useLang() {
+  const [lang, setLang] = React.useState(I18N.lang);
+  React.useEffect(() => I18N.subscribe(setLang), []);
+  return lang;
+}
 
 /* ---------------------------------------------------------------
    BACKEND: replace these stubs with real endpoints.
@@ -1209,7 +1221,7 @@ function TurnKnob() {
 
   return h('button', {
       type: 'button', className: 'turn-knob', onClick: next,
-      'aria-label': `Channel tuning dial, currently ${current.n}. Tap to turn.`,
+      'aria-label': L('home.controls.dial_aria', 'Channel tuning dial, currently {n}. Tap to turn.', { n: current.n }),
     },
     h('svg', { viewBox: '0 0 170 170' },
       h('defs', null,
@@ -1251,7 +1263,7 @@ function TurnKnob() {
 
 function ControlPanel() {
   const [muted, toggleMuted] = useBackgroundMusic('assets/bgm-home.m4a', false); // default on, per Figma
-  const [lang, setLang] = React.useState('EN');
+  const lang = useLang() === 'th' ? 'TH' : 'EN';
   const [showLangHint, setShowLangHint] = React.useState(() => {
     try { return !localStorage.getItem('p4r_lang_hint_dismissed'); } catch (e) { return true; }
   });
@@ -1264,7 +1276,7 @@ function ControlPanel() {
     /* Figma node 4600:15191 "Language": only 2 languages, EN <-> TH
        (the lang-hint tooltip already said "Thai" — the toggle itself
        was wrongly cycling to "JP" instead). */
-    const next = lang === 'EN' ? 'TH' : 'EN'; setLang(next); Api.setLanguage(next);
+    const next = lang === 'EN' ? 'TH' : 'EN'; I18N.set(next.toLowerCase()); Api.setLanguage(next);
     if (showLangHint) dismissLangHint(); // engaging with the toggle answers the nudge
   };
   return h('div', { className: 'control-panel' },
@@ -1281,16 +1293,17 @@ function ControlPanel() {
         /* Figma node 4600:15914: icon+label describe the action a
            click performs, not the current state — playing shows
            "Mute" (with the mute-look icon), muted shows "Unmute". */
-        h(IconBtn, { label: muted ? 'Unmute' : 'Mute', onClick: toggleAudio },
+        h(IconBtn, { label: muted ? L('home.controls.unmute', 'Unmute') : L('home.controls.mute', 'Mute'), onClick: toggleAudio },
           muted ? h(IconVolume, { width: 16, height: 16, color: '#2D2D2D' }) : h(IconMute, { width: 16, height: 16, color: '#2D2D2D' })
         ),
         h(IconBtn, {
-          label: 'Language', onClick: cycleLang, className: 'lang',
-          hint: showLangHint ? h(LangHint, { text: 'CLICK HERE FOR THAI', onDismiss: dismissLangHint }) : null,
+          label: L('home.controls.language_label', 'Language'), onClick: cycleLang, className: 'lang',
+          // The nudge toward Thai only makes sense while the page is English.
+          hint: showLangHint && lang === 'EN' ? h(LangHint, { text: L('home.controls.lang_hint', 'CLICK HERE FOR THAI'), onDismiss: dismissLangHint }) : null,
         }, h('span', null, lang))
       ),
       h(TurnKnob, null),
-      h('div', { className: 'dial-labels' }, h('span', null, 'CHANNEL'), h('span', null, 'TUNING'))
+      h('div', { className: 'dial-labels' }, h('span', null, L('home.controls.channel_label', 'CHANNEL')), h('span', null, L('home.controls.tuning_label', 'TUNING')))
     )
   );
 }
@@ -1335,18 +1348,18 @@ function Hero() {
         h('div', { className: 'screen' },
           h('div', { className: 'screen-inner' },
             h('div', { className: 'title-block' },
-              h('img', { className: 'logo', src: 'assets/logo-p4r.png', alt: 'Persona 4 Revival logo' }),
+              h('img', { className: 'logo', src: 'assets/logo-p4r.png', alt: L('home.logo_alt', 'Persona 4 Revival logo') }),
               h('div', { className: 'headline' },
-                h('h1', null, 'WELCOME TO THE'),
-                h('h2', null, 'MIDNIGHT CHANNEL'),
-                h('p', null, 'Do mission & win prizes.')
+                h('h1', null, L('home.hero.headline_1', 'WELCOME TO THE')),
+                h('h2', null, L('home.hero.headline_2', 'MIDNIGHT CHANNEL')),
+                h('p', null, L('home.hero.tagline', 'Do mission & win prizes.'))
               )
             ),
             h('button', {
               className: 'cta cta--yellow cta--start',
               onClick: () => document.getElementById('info').scrollIntoView({ behavior: 'smooth' }),
             },
-              h('span', null, 'Start'), h(IconTV, { width: 24, height: 24 })
+              h('span', null, L('home.hero.cta_start', 'Start')), h(IconTV, { width: 24, height: 24 })
             )
           ),
           h('div', { className: 'screen-glass', 'aria-hidden': 'true' })
@@ -1367,17 +1380,17 @@ function InfoSection({ onOpenAccountModal }) {
            own stroke asset) — was wrongly using .cta--cyan, then
            wrongly using .cta--yellow. */
         h('button', { className: 'cta cta--outline cta--sm', onClick: onOpenAccountModal },
-          h('span', null, 'Log In'), h(IconLogin, { width: 24, height: 24 })
+          h('span', null, L('home.info.login_cta', 'Log In')), h(IconLogin, { width: 24, height: 24 })
         )
       ),
       h('div', { className: 'row-a' },
         h('div', { className: 'col-left' },
           h('div', { className: 'heading' },
-            h('span', null, 'COMPLETE\u00a0MISSIONS, WIN\u00a0BIG!') // non-breaking spaces: wraps only after the comma
+            h('span', null, L('home.info.heading', 'COMPLETE\u00a0MISSIONS, WIN\u00a0BIG!')) // non-breaking spaces: wraps only after the comma
           ),
-          h('p', { className: 'info-copy' }, 'Clear all the Midnight Channel missions to unlock prizes and enter the Lucky Draw for exclusive Persona 4 Revival merch.'),
-          h('button', { className: 'cta cta--dark cta--join', onClick: onOpenAccountModal }, h('span', null, 'JOIN NOW')),
-          h('p', { className: 'tnc' }, '*Terms & Conditions apply.')
+          h('p', { className: 'info-copy' }, L('home.info.copy', 'Clear all the Midnight Channel missions to unlock prizes and enter the Lucky Draw for exclusive Persona 4 Revival merch.')),
+          h('button', { className: 'cta cta--dark cta--join', onClick: onOpenAccountModal }, h('span', null, L('home.info.join_cta', 'JOIN NOW'))),
+          h('p', { className: 'tnc' }, L('home.info.tnc', '*Terms & Conditions apply.'))
         ),
         h('div', { className: 'col-right' },
           h('div', { className: 'merch-flower merch-flower--top-left' },
@@ -1386,7 +1399,7 @@ function InfoSection({ onOpenAccountModal }) {
           h('div', { className: 'merch-flower merch-flower--black' },
             h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-2.webp', alt: '' }))
           ),
-          h('div', { className: 'merch-card' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
+          h('div', { className: 'merch-card' }, h('span', null, L('home.merch.placeholder', h(React.Fragment, null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')))),
           h('div', { className: 'merch-flower merch-flower--yellow' },
             h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-1.webp', alt: '' }))
           )
@@ -1407,13 +1420,14 @@ function Footer() {
     h('div', { className: 'socials' },
       socials.map(({ label, Icon, href }) => h('a', { key: label, href, 'aria-label': label, target: '_blank', rel: 'noopener' }, h(Icon, null)))
     ),
-    h('p', null, '©ATLUS. ©SEGA. All rights reserved. | Persona 4 Revival "Midnight Channel" Campaign | ',
+    h('p', null, L('home.footer.copyright', '©ATLUS. ©SEGA. All rights reserved. | Persona 4 Revival "Midnight Channel" Campaign'), ' | ',
       h('button', { type: 'button', className: 'cookie-link', 'data-cookie-settings': '' }, 'Cookie settings')
     )
   );
 }
 
 function App() {
+  useLang();
   const [accountModalOpen, setAccountModalOpen] = React.useState(false);
   return h(React.Fragment, null,
     h(Hero, null),

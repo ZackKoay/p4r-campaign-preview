@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Persona 4 Revival — Midnight Channel (Event / Mission Tracker)</title>
+<script src="assets/i18n.js"></script>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
   Event page (mission tracker) — built from the Figma frame family:
@@ -715,8 +716,8 @@ a.modal-btn{text-decoration:none}
       <line x1="6" y1="17.5" x2="18" y2="17.5"/>
     </svg>
   </div>
-  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
-  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
+  <p class="hint" data-i18n="common.rotate.hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <div id="root"></div>
 
@@ -724,6 +725,14 @@ a.modal-btn{text-decoration:none}
 import React from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 const h = React.createElement;
+
+// Thai / English (public/assets/i18n.js): L(key, english, vars) is the
+// Thai text for that sheet key in Thai mode, otherwise the English given
+// here (a string or an element). This page has no toggle, so the
+// language is fixed for the visit.
+const L = window.P4R_I18N.t;
+window.P4R_I18N.apply(); // the rotate-your-phone prompt (plain HTML above)
+const merchLabel = (key) => h('span', null, L(key, h(React.Fragment, null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')));
 
 /* ---------------------------------------------------------------
    BACKEND: replace these stubs with real SEGA Account API calls.
@@ -832,9 +841,9 @@ function useBackgroundMusic(src, initialMuted) {
 }
 
 function AudioToggle({ muted, onToggle }) {
-  return h('button', { type: 'button', className: 'audio-toggle', onClick: onToggle, 'aria-label': muted ? 'Unmute' : 'Mute' },
+  return h('button', { type: 'button', className: 'audio-toggle', onClick: onToggle, 'aria-label': muted ? L('event.audio.unmute', 'Unmute') : L('event.audio.mute', 'Mute') },
     muted ? h(IconVolume, null) : h(IconMute, null),
-    h('span', { className: 'label' }, muted ? 'Unmute' : 'Mute')
+    h('span', { className: 'label' }, muted ? L('event.audio.unmute', 'Unmute') : L('event.audio.mute', 'Mute'))
   );
 }
 const IconDownload = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#FFFC00', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...p },
@@ -897,32 +906,32 @@ function fallbackCopy(text) {
 const MISSIONS = [
   {
     id: 1,
-    name: 'Stay Up to Date',
+    name: L('event.mission.1_name', 'Stay Up to Date'),
     tasks: [
       { id: '1.gate', label: 'Sign up for SEGA Account', kind: 'gate' },
-      { id: '1.a', label: 'Wishlist Persona 4 Revival', kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
-      { id: '1.b', label: 'Follow ATLUS SEA on Instagram', kind: 'link', href: 'https://www.instagram.com/atlus.sea/' },
-      { id: '1.c', label: 'Invite a friend to join', kind: 'share' },
+      { id: '1.a', label: L('event.task.1_a', 'Wishlist Persona 4 Revival'), kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
+      { id: '1.b', label: L('event.task.1_b', 'Follow ATLUS SEA on Instagram'), kind: 'link', href: 'https://www.instagram.com/atlus.sea/' },
+      { id: '1.c', label: L('event.task.1_c', 'Invite a friend to join'), kind: 'share' },
     ],
   },
   {
     id: 2,
-    name: 'Spread the Word',
+    name: L('event.mission.2_name', 'Spread the Word'),
     tasks: [
-      { id: '2.a', label: 'Join the ATLUS SEA server on Discord', kind: 'link', href: 'https://discord.com/invite/atlussea' },
-      { id: '2.b', label: 'Input password from KOL streams', kind: 'password', modalTitle: 'Enter the Password from the Stream' },
+      { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: 'https://discord.com/invite/atlussea' },
+      { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: 'Enter the Password from the Stream' },
     ],
   },
   {
     id: 3,
-    name: 'Reach the Goal',
+    name: L('event.mission.3_name', 'Reach the Goal'),
     tasks: [
       // Mock: coming back from SEGA's link page counts as linked (the
       // real site asks the API — see the Laravel event view).
       { id: '3.link', label: 'Link platform account', kind: 'platform', href: 'https://sega-account.com/auth/content/link' },
-      { id: '3.a', label: 'Play the Persona 4 Revival demo', kind: 'demo' },
-      { id: '3.b', label: 'Pre-order Persona 4 Revival', kind: 'upload', modalTitle: 'Upload Your Pre-order Receipt' },
-      { id: '3.c', label: 'Complete the secret message', kind: 'password', modalTitle: 'Enter the Secret Message', placeholder: 'Enter Secret Message' },
+      { id: '3.a', label: L('event.task.3_a', 'Play the Persona 4 Revival demo'), kind: 'demo' },
+      { id: '3.b', label: L('event.task.3_b', 'Pre-order Persona 4 Revival'), kind: 'upload', modalTitle: 'Upload Your Pre-order Receipt' },
+      { id: '3.c', label: L('event.task.3_c', 'Complete the secret message'), kind: 'password', modalTitle: 'Enter the Secret Message', placeholder: 'Enter Secret Message' },
     ],
   },
 ];
@@ -954,7 +963,7 @@ function TaskRow({ task, isDone, onGo, index = 0 }) {
       className: `task-btn ${locked ? 'task-btn--done' : 'task-btn--go'}`,
       disabled: locked,
       onClick: (e) => { e.stopPropagation(); if (!locked) onGo(); },
-    }, isDone ? 'DONE' : 'GO')
+    }, isDone ? L('event.task.done', 'DONE') : L('event.task.go', 'GO'))
   );
 }
 
@@ -982,14 +991,14 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
     h('div', { className: 'mission-screen' },
       h('div', { className: 'mission-head' },
         h('div', { className: 'mission-title', key: `title-${mission.id}` }, // new element per mission: replays its animation
-          h('span', null, `MISSION ${mission.id}:`),
+          h('span', null, L('event.mission.label_prefix', 'MISSION {n}:', { n: mission.id })),
           h('span', null, mission.name)
         ),
         h('div', { className: 'mission-toggle' },
           MISSIONS.map((m) => h('button', {
             key: m.id, type: 'button',
             className: `toggle-btn${m.id === active ? ' active' : ''}`,
-            'aria-label': `Show Mission ${m.id}`, 'aria-pressed': m.id === active,
+            'aria-label': L('event.mission.toggle_aria', 'Show Mission {n}', { n: m.id }), 'aria-pressed': m.id === active,
             onClick: () => onSelect(m.id),
           }, h('span', null, String(m.id))))
         )
@@ -1002,7 +1011,7 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
       ),
       h('div', { className: 'mission-progress' },
         h('div', { className: 'col' },
-          h('p', { className: 'label' }, `Mission ${mission.id} Progress${isComplete ? ' - Complete!' : ''}`),
+          h('p', { className: 'label' }, L('event.mission.progress_label', 'Mission {n} Progress', { n: mission.id }) + (isComplete ? ' - ' + L('event.mission.progress_complete_suffix', 'Complete!') : '')),
           h('div', { className: 'progress-track' },
             h('div', { className: 'progress-cap', 'aria-hidden': 'true' }),
             /* Fill the first `doneCount` segments in order (left to right),
@@ -1020,13 +1029,13 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
           // claiming (e.g. to re-download) shouldn't be blocked.
           type: 'button', className: 'bonus-btn', disabled: !isComplete,
           onClick: () => onBonusClick(mission.id),
-        }, 'BONUS')
+        }, L('event.bonus_button', 'BONUS'))
       ),
       isComplete && h('div', {
         className: 'stamp-wrap', key: `stamp-${mission.id}`,
         style: { '--stamp-delay': `${300 + (total - 1) * 50}ms` }, // after the last row is in
       },
-        h('div', { className: 'stamp' }, isClaimed ? 'CLAIMED!' : 'COMPLETED!')
+        h('div', { className: 'stamp' }, isClaimed ? L('event.stamp.claimed', 'CLAIMED!') : L('event.stamp.completed', 'COMPLETED!'))
       )
     )
   );
@@ -1036,18 +1045,18 @@ function PrizeRail({ entries, total, onEnterDraw }) {
   const glowing = entries > 0;
   return h('div', { className: 'prize-rail' },
     h('div', { className: 'lucky-draw-block' },
-      h('div', { className: `lucky-draw-title${glowing ? ' glow' : ''}` }, h('span', null, 'LUCKY DRAW')),
+      h('div', { className: `lucky-draw-title${glowing ? ' glow' : ''}` }, h('span', null, L('event.luckydraw.title', 'LUCKY DRAW'))),
       h('div', { className: 'lucky-draw-copy' },
-        h('p', null, 'Complete missions to accumulate entry chances!'),
-        h('p', null, `Entries acquired:  ${entries}/${total}`)
+        h('p', null, L('event.luckydraw.copy', 'Complete missions to accumulate entry chances!')),
+        h('p', null, L('event.luckydraw.entries_label', 'Entries acquired:  {n}/{total}', { n: entries, total }))
       )
     ),
-    h('div', { className: 'prize-merch' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')),
+    h('div', { className: 'prize-merch' }, merchLabel('event.merch.placeholder')),
     h('button', {
       type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
       onClick: () => glowing && onEnterDraw(),
-    }, 'ENTER LUCKY DRAW'),
-    h('p', { className: 'event-date' }, 'Event period: xx October - xx November 2025')
+    }, L('event.luckydraw.enter_button', 'ENTER LUCKY DRAW')),
+    h('p', { className: 'event-date' }, L('event.luckydraw.period', 'Event period: xx October - xx November 2025'))
   );
 }
 
@@ -1103,7 +1112,7 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
   }, []);
   return h('div', { className: 'modal-overlay', ref: overlayRef, onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', tabIndex: -1, ref: boxRef },
-      h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': 'Close' }, h(IconClose, { width: 24, height: 24 })),
+      h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': L('event.modal.close_aria', 'Close') }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, h('span', null, header)),
       h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children),
       actions && h('div', { className: 'modal-foot' }, actions)
@@ -1115,19 +1124,19 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
 // "all the missions" when that's actually true.
 function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, onSubmit, onClose }) {
   return h(Modal, {
-    onClose, header: 'LUCKY DRAW',
-    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? 'SUBMITTING...' : 'SUBMIT ENTRY'),
+    onClose, header: L('event.modal.luckydraw_header', 'LUCKY DRAW'),
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? 'SUBMITTING...' : L('event.modal.luckydraw_submit', 'SUBMIT ENTRY')),
   },
     h('div', { className: 'modal-content-row' },
       h('div', { className: 'modal-text' },
         h('div', null,
-          h('h3', null, entries >= entriesTotal ? "You've completed all the missions!" : `You've completed ${entries} of ${entriesTotal} missions!`),
-          h('p', { className: 'copy' }, `This gives you ${draws}/${drawsTotal} total draws.`),
-          h('p', { className: 'copy' }, 'Join us in lorem ipsum dolor sit amet, consectetur adipiscing elit.')
+          h('h3', null, entries >= entriesTotal ? L('event.modal.luckydraw_heading', "You've completed all the missions!") : `You've completed ${entries} of ${entriesTotal} missions!`),
+          h('p', { className: 'copy' }, L('event.modal.luckydraw_draws_copy', 'This gives you {draws}/{total} total draws.', { draws, total: drawsTotal })),
+          h('p', { className: 'copy' }, L('event.modal.luckydraw_join_copy', 'Join us in lorem ipsum dolor sit amet, consectetur adipiscing elit.'))
         ),
-        h('p', { className: 'tnc' }, '*T&Cs apply.')
+        h('p', { className: 'tnc' }, L('event.modal.luckydraw_tnc', '*T&Cs apply.'))
       ),
-      h('div', { className: 'modal-merch' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER'))
+      h('div', { className: 'modal-merch' }, merchLabel('event.merch.placeholder'))
     )
   );
 }
@@ -1135,11 +1144,11 @@ function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, 
 function LuckyDrawSubmittedModal({ onReturn }) {
   return h(Modal, {
     onClose: onReturn, centered: true,
-    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onReturn }, 'RETURN TO MISSION'),
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', onClick: onReturn }, L('event.modal.submitted_return', 'RETURN TO MISSION')),
   },
     h('div', { className: 'modal-text' },
-      h('h3', null, 'Your entry has been submitted!'),
-      h('p', { className: 'copy' }, '*Please note that your entry may be forfeited if you do not meet the requirements for any of the missions e.g. Wrong email, invalid receipt, etc.')
+      h('h3', null, L('event.modal.submitted_heading', 'Your entry has been submitted!')),
+      h('p', { className: 'copy' }, L('event.modal.submitted_copy', '*Please note that your entry may be forfeited if you do not meet the requirements for any of the missions e.g. Wrong email, invalid receipt, etc.'))
     )
   );
 }
@@ -1148,26 +1157,26 @@ function LogoutConfirmModal({ onConfirm, onCancel }) {
   return h(Modal, {
     onClose: onCancel, centered: true,
     actions: h(React.Fragment, null,
-      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, 'Yes, log me out'),
-      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--dark', onClick: onCancel }, 'No, bring me back')
+      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--outline', onClick: onConfirm }, L('event.modal.logout_confirm', 'Yes, log me out')),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--sm modal-btn--dark', onClick: onCancel }, L('event.modal.logout_cancel', 'No, bring me back'))
     ),
   },
     h('div', { className: 'modal-text' },
-      h('h3', null, 'Are you sure', h('br'), 'you want to logout?')
+      h('h3', null, L('event.modal.logout_heading', h(React.Fragment, null, 'Are you sure', h('br'), 'you want to logout?')))
     )
   );
 }
 
 function BonusModal({ busy, onDownload, onClose }) {
   return h(Modal, {
-    onClose, header: 'BONUS', centered: true,
+    onClose, header: L('event.modal.bonus_header', 'BONUS'), centered: true,
     actions: h(React.Fragment, null,
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), 'DESKTOP'),
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), 'MOBILE')
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_desktop', 'DESKTOP')),
+      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_mobile', 'MOBILE'))
     ),
   },
-    h('p', { className: 'copy' }, "Here's an exclusive Persona 4 Revival Merch!"),
-    h('div', { className: 'modal-merch modal-merch--wide' }, h('span', null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER'))
+    h('p', { className: 'copy' }, L('event.modal.bonus_copy', "Here's an exclusive Persona 4 Revival Merch!")),
+    h('div', { className: 'modal-merch modal-merch--wide' }, merchLabel('event.merch.placeholder'))
   );
 }
 
@@ -1182,7 +1191,7 @@ function BonusModal({ busy, onDownload, onClose }) {
    to join" task, which then locks like the others (see TaskRow). */
 function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
   return h(Modal, { onClose, centered: true, dismissOnOverlayClick: false },
-    h('div', { className: 'modal-text' }, h('h3', null, 'Share to your friends!')),
+    h('div', { className: 'modal-text' }, h('h3', null, L('event.modal.share_heading', 'Share to your friends!'))),
     h('div', { className: 'share-socials' },
       h('a', {
         className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('facebook'),
@@ -1210,7 +1219,7 @@ function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
     h('div', { className: 'share-link-row' },
       h('div', { className: 'share-link-box' }, shareUrl),
       h('button', { type: 'button', className: 'modal-btn modal-btn--dark modal-btn--sm', onClick: () => { onCopyLink(); onShared('copy-link'); } },
-        'Copy'
+        L('event.modal.share_copy_button', 'Copy')
       )
     )
   );
@@ -1226,7 +1235,7 @@ function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
    the Error state is fully wired and Figma-accurate, just not
    reachable until real server-side verification exists to actually
    reject a wrong password. */
-function PasswordModal({ title, placeholder = 'Enter Password', onClose, onVerify }) {
+function PasswordModal({ title, placeholder = L('event.modal.password_placeholder', 'Enter Password'), onClose, onVerify }) {
   const [value, setValue] = React.useState('');
   const [status, setStatus] = React.useState('idle'); // idle | verifying | error
   // Once they've typed a real character, the button stays in its dark
@@ -1262,12 +1271,12 @@ function PasswordModal({ title, placeholder = 'Enter Password', onClose, onVerif
           },
           onKeyDown: (e) => { if (e.key === 'Enter') handleSubmit(); },
         }),
-        status === 'error' && h('p', { className: 'password-error' }, 'Password invalid. Please try a different password.')
+        status === 'error' && h('p', { className: 'password-error' }, L('event.modal.password_error', 'Password invalid. Please try a different password.'))
       ),
       h('button', {
         type: 'button', className: `modal-btn modal-btn--sm ${touched ? 'modal-btn--dark' : 'modal-btn--empty'}`,
         disabled: submitDisabled, onClick: handleSubmit,
-      }, status === 'verifying' ? 'Verifying...' : 'Enter')
+      }, status === 'verifying' ? L('event.modal.password_verifying', 'Verifying...') : L('event.modal.password_submit', 'Enter'))
     )
   );
 }
@@ -1461,7 +1470,7 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
       preview
         ? h('div', { className: 'upload-zone upload-zone--filled' },
             h('div', { className: 'upload-thumb' },
-              h('img', { src: preview, alt: `Your receipt: ${file.name}` }),
+              h('img', { src: preview, alt: L('event.modal.upload_preview_alt', 'Your receipt: {name}', { name: file.name }) }),
               h('button', {
                 type: 'button', className: 'upload-remove', onClick: clear, disabled: busy,
                 'aria-label': 'Remove this image',
@@ -1602,7 +1611,7 @@ function App() {
 
   const handleCopyLink = () => {
     copyToClipboard(shareUrl);
-    setToastMessage('Link copied to clipboard!');
+    setToastMessage(L('event.toast.link_copied', 'Link copied to clipboard!'));
   };
 
   // Mock upload: a short "Uploading..." then success, like the password
@@ -1680,7 +1689,7 @@ function App() {
             h('div', { className: 'event-id' },
               h('span', { className: 'name' }, 'Protaginist_67'), // BACKEND: real username from SEGA Account
               h('div', { className: 'sep' }),
-              h('button', { className: 'logout', onClick: () => setModal('logout') }, 'Log Out')
+              h('button', { className: 'logout', onClick: () => setModal('logout') }, L('event.header.logout', 'Log Out'))
             ),
             h(AudioToggle, { muted: audioMuted, onToggle: toggleAudioMuted })
           )
@@ -1698,13 +1707,13 @@ function App() {
       ),
       h('footer', { className: 'event-footer' },
         h('div', { className: 'links' },
-          h('a', { href: 'https://www.sega.co.jp/en/privacypolicy/', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
+          h('a', { href: 'https://www.sega.co.jp/en/privacypolicy/', target: '_blank', rel: 'noopener' }, L('event.footer.privacy', 'Privacy Policy')),
           h('div', { className: 'sep' }),
-          h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
+          h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, L('event.footer.tos', 'Terms of Service')),
           h('div', { className: 'sep' }),
           h('a', { href: '#', 'data-cookie-settings': '' }, 'Cookie settings')
         ),
-        h('p', { className: 'copyright' }, '©ATLUS. ©SEGA.')
+        h('p', { className: 'copyright' }, L('event.footer.copyright', '©ATLUS. ©SEGA.'))
       )
     ),
     modal === 'lucky-draw' && h(LuckyDrawRevealModal, {

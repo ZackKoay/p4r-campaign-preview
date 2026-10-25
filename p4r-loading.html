@@ -6,7 +6,8 @@
 <!-- No-JS fallback: still gets you to the Event page once the entrance
      effect has had time to play (see the video's real ~5s runtime below). -->
 <meta http-equiv="refresh" content="5;url=p4r-event-page.html" />
-<title>Loading — Persona 4 Revival</title>
+<title data-i18n="loading.meta.title">Loading — Persona 4 Revival</title>
+<script src="assets/i18n.js"></script>
 <!-- ============================================================
   PERSONA 4 REVIVAL — "MIDNIGHT CHANNEL" CAMPAIGN SITE
   Loading screen — Figma node 4600:15951 ("P4R — Loading").
@@ -89,8 +90,8 @@ body{background:var(--black); min-height:100vh; overflow:hidden}
       <line x1="6" y1="17.5" x2="18" y2="17.5"/>
     </svg>
   </div>
-  <p>This experience is built for landscape.<br>Turn your phone sideways to continue.</p>
-  <p class="hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
+  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
+  <p class="hint" data-i18n="common.rotate.hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <!-- disablePictureInPicture/disableRemotePlayback: stop Chrome/Edge's
      automatic hover PiP icon and the cast/remote-playback affordance —
@@ -100,8 +101,14 @@ body{background:var(--black); min-height:100vh; overflow:hidden}
 </video>
 <div class="loading-overlay">
   <img src="assets/logo-p4r.png" alt="Persona 4 Revival">
-  <p>Connecting to SEGA Account<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+  <p id="status-text"><span id="status-label">Connecting to SEGA Account</span><span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
 </div>
+<script>
+  P4R_I18N.apply();
+  // The sheet's Thai ends in "…"; the animated dots after it play that part.
+  document.getElementById('status-label').textContent =
+    P4R_I18N.t('loading.status_connecting', 'Connecting to SEGA Account').replace(/(…|\.\.\.)$/, '');
+</script>
 <script>
   // BACKEND: this currently just times out and continues — swap for
   // "wait until the SEGA OAuth callback resolves, then continue" once
