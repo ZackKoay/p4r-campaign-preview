@@ -397,6 +397,16 @@ a{color:inherit;text-decoration:none}
 .copy-list li::before{content:""; position:absolute; left:0; top:.15em; width:16px; height:16px; background:url('assets/flower-1.webp') center/contain no-repeat; filter:drop-shadow(0 0 .6px var(--graphite)) drop-shadow(0 0 .6px var(--graphite))}
 /* Landscape phones: a shorter pane keeps the dialog near full size. */
 @media (max-height:500px){.scroll-copy__inner{max-height:130px}}
+/* Desktop: Lucky Draw opens wider (text column 284 -> 500px) with a
+   taller pane, so most screens show the whole campaign copy with little
+   or no scrolling. The pane is capped by the window's height so the
+   dialog still fits without useFitToScreen shrinking it. */
+@media (min-width:1024px) and (min-height:721px){
+  .modal-body--wide{max-width:920px}
+  .modal-body--wide .modal-text{flex:1 1 500px; max-width:500px}
+  .modal-body--wide .modal-merch{width:320px}
+  .modal-body--wide .scroll-copy__inner{max-height:min(380px, calc(100vh - 400px))}
+}
 @media (prefers-reduced-motion:reduce){.scroll-copy::after{transition:none}}
 /* Only the body copy keeps the 342px measure (Figma's text width). The
    title may use the dialog's full width, so a heading that fits on one
@@ -1119,7 +1129,7 @@ function useFitToScreen(overlayRef, boxRef) {
   }, []);
 }
 
-function Modal({ onClose, header, centered, children, actions, dismissOnOverlayClick = true }) {
+function Modal({ onClose, header, centered, wide, children, actions, dismissOnOverlayClick = true }) {
   const overlayRef = React.useRef(null);
   const boxRef = React.useRef(null);
   useFitToScreen(overlayRef, boxRef);
@@ -1139,7 +1149,7 @@ function Modal({ onClose, header, centered, children, actions, dismissOnOverlayC
     h('div', { className: 'modal-box', role: 'dialog', 'aria-modal': 'true', tabIndex: -1, ref: boxRef },
       h('button', { type: 'button', className: 'modal-close', onClick: onClose, 'aria-label': L('event.modal.close_aria', 'Close') }, h(IconClose, { width: 24, height: 24 })),
       header && h('div', { className: 'modal-header' }, h('span', null, header)),
-      h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}` }, children),
+      h('div', { className: `modal-body${centered ? ' modal-body--centered' : ''}${wide ? ' modal-body--wide' : ''}` }, children),
       actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
@@ -1188,7 +1198,7 @@ function ScrollCopy({ label, children }) {
 // "all the missions" when that's actually true.
 function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, onSubmit, onClose }) {
   return h(Modal, {
-    onClose, header: L('event.modal.luckydraw_header', 'LUCKY DRAW'),
+    onClose, wide: true, header: L('event.modal.luckydraw_header', 'LUCKY DRAW'),
     actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? 'SUBMITTING...' : L('event.modal.luckydraw_submit', 'SUBMIT ENTRY')),
   },
     h('div', { className: 'modal-content-row' },
