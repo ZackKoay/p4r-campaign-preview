@@ -407,6 +407,17 @@ a{color:inherit;text-decoration:none}
   .modal-body--wide .modal-merch{width:320px}
   .modal-body--wide .scroll-copy__inner{max-height:min(380px, calc(100vh - 400px))}
 }
+/* Landscape phones: Lucky Draw takes the screen's width (up to 900px,
+   leaving room for the close button) instead of its content's, and the
+   merch narrows, so the text column is two to three times wider and its
+   pane needs far less scrolling. Taller phones also get a taller pane. */
+@media (max-height:500px) and (min-width:600px){
+  .modal-body--wide{width:min(calc(100vw - 72px), 900px); max-width:none}
+  .modal-body--wide .modal-content-row{width:100%}
+  .modal-body--wide .modal-text{max-width:none}
+  .modal-body--wide .modal-merch{flex-basis:200px}
+  .modal-body--wide .scroll-copy__inner{max-height:max(130px, calc(100vh - 260px))}
+}
 @media (prefers-reduced-motion:reduce){.scroll-copy::after{transition:none}}
 /* Only the body copy keeps the 342px measure (Figma's text width). The
    title may use the dialog's full width, so a heading that fits on one
