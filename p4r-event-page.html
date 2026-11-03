@@ -762,7 +762,7 @@ a.modal-btn{text-decoration:none}
       <line x1="6" y1="17.5" x2="18" y2="17.5"/>
     </svg>
   </div>
-  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
+  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape mode.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
   <p class="hint" data-i18n="common.rotate.hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <div id="root"></div>
@@ -954,7 +954,7 @@ const MISSIONS = [
     id: 1,
     name: L('event.mission.1_name', 'Stay Up to Date'),
     tasks: [
-      { id: '1.gate', label: 'Sign up for SEGA Account', kind: 'gate' },
+      { id: '1.gate', label: L('event.task.1_gate', 'Sign up for SEGA Account'), kind: 'gate' },
       { id: '1.a', label: L('event.task.1_a', 'Wishlist Persona 4 Revival'), kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
       { id: '1.b', label: L('event.task.1_b', 'Follow ATLUS SEA on Instagram'), kind: 'link', href: 'https://www.instagram.com/atlus.sea/' },
       { id: '1.c', label: L('event.task.1_c', 'Invite a friend to join'), kind: 'share' },
@@ -965,7 +965,7 @@ const MISSIONS = [
     name: L('event.mission.2_name', 'Spread the Word'),
     tasks: [
       { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: 'https://discord.com/invite/atlussea' },
-      { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: 'Enter the Password from the Stream' },
+      { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: L('event.modal.password_title_kol', 'Enter the Password from the KOL Stream'), modalHint: L('event.modal.password_hint_kol', 'Hint: Visit the official ATLUS SEA Instagram to find out more.') },
     ],
   },
   {
@@ -974,10 +974,10 @@ const MISSIONS = [
     tasks: [
       // Mock: coming back from SEGA's link page counts as linked (the
       // real site asks the API — see the Laravel event view).
-      { id: '3.link', label: 'Link platform account', kind: 'platform', href: 'https://sega-account.com/auth/content/link' },
+      { id: '3.link', label: L('event.task.3_link', 'Link game platform account'), kind: 'platform', href: 'https://sega-account.com/auth/content/link' },
       { id: '3.a', label: L('event.task.3_a', 'Play the Persona 4 Revival demo'), kind: 'demo' },
-      { id: '3.b', label: L('event.task.3_b', 'Pre-order Persona 4 Revival'), kind: 'upload', modalTitle: 'Upload Your Pre-order Receipt' },
-      { id: '3.c', label: L('event.task.3_c', 'Complete the secret message'), kind: 'password', modalTitle: 'Enter the Secret Message', placeholder: 'Enter Secret Message' },
+      { id: '3.b', label: L('event.task.3_b', 'Pre-order Persona 4 Revival'), kind: 'upload', modalTitle: L('event.modal.upload_title', 'Upload Your Pre-order Receipt') },
+      { id: '3.c', label: L('event.task.3_c', 'Complete the secret message'), kind: 'password', modalTitle: L('event.modal.password_title_secret', 'Enter the Secret Message'), modalHint: L('event.modal.password_hint_secret', 'Hint: Ask staff, or visit the official ATLUS SEA Instagram to find out more.'), placeholder: L('event.modal.password_placeholder_secret', 'Enter Secret Message') },
     ],
   },
 ];
@@ -1210,12 +1210,12 @@ function ScrollCopy({ label, children }) {
 function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, onSubmit, onClose }) {
   return h(Modal, {
     onClose, wide: true, header: L('event.modal.luckydraw_header', 'LUCKY DRAW'),
-    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? 'SUBMITTING...' : L('event.modal.luckydraw_submit', 'SUBMIT ENTRY')),
+    actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? L('event.modal.luckydraw_submitting', 'SUBMITTING...') : L('event.modal.luckydraw_submit', 'SUBMIT ENTRY')),
   },
     h('div', { className: 'modal-content-row' },
       h('div', { className: 'modal-text' },
         h('div', null,
-          h('h3', null, entries >= entriesTotal ? L('event.modal.luckydraw_heading', "You've completed all the missions!") : `You've completed ${entries} of ${entriesTotal} missions!`),
+          h('h3', null, entries >= entriesTotal ? L('event.modal.luckydraw_heading', "You've completed all the missions!") : L('event.modal.luckydraw_heading_partial', "You've completed {n} of {total} missions!", { n: entries, total: entriesTotal })),
           h('p', { className: 'copy' }, L('event.modal.luckydraw_draws_copy', 'This gives you {draws}/{total} total draws.', { draws, total: drawsTotal })),
         ),
         h(ScrollCopy, { label: L('event.modal.luckydraw_details_aria', 'Campaign details and prizes') },
@@ -1322,7 +1322,7 @@ function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
    the Error state is fully wired and Figma-accurate, just not
    reachable until real server-side verification exists to actually
    reject a wrong password. */
-function PasswordModal({ title, placeholder = L('event.modal.password_placeholder', 'Enter Password'), onClose, onVerify }) {
+function PasswordModal({ title, hint, placeholder = L('event.modal.password_placeholder', 'Enter Password'), onClose, onVerify }) {
   const [value, setValue] = React.useState('');
   const [status, setStatus] = React.useState('idle'); // idle | verifying | error
   // Once they've typed a real character, the button stays in its dark
@@ -1344,7 +1344,7 @@ function PasswordModal({ title, placeholder = L('event.modal.password_placeholde
   };
 
   return h(Modal, { onClose, centered: true },
-    h('div', { className: 'modal-text' }, h('h3', null, title)),
+    h('div', { className: 'modal-text' }, h('h3', null, title), hint && h('p', { className: 'copy' }, hint)),
     h('div', { className: 'password-row' },
       h('div', { className: 'password-field' },
         h('input', {
@@ -1392,9 +1392,9 @@ const PLATFORM_ICONS = {
   nintendo: { viewBox: '0 0 142.86 127.63', paths: ["M8.6,93.44l5.42,7.3h2.15v-10.91h-2.21v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3ZM61.87,89.82h-9.25v2.32h3.49v8.6h2.35v-8.6h3.41v-2.32ZM61.2,126.91h4.58v-20.59h-4.58v20.59ZM37.28,93.44l5.42,7.3h2.16v-10.91h-2.22v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3ZM47.63,121.26l-4.36-14.94h-3.65l-4.34,14.89-3.96-14.89h-4.48l5.83,20.59h4.95l3.84-13.57,3.81,13.57h4.97l5.86-20.59h-4.48l-3.98,14.94ZM14.93,114.4c-2.98-.49-4.9-1.04-4.9-2.43,0-1.6,2.14-2.22,5.01-2.22,2.67,0,5.35,1.02,6.3,1.42l1.46-3.56c-1.04-.41-4.33-1.59-7.97-1.59-4.45,0-9.18,2.17-9.18,6.19,0,3.26,2.3,4.93,8.2,5.94,4.16.72,6.45,1.11,6.39,2.9-.04.99-.8,2.64-5.49,2.64-3.77,0-6.43-1.37-7.36-1.92l-1.95,3.52c1.04.55,4.52,2.18,9.01,2.18,6.55,0,10.01-2.27,10.01-6.56,0-2.49-.84-5.08-9.55-6.51M26.83,89.82h-2.43v10.91h2.43v-10.91ZM97.18,100.74v-10.91h-2.22v7.17l-5.37-7.17h-2.2v10.91h2.21v-7.3l5.42,7.3h2.15ZM78.35,98.72h-6.27v-2.56h5.8v-1.97h-5.8v-2.36h6.27v-2h-8.49v10.91h8.49v-2.02ZM136.43,124.44h.94v2.48h.6v-2.48h.92v-.59h-2.46v.59ZM129.41,89.46c-3.21,0-5.81,2.61-5.81,5.83s2.61,5.82,5.81,5.82,5.81-2.61,5.81-5.82-2.61-5.83-5.81-5.83M129.41,98.68c-1.87,0-3.39-1.52-3.39-3.4s1.52-3.4,3.39-3.4,3.39,1.52,3.39,3.4-1.52,3.4-3.39,3.4M142.01,123.85l-.77,2.24-.77-2.24h-.85v3.06h.55v-2.35l.8,2.33v.03h.54v-.03s.81-2.33.81-2.33v2.35h.55v-3.06h-.85ZM130.16,114.44h-9.62v-8.12h-4.26v20.59h4.26v-8.21h9.62v8.21h4.26v-20.59h-4.26v8.12ZM70.81,110.69h6.58v16.22h4.43v-16.22h6.43v-4.37h-17.44v4.37ZM102.57,110.23c2.33,0,4.49,1.24,5.65,3.2l3.35-2.91c-2.05-3.05-5.44-4.86-9.12-4.86-6.06,0-10.99,4.93-10.99,10.99s4.93,10.99,10.99,10.99c3.69,0,7.07-1.81,9.12-4.86l-3.35-2.91c-1.16,1.96-3.33,3.2-5.65,3.2-3.6,0-6.53-2.88-6.53-6.41s2.93-6.41,6.53-6.41M110.93,89.82h-4.51v10.91h4.51c3.09,0,5.61-2.45,5.61-5.46s-2.52-5.46-5.61-5.46M111.04,98.45h-2.38v-6.33h2.38c1.74,0,3.16,1.42,3.16,3.16s-1.42,3.16-3.16,3.16M34.93,1.17h-16.07C8.44,1.17,0,9.61,0,20.02v35.83c0,10.41,8.44,18.86,18.86,18.86h16.07c.3,0,.54-.24.54-.54V1.7c0-.3-.24-.54-.54-.54M29.54,68.78h-10.68c-3.45,0-6.7-1.34-9.14-3.79-2.44-2.44-3.79-5.69-3.79-9.14V20.02c0-3.46,1.34-6.7,3.78-9.14,2.44-2.44,5.69-3.79,9.14-3.79h10.68v61.68ZM18.36,16.31c3.82,0,6.91,3.1,6.91,6.91s-3.1,6.92-6.91,6.92-6.91-3.1-6.91-6.92,3.1-6.91,6.91-6.91M54.68,1.17h-11.38c-.27,0-.48.21-.48.48v72.52c0,.3.24.54.54.54h11.32c10.41,0,18.86-8.44,18.86-18.86V20.02c0-10.41-8.44-18.86-18.86-18.86M57.38,49.05c-4.11,0-7.44-3.33-7.44-7.44s3.33-7.44,7.44-7.44,7.43,3.33,7.43,7.44-3.33,7.44-7.43,7.44M85.93,74.71v-12.64c1.31-1.07,6.25-5.32,11.47-9.82,4.7-4.04,9.39-8.09,14.18-12.03,3.61-2.97,10.46-8.41,10.68-13.74.26-6.27-4.19-10.34-10.84-10.34-3.96,0-8.61,2.2-11.42,4.6-2.86,2.43-6.43,5.49-6.43,5.49l-10.41-11.29C91.99,5.03,101.49,0,111.4,0c21.11-.52,37.01,23,20.96,41.45-5.83,6.42-12.44,12.43-19.24,17.78h27.56v15.47h-54.76Z"] },
 };
 const DEMO_STEPS = [
-  'Open your preferred platform.',
-  'Search "Persona 4 Revival"',
-  'Select "Play Demo"',
+  L('event.modal.demo_step_1', 'Open your preferred platform.'),
+  L('event.modal.demo_step_2', 'Search "Persona 4 Revival"'),
+  L('event.modal.demo_step_3', 'Select "Play Demo"'),
 ];
 
 function DemoModal({ defaultPlatform, onPlay, onClose }) {
@@ -1415,19 +1415,19 @@ function DemoModal({ defaultPlatform, onPlay, onClose }) {
     );
   };
   return h(Modal, {
-    onClose, header: 'Experience the Demo Now', centered: true,
-    actions: platform ? playLink(platform, 'Play Demo', '') : null,
+    onClose, header: L('event.modal.demo_header', 'Experience the Demo Now'), centered: true,
+    actions: platform ? playLink(platform, L('event.modal.demo_play', 'Play Demo'), '') : null,
   },
     h('div', { className: 'modal-text demo-howto' },
-      h('h3', null, 'How to get the demo'),
+      h('h3', null, L('event.modal.demo_heading', 'How to get the demo')),
       h('ol', { className: 'demo-steps' },
         DEMO_STEPS.map((step, i) => h('li', { key: i },
-          h('span', { className: 'demo-step-label' }, `Step ${i + 1}`), h('span', null, step)
+          h('span', { className: 'demo-step-label' }, L('event.modal.demo_step_label', 'Step {n}', { n: i + 1 })), h('span', null, step)
         ))
       )
     ),
     !platform && h('div', { className: 'demo-platforms' },
-      h('p', { className: 'copy' }, 'Play Demo on:'),
+      h('p', { className: 'copy' }, L('event.modal.demo_play_on', 'Play Demo on:')),
       h('div', { className: 'modal-actions' }, DEMO_PLATFORMS.map((p) => playLink(p, p.label, 'cta--sm')))
     )
   );
@@ -1510,17 +1510,17 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
 
   const takeFile = (next) => {
     if (!next || busy) return;
-    if (!next.type.startsWith('image/')) { clear(); fail('Choose an image (JPEG or PNG).'); return; }
+    if (!next.type.startsWith('image/')) { clear(); fail(L('event.modal.upload_error_type', 'Choose an image (JPEG or PNG).')); return; }
     setStatus('preparing'); setError('');
     const ready = RECEIPT_KEEP_TYPES.includes(next.type) && next.size <= RECEIPT_MAX_BYTES
       ? Promise.resolve(next)
       : shrinkImage(next, RECEIPT_MAX_BYTES);
     ready
       .then((out) => {
-        if (out.size > RECEIPT_MAX_BYTES) { clear(); fail('That image is too large. Choose another one.'); return; }
+        if (out.size > RECEIPT_MAX_BYTES) { clear(); fail(L('event.modal.upload_error_size', 'That image is too large. Choose another one.')); return; }
         setFile(out); setPreview(URL.createObjectURL(out)); setStatus('idle');
       })
-      .catch(() => { clear(); fail("That image couldn't be opened. Choose a JPEG or PNG."); });
+      .catch(() => { clear(); fail(L('event.modal.upload_error_open', "That image couldn't be opened. Choose a JPEG or PNG.")); });
   };
 
   const handlePick = (e) => {
@@ -1546,7 +1546,7 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
     actions: h('button', {
       type: 'button', className: `modal-btn modal-btn--sm ${file && !busy ? 'modal-btn--dark' : 'modal-btn--empty'}`,
       disabled: !file || busy, onClick: handleSubmit,
-    }, status === 'uploading' ? 'Uploading...' : 'Upload Receipt'),
+    }, status === 'uploading' ? L('event.modal.upload_uploading', 'Uploading...') : L('event.modal.upload_button', 'Upload Receipt')),
   },
     h('div', { className: 'modal-text' }, h('h3', null, title)),
     h('div', { className: 'upload-field' },
@@ -1560,7 +1560,7 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
               h('img', { src: preview, alt: L('event.modal.upload_preview_alt', 'Your receipt: {name}', { name: file.name }) }),
               h('button', {
                 type: 'button', className: 'upload-remove', onClick: clear, disabled: busy,
-                'aria-label': 'Remove this image',
+                'aria-label': L('event.modal.upload_remove_aria', 'Remove this image'),
               }, h(IconClose, { width: 14, height: 14 }))
             )
           )
@@ -1572,10 +1572,10 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
             onDrop: handleDrop,
           },
             h(IconUpload, { className: 'upload-zone-icon', 'aria-hidden': 'true' }),
-            h('span', { className: 'upload-zone-title' }, status === 'preparing' ? 'Preparing your image...' : 'Choose an image'),
-            h('span', { className: 'upload-zone-hint' }, 'or drag it here')
+            h('span', { className: 'upload-zone-title' }, status === 'preparing' ? L('event.modal.upload_preparing', 'Preparing your image...') : L('event.modal.upload_choose', 'Choose an image')),
+            h('span', { className: 'upload-zone-hint' }, L('event.modal.upload_drag', 'or drag it here'))
           ),
-      h('p', { className: 'upload-hint' }, 'Upload 1 image of your pre-order receipt (JPEG or PNG, up to 1 MB).'),
+      h('p', { className: 'upload-hint' }, L('event.modal.upload_hint', 'Upload 1 image of your pre-order receipt (JPEG or PNG, up to 1 MB). You may reupload the receipt at any time but only the latest receipt will be used.')),
       status === 'error' && h('p', { className: 'password-error' }, error)
     )
   );
@@ -1675,7 +1675,7 @@ function App() {
       return; // completes once the receipt uploads — see handleReceiptUpload
     }
     if (task.kind === 'password') {
-      setModal({ type: 'password', missionId, taskId: task.id, title: task.modalTitle, placeholder: task.placeholder });
+      setModal({ type: 'password', missionId, taskId: task.id, title: task.modalTitle, hint: task.modalHint, placeholder: task.placeholder });
       return; // completes once the visitor enters a value that verifies — see handlePasswordVerify
     }
     if (task.kind === 'api') {
@@ -1708,7 +1708,7 @@ function App() {
       Api.uploadReceipt(taskId, file);
       setState((s) => ({ ...s, done: { ...s.done, [taskId]: true } }));
       setModal(null);
-      setToastMessage('Receipt uploaded!');
+      setToastMessage(L('event.toast.receipt_uploaded', 'Receipt uploaded!'));
       resolve(null);
     }, 1200);
   });
@@ -1770,7 +1770,7 @@ function App() {
       h('div', { className: 'event-inner' },
         h('div', { className: 'event-top' },
           h('a', { className: 'event-logo-link', href: 'p4r-home-hero.html' },
-            h('img', { className: 'event-logo', src: 'assets/event-logo-mark.png', alt: 'Persona 4 Revival — back to Home' })
+            h('img', { className: 'event-logo', src: 'assets/event-logo-mark.png', alt: L('event.logo_alt', 'Persona 4 Revival — back to Home') })
           ),
           h('div', { className: 'event-top-right' },
             h('div', { className: 'event-id' },
@@ -1798,7 +1798,7 @@ function App() {
           h('div', { className: 'sep' }),
           h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, L('event.footer.tos', 'Terms of Service')),
           h('div', { className: 'sep' }),
-          h('a', { href: '#', 'data-cookie-settings': '' }, 'Cookie settings')
+          h('a', { href: '#', 'data-cookie-settings': '' }, L('common.cookie_settings', 'Cookie settings'))
         ),
         h('p', { className: 'copyright' }, L('event.footer.copyright', '©ATLUS. ©SEGA.'))
       )
@@ -1821,7 +1821,7 @@ function App() {
       onCopyLink: handleCopyLink,
     }),
     modal && modal.type === 'password' && h(PasswordModal, {
-      key: modal.taskId, title: modal.title, placeholder: modal.placeholder,
+      key: modal.taskId, title: modal.title, hint: modal.hint, placeholder: modal.placeholder,
       onClose: () => setModal(null),
       onVerify: (value) => handlePasswordVerify(modal.missionId, modal.taskId, value),
     }),

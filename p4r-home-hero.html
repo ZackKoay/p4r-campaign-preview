@@ -940,11 +940,12 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
       <line x1="6" y1="17.5" x2="18" y2="17.5"/>
     </svg>
   </div>
-  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
+  <p><span data-i18n="common.rotate.line_1">This experience is built for landscape mode.</span><br><span data-i18n="common.rotate.line_2">Turn your phone sideways to continue.</span></p>
   <p class="hint" data-i18n="common.rotate.hint">If it doesn't rotate on its own, turn off Rotation Lock in your device settings.</p>
 </div>
 <div id="root"></div>
 
+<script>P4R_I18N.apply(); // the rotate-your-phone prompt (plain HTML above)</script>
 <script type="module">
 import React from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
@@ -1189,7 +1190,7 @@ function IconBtn({ children, label, onClick, className = '', hint = null }) {
 function LangHint({ text, onDismiss }) {
   return h('div', { className: 'lang-hint', role: 'status' },
     h('span', null, text),
-    h('button', { className: 'lang-hint-close', onClick: onDismiss, 'aria-label': 'Dismiss language hint' }, h(IconClose))
+    h('button', { className: 'lang-hint-close', onClick: onDismiss, 'aria-label': L('home.controls.lang_hint_close_aria', 'Close') }, h(IconClose))
   );
 }
 
@@ -1421,7 +1422,7 @@ function Footer() {
       socials.map(({ label, Icon, href }) => h('a', { key: label, href, 'aria-label': label, target: '_blank', rel: 'noopener' }, h(Icon, null)))
     ),
     h('p', null, L('home.footer.copyright', '©ATLUS. ©SEGA. All rights reserved. | Persona 4 Revival "Midnight Channel" Campaign'), ' | ',
-      h('button', { type: 'button', className: 'cookie-link', 'data-cookie-settings': '' }, 'Cookie settings')
+      h('button', { type: 'button', className: 'cookie-link', 'data-cookie-settings': '' }, L('common.cookie_settings', 'Cookie settings'))
     )
   );
 }
