@@ -501,6 +501,9 @@ a{color:inherit;text-decoration:none}
    2px border rather than adding a separate outline. */
 .password-input:focus{border-color:var(--yellow-fog-20); outline:none}
 .password-error{font-family:var(--font-body); font-weight:400; font-size:11px; color:var(--red); margin:4px 0 0}
+/* Where to find the answer, under the input (below the error, which
+   belongs to the input itself). */
+.password-hint{font-family:var(--font-body); font-weight:400; font-size:12px; line-height:1.4; color:#636363; margin:4px 0 0; text-align:left}
 /* Every other modal-btn use on this page is always-enabled, so this is
    the first one that needs a real disabled look — but only for the
    pristine Empty state (node 4946:7933's own asset, fill #E2E2E2/text
@@ -1344,7 +1347,7 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
   };
 
   return h(Modal, { onClose, centered: true },
-    h('div', { className: 'modal-text' }, h('h3', null, title), hint && h('p', { className: 'copy' }, hint)),
+    h('div', { className: 'modal-text' }, h('h3', null, title)),
     h('div', { className: 'password-row' },
       h('div', { className: 'password-field' },
         h('input', {
@@ -1358,7 +1361,8 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
           },
           onKeyDown: (e) => { if (e.key === 'Enter') handleSubmit(); },
         }),
-        status === 'error' && h('p', { className: 'password-error' }, L('event.modal.password_error', 'Password invalid. Please try a different password.'))
+        status === 'error' && h('p', { className: 'password-error' }, L('event.modal.password_error', 'Password invalid. Please try a different password.')),
+        hint && h('p', { className: 'password-hint' }, hint)
       ),
       h('button', {
         type: 'button', className: `modal-btn modal-btn--sm ${touched ? 'modal-btn--dark' : 'modal-btn--empty'}`,

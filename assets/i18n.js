@@ -135,10 +135,10 @@
     "common.cookie_settings": "การตั้งค่าคุกกี้",
     "event.task.3_link": "เชื่อมต่อบัญชีแพลตฟอร์มเกม",
     "event.modal.password_title_kol": "กรอกรหัสผ่านที่ได้รับจากไลฟ์ของ KOL หรือ ส\u2060ต\u2060รี\u2060ม\u2060เ\u2060ม\u2060อ\u2060ร์", // \u2060 between its letters: "สตรีมเมอร์" (streamer) never splits across lines
-    "event.modal.password_hint_kol": "คำใบ้: ติดตามรายละเอียดเพิ่มเติมได้ที่ Instagram อย่างเป็นทางการของ ATLUS SEA",
+    "event.modal.password_hint_kol": "คำใบ้: ติดตามรายละเอียดเพิ่มเติมได้ที่ Instagram อย่างเป็นทางการของ ATLUS\u00a0SEA",
     "event.modal.password_title_secret": "กรอกข้อความลับ",
     "event.modal.password_placeholder_secret": "กรอกข้อความลับ",
-    "event.modal.password_hint_secret": "คำใบ้: สอบถามทีมงาน หรือติดตามรายละเอียดเพิ่มเติมได้ที่ Instagram อย่างเป็นทางการของ ATLUS SEA",
+    "event.modal.password_hint_secret": "คำใบ้: สอบถามทีมงาน หรือติดตามรายละเอียดเพิ่มเติมได้ที่ Instagram อย่างเป็นทางการของ ATLUS\u00a0SEA",
     "event.modal.luckydraw_heading_partial": "คุณทำภารกิจสำเร็จแล้ว {n} จาก {total} ภารกิจ!",
     "event.modal.luckydraw_submitting": "กำลังส่งข้อมูล…",
     "event.modal.demo_header": "ทดลองเล่นเดโมได้แล้วตอนนี้",
