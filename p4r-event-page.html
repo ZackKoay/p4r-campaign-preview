@@ -351,6 +351,23 @@ a{color:inherit;text-decoration:none}
    right:-14px per Figma node 4484:3349), so the box stays
    overflow:visible; the overlay's padding leaves room for it. */
 .modal-box:focus{outline:none}
+/* Keyboard focus: a yellow ring with a dark edge inside it, so it shows
+   on the red Event page, the yellow Home sections and white pop-ups alike.
+   Mouse clicks don't trigger it (:focus-visible). tabindex="-1" boxes
+   (the pop-up itself) are left out: focus only rests there briefly. */
+a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible{
+  outline:3px solid #FFFC00; outline-offset:2px; box-shadow:0 0 0 2px #1B1B1B;
+}
+/* The slanted buttons' clip-path cuts the focus ring off, so focus shows
+   inside their own shape instead: the colours swap (yellow buttons turn
+   dark with yellow text, the dark pop-up button turns yellow), edged by a
+   stroke that follows the slant (half of the 8px stroke falls outside
+   the clip). */
+.task-btn:focus-visible, .bonus-btn:focus-visible, .enter-draw-btn:focus-visible, .modal-btn:focus-visible{
+  outline:none; box-shadow:none; background-color:#1B1B1B; color:#FFFC00;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M12,0 L100,0 L88,100 L0,100 Z' fill='none' stroke='%23FFFC00' stroke-width='8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); background-size:100% 100%; background-repeat:no-repeat;
+}
+.modal-btn--dark:focus-visible, .modal-btn--outline:focus-visible{background-color:#FFFC00; color:#1B1B1B; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M12,0 L100,0 L88,100 L0,100 Z' fill='none' stroke='%231B1B1B' stroke-width='8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")}
 .modal-box{
   position:relative; background:#fff; border:4px solid var(--graphite);
   box-shadow:4px 4px 0 var(--yellow-fog-20); max-width:calc(100vw - 40px); overflow:visible;
@@ -1143,20 +1160,46 @@ function useFitToScreen(overlayRef, boxRef) {
   }, []);
 }
 
+// Enabled, visible controls inside root, in Tab order.
+function focusables(root) {
+  return [...root.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')].filter((el) =>
+    !el.disabled && el.tabIndex >= 0 && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+}
+
 function Modal({ onClose, header, centered, wide, children, actions, dismissOnOverlayClick = true }) {
   const overlayRef = React.useRef(null);
   const boxRef = React.useRef(null);
   useFitToScreen(overlayRef, boxRef);
   const onCloseRef = React.useRef(onClose);
   onCloseRef.current = onClose;
+  // Whatever had focus when the pop-up opened (the GO button), read on
+  // the first render: by the time effects run, an autoFocus field inside
+  // (the password input) already has focus.
+  const [opener] = React.useState(() => document.activeElement);
   React.useEffect(() => {
-    const opener = document.activeElement;
     if (boxRef.current && !boxRef.current.contains(document.activeElement)) boxRef.current.focus();
-    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current(); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
+      // Tab stays inside the pop-up: from the last control it wraps to
+      // the first, and Shift+Tab from the first wraps to the last.
+      if (e.key !== 'Tab' || !boxRef.current) return;
+      const items = focusables(boxRef.current);
+      if (!items.length) { e.preventDefault(); return; }
+      const first = items[0], last = items[items.length - 1];
+      const at = document.activeElement;
+      if (e.shiftKey && (at === first || !boxRef.current.contains(at) || at === boxRef.current)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (at === last || !boxRef.current.contains(at))) { e.preventDefault(); first.focus(); }
+    };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
-      if (opener && opener.focus && document.contains(opener)) opener.focus();
+      // Back to the GO button that opened it. If that task is now done
+      // (its button disabled) or gone, the next control after it instead.
+      if (!opener || !document.contains(opener)) return;
+      if (!opener.disabled) { opener.focus(); return; }
+      const all = focusables(document.body);
+      const next = all.find((el) => opener.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+      if (next) next.focus();
     };
   }, []);
   return h('div', { className: 'modal-overlay', ref: overlayRef, onClick: (e) => { if (dismissOnOverlayClick && e.target === e.currentTarget) onClose(); } },
