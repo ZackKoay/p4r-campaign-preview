@@ -598,6 +598,9 @@ a.modal-btn{text-decoration:none}
    states). Same height for all; the Switch 2 logo carries its own small
    wordmark, so it's a little taller to stay legible. */
 .cta-icon{width:18px; height:18px}
+/* Switch 2's "Releases 20 May": a small second line under the label. */
+.cta-label{display:flex; flex-direction:column; align-items:flex-start; line-height:1.1}
+.cta-note{font-family:var(--font-body); font-weight:400; font-size:11px; opacity:.8}
 .cta-icon--nintendo{width:22px; height:22px}
 @media (prefers-reduced-motion:reduce){.cta{transition:none}}
 
@@ -1424,11 +1427,13 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
 // CONTENT: each platform's demo page — placeholders until the client
 // sends the real links. The ids are what the API's default_platform
 // should return.
+// The client's order: Xbox, Steam, PlayStation, Switch 2. Each opens the
+// game's own store page, where the demo is.
 const DEMO_PLATFORMS = [
+  { id: 'xbox', label: 'Xbox', href: 'https://www.xbox.com/en-US/games/store/persona-4-revival/9n40dk5n4ld4' },
   { id: 'steam', label: 'Steam', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
-  { id: 'playstation', label: 'PlayStation', href: 'https://store.playstation.com/' },
-  { id: 'xbox', label: 'Xbox', href: 'https://www.xbox.com/games/store' },
-  { id: 'nintendo', label: 'Nintendo Switch 2', href: 'https://www.nintendo.com/store/' },
+  { id: 'playstation', label: 'PlayStation', href: 'https://www.playstation.com/en-sg/games/persona-4-revival/' },
+  { id: 'nintendo', label: 'Nintendo Switch 2', note: L('event.modal.demo_note_ns2', 'Releases 20 May'), href: 'https://www.nintendo.com/my/games/detail.html?id=70010000131659' },
 ];
 // Platform logos (assets/icons/steam.svg, ps.svg, xbox.svg, ns2.svg),
 // inlined so they take the button's text colour.
@@ -1458,7 +1463,9 @@ function DemoModal({ defaultPlatform, onPlay, onClose }) {
       logo && h('svg', { className: `cta-icon cta-icon--${p.id}`, viewBox: logo.viewBox, 'aria-hidden': 'true', focusable: 'false' },
         logo.paths.map((d, i) => h('path', { key: i, d }))
       ),
-      h('span', null, label)
+      p.note
+        ? h('span', { className: 'cta-label' }, h('span', null, label), h('small', { className: 'cta-note' }, p.note))
+        : h('span', null, label)
     );
   };
   return h(Modal, {
