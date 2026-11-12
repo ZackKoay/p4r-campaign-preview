@@ -520,6 +520,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 .password-error{font-family:var(--font-body); font-weight:400; font-size:11px; color:var(--red); margin:4px 0 0}
 /* Where to find the answer, under the input (below the error, which
    belongs to the input itself). */
+.password-hint a{color:#1B1B1B; font-weight:700; text-decoration:underline; text-underline-offset:2px}
 .password-hint{font-family:var(--font-body); font-weight:400; font-size:12px; line-height:1.4; color:#636363; margin:4px 0 0; text-align:left}
 /* Every other modal-btn use on this page is always-enabled, so this is
    the first one that needs a real disabled look — but only for the
@@ -972,6 +973,15 @@ function fallbackCopy(text) {
            actual Steam store page, the actual ATLUS SEA Instagram —
            rather than a fake in-site copy of either) and marks complete.
 --------------------------------------------------------------- */
+// The official ATLUS SEA Instagram, linked from Mission 2's password hint.
+// match finds the linked words in either language ("ATLUS SEA Instagram";
+// the Thai says "Instagram อย่างเป็นทางการของ ATLUS SEA", with a
+// no-break space in "ATLUS SEA").
+const ATLUS_INSTAGRAM = {
+  href: 'https://www.instagram.com/atlus.sea/?hl=en',
+  match: /ATLUS[\s\u00a0]SEA Instagram|Instagram อย่างเป็นทางการของ ATLUS[\s\u00a0]SEA/,
+};
+
 const MISSIONS = [
   {
     id: 1,
@@ -988,7 +998,7 @@ const MISSIONS = [
     name: L('event.mission.2_name', 'Spread the Word'),
     tasks: [
       { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: 'https://discord.com/invite/atlussea' },
-      { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: L('event.modal.password_title_kol', 'Enter the Password from the KOL Stream'), modalHint: L('event.modal.password_hint_kol', 'Hint: Visit the official ATLUS SEA Instagram to find out more.') },
+      { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: L('event.modal.password_title_kol', 'Enter the Password from the KOL Stream'), modalHint: linkPhrase(L('event.modal.password_hint_kol', 'Hint: Visit the official ATLUS SEA Instagram to find out more.'), ATLUS_INSTAGRAM) },
     ],
   },
   {
@@ -1213,6 +1223,17 @@ function Modal({ onClose, header, centered, wide, children, actions, dismissOnOv
       actions && h('div', { className: 'modal-foot' }, actions)
     )
   );
+}
+
+// Turns the words link.match finds in text into a link (new tab). Text
+// without them comes back unchanged.
+function linkPhrase(text, link) {
+  const m = typeof text === 'string' && text.match(link.match);
+  if (!m) return text;
+  return h(React.Fragment, null,
+    text.slice(0, m.index),
+    h('a', { href: link.href, target: '_blank', rel: 'noopener noreferrer' }, m[0]),
+    text.slice(m.index + m[0].length));
 }
 
 /* Client copy that comes as one translatable string: a blank line starts a
