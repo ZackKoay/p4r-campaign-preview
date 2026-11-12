@@ -521,7 +521,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 /* Where to find the answer, under the input (below the error, which
    belongs to the input itself). */
 /* Same as the site's other links in text (Cookie settings, the Loading back link): underlined, otherwise like the words around it. */
-.password-hint a{text-decoration:underline}
+.password-hint a{text-decoration:underline; transition:background-color .15s ease, color .15s ease}
+/* Hover turns it yellow the way the footer links do, but as a highlight
+   behind dark text: yellow text alone can't be read on the white pop-up. */
+.password-hint a:hover{background:var(--yellow); color:#1B1B1B}
+@media (prefers-reduced-motion:reduce){.password-hint a{transition:none}}
 .password-hint{font-family:var(--font-body); font-weight:400; font-size:12px; line-height:1.4; color:#636363; margin:4px 0 0; text-align:left}
 /* Every other modal-btn use on this page is always-enabled, so this is
    the first one that needs a real disabled look — but only for the
