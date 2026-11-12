@@ -973,7 +973,8 @@ function fallbackCopy(text) {
            actual Steam store page, the actual ATLUS SEA Instagram —
            rather than a fake in-site copy of either) and marks complete.
 --------------------------------------------------------------- */
-// The official ATLUS SEA Instagram, linked from Mission 2's password hint.
+// The official ATLUS SEA Instagram, linked from the password hints
+// (Missions 2 and 3).
 // match finds the linked words in either language ("ATLUS SEA Instagram";
 // the Thai says "Instagram อย่างเป็นทางการของ ATLUS SEA", with a
 // no-break space in "ATLUS SEA").
@@ -1010,7 +1011,7 @@ const MISSIONS = [
       { id: '3.link', label: L('event.task.3_link', 'Link game platform account'), kind: 'platform', href: 'https://sega-account.com/auth/content/link' },
       { id: '3.a', label: L('event.task.3_a', 'Play the Persona 4 Revival demo'), kind: 'demo' },
       { id: '3.b', label: L('event.task.3_b', 'Pre-order Persona 4 Revival'), kind: 'upload', modalTitle: L('event.modal.upload_title', 'Upload Your Pre-order Receipt') },
-      { id: '3.c', label: L('event.task.3_c', 'Complete the secret message'), kind: 'password', modalTitle: L('event.modal.password_title_secret', 'Enter the Secret Message'), modalHint: L('event.modal.password_hint_secret', 'Hint: Ask staff, or visit the official ATLUS SEA Instagram to find out more.'), placeholder: L('event.modal.password_placeholder_secret', 'Enter Secret Message') },
+      { id: '3.c', label: L('event.task.3_c', 'Complete the secret message'), kind: 'password', modalTitle: L('event.modal.password_title_secret', 'Enter the Secret Message'), modalHint: linkPhrase(L('event.modal.password_hint_secret', 'Hint: Ask staff, or visit the official ATLUS SEA Instagram to find out more.'), ATLUS_INSTAGRAM), placeholder: L('event.modal.password_placeholder_secret', 'Enter Secret Message') },
     ],
   },
 ];
