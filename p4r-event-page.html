@@ -980,12 +980,11 @@ function fallbackCopy(text) {
 --------------------------------------------------------------- */
 // The official ATLUS SEA Instagram, linked from the password hints
 // (Missions 2 and 3).
-// match finds the linked words in either language ("ATLUS SEA Instagram";
-// the Thai says "Instagram อย่างเป็นทางการของ ATLUS SEA", with a
-// no-break space in "ATLUS SEA").
+// match finds the linked words: "ATLUS SEA Instagram" in English, just
+// "ATLUS SEA" in Thai (written there with a no-break space).
 const ATLUS_INSTAGRAM = {
   href: 'https://www.instagram.com/atlus.sea/?hl=en',
-  match: /ATLUS[\s\u00a0]SEA Instagram|Instagram อย่างเป็นทางการของ ATLUS[\s\u00a0]SEA/,
+  match: /ATLUS[\s\u00a0]SEA Instagram|ATLUS[\s\u00a0]SEA/,
 };
 
 const MISSIONS = [
