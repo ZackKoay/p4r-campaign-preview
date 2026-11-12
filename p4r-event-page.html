@@ -520,7 +520,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 .password-error{font-family:var(--font-body); font-weight:400; font-size:11px; color:var(--red); margin:4px 0 0}
 /* Where to find the answer, under the input (below the error, which
    belongs to the input itself). */
-.password-hint a{color:#1B1B1B; font-weight:700; text-decoration:underline; text-underline-offset:2px}
+/* Same as the site's other links in text (Cookie settings, the Loading back link): underlined, otherwise like the words around it. */
+.password-hint a{text-decoration:underline}
 .password-hint{font-family:var(--font-body); font-weight:400; font-size:12px; line-height:1.4; color:#636363; margin:4px 0 0; text-align:left}
 /* Every other modal-btn use on this page is always-enabled, so this is
    the first one that needs a real disabled look — but only for the
