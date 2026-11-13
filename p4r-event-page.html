@@ -1048,6 +1048,12 @@ const MISSIONS = [
     // DESKTOP / MOBILE buttons hand out). Missions without one show the
     // placeholder until their merch arrives.
     bonusImage: { src: 'assets/bonus/m1-wallpaper.jpg', alt: L('event.modal.bonus_m1_alt', 'Persona 4 Revival Midnight Channel wallpaper') },
+    // What DESKTOP / MOBILE hand out. The API only records the claim
+    // (m1_bonus); the files themselves are static assets.
+    bonusDownloads: {
+      desktop: { href: 'assets/bonus/P4R-Wallpaper-2560x1440.jpg', name: 'P4R-Wallpaper-2560x1440.jpg' },
+      mobile: { href: 'assets/bonus/P4R-Wallpaper-1440x2560.jpg', name: 'P4R-Wallpaper-1440x2560.jpg' },
+    },
     tasks: [
       { id: '1.gate', label: L('event.task.1_gate', 'Sign up for SEGA Account'), kind: 'gate' },
       { id: '1.a', label: L('event.task.1_a', 'Wishlist Persona 4 Revival'), kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
@@ -1391,6 +1397,19 @@ function LogoutConfirmModal({ onConfirm, onCancel }) {
       h('h3', null, L('event.modal.logout_heading', h(React.Fragment, null, 'Are you sure', h('br'), 'you want to logout?')))
     )
   );
+}
+
+// Starts a file download from the click itself (so no pop-up blocker
+// steps in). `download` names the file when it's served from this site;
+// if the assets live on another domain (ASSET_URL / CDN) browsers ignore
+// it and open the image instead, in a new tab rather than replacing this
+// page - a true download there needs the CDN to send
+// Content-Disposition: attachment.
+function startDownload(file) {
+  if (!file) return;
+  const a = document.createElement('a');
+  a.href = file.href; a.download = file.name; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 function BonusModal({ image, busy, onDownload, onClose }) {
@@ -1887,6 +1906,7 @@ function App() {
   };
 
   const handleBonusDownload = (missionId, platform) => {
+    startDownload((MISSIONS.find((m) => m.id === missionId).bonusDownloads || {})[platform]);
     const firstClaim = !state.claimed[missionId];
     Api.claimBonus(missionId, platform);
     setState((s) => ({ ...s, claimed: { ...s.claimed, [missionId]: true } }));
