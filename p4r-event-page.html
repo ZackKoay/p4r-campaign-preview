@@ -427,6 +427,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
   .modal-body--wide .modal-merch{width:clamp(284px, 38%, 340px)}
   .modal-body--wide .scroll-copy__inner{max-height:max(160px, min(380px, calc(100vh - 400px)))}
 }
+/* Narrower screens (under 768px, taller than a landscape phone): the
+   text sits above the prize card, and both fill the dialog's width, so
+   the left and right padding is the dialog's own 24px on both sides. */
+@media (max-width:767px) and (min-height:501px){
+  .modal-body--wide{width:min(calc(100vw - 72px), 640px); max-width:none}
+  .modal-body--wide .modal-content-row{width:100%; flex-direction:column; flex-wrap:nowrap}
+  .modal-body--wide .modal-text{max-width:none}
+  .modal-body--wide .modal-merch{width:100%; min-height:220px}
+}
 /* Landscape phones: Lucky Draw takes the screen's width (up to 900px,
    leaving room for the close button) instead of its content's, and the
    merch narrows, so the text column is two to three times wider and its
