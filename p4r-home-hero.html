@@ -624,8 +624,30 @@ a{color:inherit;text-decoration:none}
   display:flex; align-items:center; justify-content:center; text-align:center;
 }
 .merch-card::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
-.merch-card::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.73)}
-.merch-card span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:clamp(20px,3.2vw,32px); line-height:1.3}
+.merch-card::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.8)}
+/* Lucky Draw prizes, arranged as in the design's two layouts: wide
+   (for wide cards) and square (once the card is nearer square, under
+   1.2:1). The stage is the arrangement's own bounding box, scaled to fit
+   inside the card's padding without cropping, so the prizes fill the
+   card at any size and keep their places relative to each other (left,
+   top and width are % of the stage). tv-glitch.jpg multiplies over the
+   card's background and dark layer, under the prizes. */
+.prize-glitch{position:absolute; inset:0; z-index:1; background:url('assets/tv-glitch.jpg') center/cover; mix-blend-mode:multiply; pointer-events:none}
+.prize-showcase{position:absolute; inset:8% 5%; z-index:2; container-type:size; pointer-events:none}
+.prize-stage{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw, 100cqh * 1191 / 414); aspect-ratio:1191 / 414}
+.prize-item{position:absolute; display:block; height:auto}
+.prize-item--monitor{left:8.40%; top:0.00%; width:45.68%}
+.prize-item--aniplus{left:55.75%; top:14.50%; width:44.25%}
+.prize-item--glasses{left:50.13%; top:77.09%; width:15.11%}
+.prize-item--controller{left:0.00%; top:68.15%; width:16.46%}
+@container (aspect-ratio < 1.2){
+  .prize-stage{width:min(100cqw, 100cqh * 599 / 702); aspect-ratio:599 / 702}
+  .prize-item--monitor{left:14.69%; top:0.00%; width:80.13%}
+  .prize-item--aniplus{left:15.69%; top:59.01%; width:83.14%}
+  .prize-item--glasses{left:73.29%; top:45.61%; width:26.71%}
+  .prize-item--controller{left:0.00%; top:36.49%; width:29.05%}
+}
+
 
 /* Decorative flowers anchored to the Merch Placeholder card's corners
    (Figma node 4963:55782 — flower centers sit on the card's top-left and
@@ -1407,7 +1429,12 @@ function InfoSection({ onOpenAccountModal }) {
           h('div', { className: 'merch-flower merch-flower--black' },
             h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-2.webp', alt: '' }))
           ),
-          h('div', { className: 'merch-card' }, h('span', null, L('home.merch.placeholder', h(React.Fragment, null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')))),
+          h('div', { className: 'merch-card' },
+            h('div', { className: 'prize-glitch', 'aria-hidden': 'true' }),
+            h('div', { className: 'prize-showcase' }, h('div', { className: 'prize-stage' },
+              [{ id: 'monitor', alt: '55" Philips Monitor' }, { id: 'aniplus', alt: 'ANIPLUS Merchandise Set' }, { id: 'glasses', alt: 'Sunday Shades P4R Collaboration Exclusive Glasses' }, { id: 'controller', alt: 'Gamesir Controller' }].map((p) => h('img', { key: p.id, className: `prize-item prize-item--${p.id}`, src: `assets/prizes/prize-${p.id}.webp`, alt: p.alt, decoding: 'async' }))
+            ))
+          ),
           h('div', { className: 'merch-flower merch-flower--yellow' },
             h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-1.webp', alt: '' }))
           )
