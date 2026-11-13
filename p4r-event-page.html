@@ -842,9 +842,14 @@ a.modal-btn{text-decoration:none}
 </div>
 <div id="root"></div>
 
+<!-- React 18.3.1, self-hosted (assets/vendor/, the official npm production
+     builds, checked against the registry's sha512) rather than loaded from a
+     third-party CDN that could serve altered code. -->
+<script src="assets/vendor/react-18.3.1.production.min.js"></script>
+<script src="assets/vendor/react-dom-18.3.1.production.min.js"></script>
 <script type="module">
-import React from 'https://esm.sh/react@18.3.1';
-import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+const React = window.React;
+const { createRoot } = window.ReactDOM;
 const h = React.createElement;
 
 // Thai / English (public/assets/i18n.js): L(key, english, vars) is the
