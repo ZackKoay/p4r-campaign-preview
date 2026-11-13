@@ -627,11 +627,11 @@ a{color:inherit;text-decoration:none}
 /* Lucky Draw prizes, arranged as in the design's two layouts: wide
    (for wide cards) and square (once the card is nearer square, under
    1.2:1). The stage is the arrangement's own bounding box, scaled to fit
-   inside the card's padding without cropping, so the prizes fill the
+   inside the card with 24px clear on every side, without cropping, so the prizes fill the
    card at any size and keep their places relative to each other (left,
    top and width are % of the stage). The card's background is the pattern
    image alone, with no overlay. */
-.prize-showcase{position:absolute; inset:8% 5%; z-index:2; container-type:size; pointer-events:none}
+.prize-showcase{position:absolute; inset:24px; z-index:2; container-type:size; pointer-events:none}
 .prize-stage{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw, 100cqh * 1191 / 414); aspect-ratio:1191 / 414}
 .prize-item{position:absolute; display:block; height:auto}
 .prize-item--monitor{left:8.40%; top:0.00%; width:45.68%}
@@ -639,13 +639,14 @@ a{color:inherit;text-decoration:none}
 .prize-item--glasses{left:50.13%; top:77.09%; width:15.11%}
 .prize-item--controller{left:0.00%; top:68.15%; width:16.46%}
 @container (aspect-ratio < 1.2){
-  /* The monitor and the ANIPLUS set are centred in the card; the
-     controller and glasses keep their places on the monitor. */
+  /* The monitor and the ANIPLUS set are centred in the card. The
+     controller and glasses sit on the monitor's lower corners, kept
+     inside the stage so nothing touches the 24px edge. */
   .prize-stage{width:min(100cqw, 100cqh * 599 / 702); aspect-ratio:599 / 702}
   .prize-item--monitor{left:9.94%; top:0.00%; width:80.13%}
   .prize-item--aniplus{left:8.43%; top:59.01%; width:83.14%}
   .prize-item--glasses{left:68.54%; top:45.61%; width:26.71%}
-  .prize-item--controller{left:-4.75%; top:36.49%; width:29.05%}
+  .prize-item--controller{left:0.00%; top:36.49%; width:29.05%}
 }
 
 
