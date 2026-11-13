@@ -1408,6 +1408,38 @@ function LogoutConfirmModal({ onConfirm, onCancel }) {
   );
 }
 
+/* ---------------------------------------------------------------
+   ANALYTICS: events for Google Tag Manager / GA4. track() only pushes
+   to window.dataLayer; nothing leaves the page unless GTM is loaded,
+   which happens only after the visitor accepts Analytics cookies
+   (partials/cookie-control; with COOKIE_CONTROL_VIA=gtm, Consent Mode
+   keeps analytics_storage denied until they do). GTM needs a Custom
+   Event trigger per event name below, feeding a GA4 Event tag. Event
+   names and parameters are listed in the README ("Analytics events").
+   --------------------------------------------------------------- */
+function track(event, params) {
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(Object.assign({ event }, params || {}));
+}
+
+// Sends one event per task, bonus or Lucky Draw entry that has just
+// become done, plus mission_complete when a mission's last task does.
+// `prev` is what was already done, so tasks loaded from the API on
+// arrival are never sent again.
+function trackDoneChanges(prev, next) {
+  Object.keys(next).forEach((key) => {
+    if (!next[key] || prev[key]) return;
+    if (key === 'lucky-draw') { track('lucky_draw_submit'); return; }
+    if (key.indexOf('bonus-') === 0) { track('bonus_claim', { mission_id: Number(key.slice(6)) }); return; }
+    const mission = MISSIONS.find((m) => m.tasks.some((t) => t.id === key));
+    track('mission_task_complete', { mission_id: mission ? mission.id : null, task_id: key, task_field: (typeof FIELD_BY_ID !== 'undefined' && FIELD_BY_ID[key]) || null });
+  });
+  MISSIONS.forEach((m) => {
+    const all = (d) => m.tasks.every((t) => d[t.id]);
+    if (all(next) && !all(prev)) track('mission_complete', { mission_id: m.id });
+  });
+}
+
 // Starts a file download from the click itself (so no pop-up blocker
 // steps in). `download` names the file when it's served from this site;
 // if the assets live on another domain (ASSET_URL / CDN) browsers ignore
@@ -1582,7 +1614,7 @@ function DemoModal({ defaultPlatform, onPlay, onClose }) {
       className: `cta cta--dark ${cls}`,
       // Always a new tab: opened here rather than left to the link,
       // since onPlay closes this pop-up (removing the link) mid-click.
-      onClick: (e) => { e.preventDefault(); window.open(p.href, '_blank', 'noopener'); onPlay(p.id); },
+      onClick: (e) => { e.preventDefault(); track('demo_store_click', { platform: p.id }); window.open(p.href, '_blank', 'noopener'); onPlay(p.id); },
     },
       logo && h('svg', { className: `cta-icon cta-icon--${p.id}`, viewBox: logo.viewBox, 'aria-hidden': 'true', focusable: 'false' },
         logo.paths.map((d, i) => h('path', { key: i, d }))
@@ -1786,6 +1818,16 @@ function useFitScale() {
 function App() {
   const stageRef = useFitScale();
   const [state, setState] = React.useState(loadState);
+  // Analytics: tasks and bonuses newly done since the last check (what
+  // was saved before this visit is the starting point, not sent again).
+  const trackedDoneRef = React.useRef(null);
+  React.useEffect(() => {
+    const now = { ...state.done };
+    Object.keys(state.claimed).forEach((id) => { if (state.claimed[id]) now[`bonus-${id}`] = true; });
+    const prev = trackedDoneRef.current;
+    trackedDoneRef.current = now;
+    if (prev) trackDoneChanges(prev, now);
+  }, [state]);
   const [active, setActive] = React.useState(() => firstUnclaimedMission((id) => state.claimed[id]));
   const advanceTimer = React.useRef(null);
   React.useEffect(() => () => clearTimeout(advanceTimer.current), []);
@@ -1870,6 +1912,7 @@ function App() {
   // dismissOnOverlayClick: false, which also turns off backdrop-click-
   // to-dismiss for this one).
   const handleShareComplete = (missionId, taskId, channel) => {
+    track('share', { method: channel, mission_id: missionId, task_id: taskId });
     Api.markInviteShared(missionId, taskId, channel);
     setState((s) => ({ ...s, done: { ...s.done, [taskId]: true } }));
   };
@@ -1920,6 +1963,7 @@ function App() {
 
   const handleBonusDownload = (missionId, platform) => {
     startDownload((MISSIONS.find((m) => m.id === missionId).bonusDownloads || {})[platform]);
+    track('bonus_download', { mission_id: missionId, version: platform });
     const firstClaim = !state.claimed[missionId];
     Api.claimBonus(missionId, platform);
     setState((s) => ({ ...s, claimed: { ...s.claimed, [missionId]: true } }));
@@ -1928,6 +1972,7 @@ function App() {
   };
 
   const handleSubmitEntry = () => {
+    track('lucky_draw_submit');
     Api.submitEntry(draws);
     setModal('lucky-draw-submitted');
   };
@@ -1967,7 +2012,7 @@ function App() {
               done: state.done, onTaskGo: handleTaskGo,
               claimed: state.claimed, onBonusClick: (missionId) => setModal({ type: 'bonus', missionId }),
             }),
-            h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => setModal('lucky-draw') })
+            h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => { track('lucky_draw_open', { entries }); setModal('lucky-draw'); } })
           )
         )
       ),

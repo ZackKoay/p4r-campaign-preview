@@ -1495,5 +1495,21 @@ createRoot(document.getElementById('root')).render(h(App));
 </script>
 <!-- Cookie banner: look-alike of Cookie Control for this preview (see the file). -->
 <script src="cookie-control-preview.js" data-icon></script>
+<script>
+/* ANALYTICS: Home's three buttons as Google Tag Manager events
+   (cta_click, cta = start | log_in | join_now). Only pushed to
+   window.dataLayer; nothing is sent unless GTM is loaded, which needs
+   Analytics consent (see the event page's track() and the README's
+   "Analytics events"). Capture phase, so it runs before a button
+   leaves the page for SEGA's sign-in. Buttons inside pop-ups and the
+   cookie banner's own "Cookie settings" are left out. */
+document.addEventListener('click', function (e) {
+  var el = e.target.closest && e.target.closest('.cta--start, .cta--join, #login-cta, button.cta--outline.cta--sm');
+  if (!el || el.hasAttribute('data-cookie') || el.closest('[role="dialog"], .modal-box')) return;
+  var cta = el.classList.contains('cta--start') ? 'start' : el.classList.contains('cta--join') ? 'join_now' : 'log_in';
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: 'cta_click', cta: cta, page: 'home' });
+}, true);
+</script>
 </body>
 </html>
