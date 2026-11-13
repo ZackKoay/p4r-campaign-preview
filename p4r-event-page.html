@@ -454,16 +454,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 .modal-merch--wide{width:100%; max-width:520px; min-height:220px}
 .modal-merch::before{content:""; position:absolute; inset:0; background:url('assets/modal-merch-placeholder.png') center/cover}
 .modal-merch::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.73)}
-.modal-merch--prizes{isolation:isolate}
-.modal-merch--prizes::after{background:rgba(32,32,32,.8)}
+.modal-merch--prizes::before{background:url('assets/home-merch-pattern.png') center/cover #BCBE00}
+.modal-merch--prizes::after{content:none}
 /* Lucky Draw prizes, arranged as in the design's two layouts: wide
    (for wide cards) and square (once the card is nearer square, under
    1.2:1). The stage is the arrangement's own bounding box, scaled to fit
    inside the card's padding without cropping, so the prizes fill the
    card at any size and keep their places relative to each other (left,
-   top and width are % of the stage). tv-glitch.jpg multiplies over the
-   card's background and dark layer, under the prizes. */
-.prize-glitch{position:absolute; inset:0; z-index:1; background:url('assets/tv-glitch.jpg') center/cover; mix-blend-mode:multiply; pointer-events:none}
+   top and width are % of the stage). Both cards show the prizes on the dot
+   pattern alone, with no overlay. */
 .prize-showcase{position:absolute; inset:8% 5%; z-index:2; container-type:size; pointer-events:none}
 .prize-stage{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw, 100cqh * 1191 / 414); aspect-ratio:1191 / 414}
 .prize-item{position:absolute; display:block; height:auto}
@@ -835,15 +834,10 @@ window.P4R_I18N.apply(); // the rotate-your-phone prompt (plain HTML above)
 // The four Lucky Draw prizes (layout: .prize-stage). Product names
 // stay in English in both languages.
 const PRIZE_ITEMS = [{ id: 'monitor', alt: '55" Philips Monitor' }, { id: 'aniplus', alt: 'ANIPLUS Merchandise Set' }, { id: 'glasses', alt: 'Sunday Shades P4R Collaboration Exclusive Glasses' }, { id: 'controller', alt: 'Gamesir Controller' }];
-// glitch: the tv-glitch.jpg layer under the prizes (the pop-up has it;
-// the event page's Lucky Draw card is the plain dot pattern, like Home's).
-function PrizeShowcase({ glitch = true }) {
-  return h(React.Fragment, null,
-    glitch && h('div', { className: 'prize-glitch', 'aria-hidden': 'true' }),
-    h('div', { className: 'prize-showcase' }, h('div', { className: 'prize-stage' },
-      PRIZE_ITEMS.map((p) => h('img', { key: p.id, className: `prize-item prize-item--${p.id}`, src: `assets/prizes/prize-${p.id}.webp`, alt: p.alt, decoding: 'async' }))
-    ))
-  );
+function PrizeShowcase() {
+  return h('div', { className: 'prize-showcase' }, h('div', { className: 'prize-stage' },
+    PRIZE_ITEMS.map((p) => h('img', { key: p.id, className: `prize-item prize-item--${p.id}`, src: `assets/prizes/prize-${p.id}.webp`, alt: p.alt, decoding: 'async' }))
+  ));
 }
 const merchLabel = (key) => h('span', null, L(key, h(React.Fragment, null, h('span', null, 'MERCH'), h('br'), 'PLACEHOLDER')));
 
@@ -1173,7 +1167,7 @@ function PrizeRail({ entries, total, onEnterDraw }) {
         h('p', null, L('event.luckydraw.entries_label', 'Entries acquired:  {n}/{total}', { n: entries, total }))
       )
     ),
-    h('div', { className: 'prize-merch' }, h(PrizeShowcase, { glitch: false })),
+    h('div', { className: 'prize-merch' }, h(PrizeShowcase)),
     h('button', {
       type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
       onClick: () => glowing && onEnterDraw(),
