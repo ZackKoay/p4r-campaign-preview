@@ -470,6 +470,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 /* The bonus merch itself (e.g. Mission 1's wallpaper) fills the merch
    slot: same width, its own 16:9 shape, 16px corners. */
 .bonus-merch{display:block; width:100%; max-width:520px; height:auto; aspect-ratio:16 / 9; object-fit:cover; border-radius:16px}
+.bonus-merch--square{max-width:316px; aspect-ratio:1}
 .modal-merch::before{content:""; position:absolute; inset:0; background:url('assets/modal-merch-placeholder.png') center/cover}
 .modal-merch::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.73)}
 .modal-merch--prizes::before{background:url('assets/home-merch-pattern.png') center/cover #BCBE00}
@@ -1064,6 +1065,13 @@ const MISSIONS = [
   {
     id: 2,
     name: L('event.mission.2_name', 'Spread the Word'),
+    // Mission 2's bonus is an avatar frame: square preview, its own line
+    // of copy, and one DOWNLOAD button (no desktop/mobile versions).
+    bonusCopy: L('event.modal.bonus_copy_m2', "Here's an exclusive Persona 4 Revival Avatar Frame as a bonus prize!"),
+    bonusImage: { src: 'assets/bonus/m2-avatar-frame.png', alt: L('event.modal.bonus_m2_alt', 'Persona 4 Revival avatar frame'), square: true },
+    bonusDownloads: {
+      file: { href: 'assets/bonus/P4R-Avatar-Frame.png', name: 'P4R-Avatar-Frame.png' },
+    },
     tasks: [
       { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: 'https://discord.com/invite/atlussea' },
       { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: L('event.modal.password_title_kol', 'Enter the Password from the KOL Stream'), modalHint: linkPhrase(L('event.modal.password_hint_kol', 'Hint: Visit the official ATLUS SEA Instagram to find out more.'), ATLUS_INSTAGRAM) },
@@ -1412,17 +1420,21 @@ function startDownload(file) {
   document.body.appendChild(a); a.click(); a.remove();
 }
 
-function BonusModal({ image, busy, onDownload, onClose }) {
+// downloads: a mission's bonusDownloads. One `file` gives a single
+// DOWNLOAD button; `desktop` / `mobile` give one button each.
+function BonusModal({ image, copy, downloads, busy, onDownload, onClose }) {
   return h(Modal, {
     onClose, header: L('event.modal.bonus_header', 'BONUS'), centered: true,
-    actions: h(React.Fragment, null,
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_desktop', 'DESKTOP')),
-      h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_mobile', 'MOBILE'))
-    ),
+    actions: downloads && downloads.file
+      ? h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('file') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_download', 'DOWNLOAD'))
+      : h(React.Fragment, null,
+        h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('desktop') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_desktop', 'DESKTOP')),
+        h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: () => onDownload('mobile') }, h(IconDownload, { width: 24, height: 24 }), L('event.modal.bonus_mobile', 'MOBILE'))
+      ),
   },
-    h('p', { className: 'copy' }, L('event.modal.bonus_copy', "Here's an exclusive Persona 4 Revival Merch!")),
+    h('p', { className: 'copy' }, copy || L('event.modal.bonus_copy', "Here's an exclusive Persona 4 Revival Merch!")),
     image
-      ? h('img', { className: 'bonus-merch', src: image.src, alt: image.alt, width: 1200, height: 675, decoding: 'async' })
+      ? h('img', { className: `bonus-merch${image.square ? ' bonus-merch--square' : ''}`, src: image.src, alt: image.alt, width: image.square ? 640 : 1200, height: image.square ? 640 : 675, decoding: 'async' })
       : h('div', { className: 'modal-merch modal-merch--wide' }, merchLabel('event.merch.placeholder'))
   );
 }
@@ -1977,6 +1989,8 @@ function App() {
     modal === 'logout' && h(LogoutConfirmModal, { onConfirm: Api.logOut, onCancel: () => setModal(null) }),
     modal && modal.type === 'bonus' && h(BonusModal, {
       image: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusImage,
+      copy: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusCopy,
+      downloads: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusDownloads,
       busy: saving,
       onDownload: (platform) => handleBonusDownload(modal.missionId, platform),
       onClose: () => setModal(null),
