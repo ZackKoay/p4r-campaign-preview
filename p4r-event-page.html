@@ -1580,9 +1580,8 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
    button to that platform's demo page; without one, a button per
    platform. onPlay fires as the player follows a link: the page then
    checks their play history when they come back. */
-// CONTENT: each platform's demo page — placeholders until the client
-// sends the real links. The ids are what the API's default_platform
-// should return.
+// Each platform's demo store page (the client's links). The ids are
+// what the API's default_platform should return.
 // The client's order: Xbox, Steam, PlayStation, Switch 2. Each opens the
 // game's own store page, where the demo is.
 const DEMO_PLATFORMS = [
