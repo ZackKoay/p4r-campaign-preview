@@ -1244,15 +1244,20 @@ function linkPhrase(text, link) {
 
 /* Client copy that comes as one translatable string: a blank line starts a
    new paragraph, lines starting "- " become a list, other line breaks stay
-   (.scroll-copy .copy is pre-line). A non-string (a React fallback) passes
-   through untouched. */
+   (.scroll-copy .copy is pre-line). The copy's first line is bold (the
+   Lucky Draw's "Complete missions…" sentence). A non-string (a React
+   fallback) passes through untouched. */
 function richCopy(text) {
   if (typeof text !== 'string') return text;
   const isItem = (line) => /^\s*-\s+/.test(line);
   return text.trim().split(/\n\s*\n/).map((block, i) => {
     const lines = block.split('\n');
     const items = lines.filter(isItem);
-    if (items.length === 0) return h('p', { key: i, className: 'copy' }, block);
+    if (items.length === 0) {
+      if (i > 0) return h('p', { key: i, className: 'copy' }, block);
+      return h('p', { key: i, className: 'copy' },
+        h('strong', null, lines[0]), lines.length > 1 ? '\n' + lines.slice(1).join('\n') : null);
+    }
     const lead = lines.filter((line) => !isItem(line)).join('\n');
     return h(React.Fragment, { key: i },
       lead && h('p', { className: 'copy copy--lead' }, lead),
