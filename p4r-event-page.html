@@ -319,6 +319,9 @@ a{color:inherit;text-decoration:none}
   filter:drop-shadow(4px 4px 0 rgba(0,0,0,.35)); background:var(--graphite-10); color:var(--graphite-30); cursor:not-allowed;
 }
 .enter-draw-btn.active{background:var(--yellow); color:var(--graphite); cursor:pointer}
+/* The button and the event period read as one unit (8px apart); the
+   prize card above takes the rest of the column's height (flex:1). */
+.enter-draw-group{display:flex; flex-direction:column; align-items:center; gap:var(--space-8)}
 .event-date{font-family:var(--font-body); font-weight:500; color:var(--graphite-10); font-size:12px; text-shadow:0 4px 4px rgba(0,0,0,.25)}
 
 /* =========================================================
@@ -1183,11 +1186,13 @@ function PrizeRail({ entries, total, onEnterDraw }) {
       )
     ),
     h('div', { className: 'prize-merch' }, h(PrizeShowcase)),
-    h('button', {
-      type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
-      onClick: () => glowing && onEnterDraw(),
-    }, L('event.luckydraw.enter_button', 'ENTER LUCKY DRAW')),
-    h('p', { className: 'event-date' }, L('event.luckydraw.period', 'Event period: xx October - xx November 2025'))
+    h('div', { className: 'enter-draw-group' },
+      h('button', {
+        type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
+        onClick: () => glowing && onEnterDraw(),
+      }, L('event.luckydraw.enter_button', 'ENTER LUCKY DRAW')),
+      h('p', { className: 'event-date' }, L('event.luckydraw.period', 'Event period: xx October - xx November 2025'))
+    )
   );
 }
 
