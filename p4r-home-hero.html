@@ -623,13 +623,13 @@ a{color:inherit;text-decoration:none}
   box-shadow:4px 4px 0 0 var(--orange);
   display:flex; align-items:center; justify-content:center; text-align:center;
 }
-.merch-card::before{content:""; position:absolute; inset:0; background:url('assets/home-merch-sky.jpg') center/cover}
+.merch-card::before{content:""; position:absolute; inset:0; background:url('assets/home-merch-pattern.png') center/cover #BCBE00}
 /* Lucky Draw prizes, arranged as in the design's two layouts: wide
    (for wide cards) and square (once the card is nearer square, under
    1.2:1). The stage is the arrangement's own bounding box, scaled to fit
    inside the card's padding without cropping, so the prizes fill the
    card at any size and keep their places relative to each other (left,
-   top and width are % of the stage). The card's background is the sky
+   top and width are % of the stage). The card's background is the pattern
    image alone, with no overlay. */
 .prize-showcase{position:absolute; inset:8% 5%; z-index:2; container-type:size; pointer-events:none}
 .prize-stage{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw, 100cqh * 1191 / 414); aspect-ratio:1191 / 414}
