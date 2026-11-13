@@ -624,15 +624,13 @@ a{color:inherit;text-decoration:none}
   display:flex; align-items:center; justify-content:center; text-align:center;
 }
 .merch-card::before{content:""; position:absolute; inset:0; background:url('assets/home-merch-sky.jpg') center/cover}
-.merch-card::after{content:""; position:absolute; inset:0; background:rgba(32,32,32,.8)}
 /* Lucky Draw prizes, arranged as in the design's two layouts: wide
    (for wide cards) and square (once the card is nearer square, under
    1.2:1). The stage is the arrangement's own bounding box, scaled to fit
    inside the card's padding without cropping, so the prizes fill the
    card at any size and keep their places relative to each other (left,
-   top and width are % of the stage). tv-glitch.jpg multiplies over the
-   card's background and dark layer, under the prizes. */
-.prize-glitch{position:absolute; inset:0; z-index:1; background:url('assets/tv-glitch.jpg') center/cover; mix-blend-mode:multiply; pointer-events:none}
+   top and width are % of the stage). The card's background is the sky
+   image alone, with no overlay. */
 .prize-showcase{position:absolute; inset:8% 5%; z-index:2; container-type:size; pointer-events:none}
 .prize-stage{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw, 100cqh * 1191 / 414); aspect-ratio:1191 / 414}
 .prize-item{position:absolute; display:block; height:auto}
@@ -1430,7 +1428,6 @@ function InfoSection({ onOpenAccountModal }) {
             h('div', { className: 'merch-flower__spin' }, h('img', { src: 'assets/flower-2.webp', alt: '' }))
           ),
           h('div', { className: 'merch-card' },
-            h('div', { className: 'prize-glitch', 'aria-hidden': 'true' }),
             h('div', { className: 'prize-showcase' }, h('div', { className: 'prize-stage' },
               [{ id: 'monitor', alt: '55" Philips Monitor' }, { id: 'aniplus', alt: 'ANIPLUS Merchandise Set' }, { id: 'glasses', alt: 'Sunday Shades P4R Collaboration Exclusive Glasses' }, { id: 'controller', alt: 'Gamesir Controller' }].map((p) => h('img', { key: p.id, className: `prize-item prize-item--${p.id}`, src: `assets/prizes/prize-${p.id}.webp`, alt: p.alt, decoding: 'async' }))
             ))
