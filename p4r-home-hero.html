@@ -639,11 +639,13 @@ a{color:inherit;text-decoration:none}
 .prize-item--glasses{left:50.13%; top:77.09%; width:15.11%}
 .prize-item--controller{left:0.00%; top:68.15%; width:16.46%}
 @container (aspect-ratio < 1.2){
+  /* The monitor and the ANIPLUS set are centred in the card; the
+     controller and glasses keep their places on the monitor. */
   .prize-stage{width:min(100cqw, 100cqh * 599 / 702); aspect-ratio:599 / 702}
-  .prize-item--monitor{left:14.69%; top:0.00%; width:80.13%}
-  .prize-item--aniplus{left:15.69%; top:59.01%; width:83.14%}
-  .prize-item--glasses{left:73.29%; top:45.61%; width:26.71%}
-  .prize-item--controller{left:0.00%; top:36.49%; width:29.05%}
+  .prize-item--monitor{left:9.94%; top:0.00%; width:80.13%}
+  .prize-item--aniplus{left:8.43%; top:59.01%; width:83.14%}
+  .prize-item--glasses{left:68.54%; top:45.61%; width:26.71%}
+  .prize-item--controller{left:-4.75%; top:36.49%; width:29.05%}
 }
 
 
