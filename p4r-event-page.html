@@ -414,15 +414,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 .copy-list li::before{content:""; position:absolute; left:0; top:.15em; width:16px; height:16px; background:url('assets/flower-1.webp') center/contain no-repeat; filter:drop-shadow(0 0 .6px var(--graphite)) drop-shadow(0 0 .6px var(--graphite))}
 /* Landscape phones: a shorter pane keeps the dialog near full size. */
 @media (max-height:500px){.scroll-copy__inner{max-height:130px}}
-/* Desktop: Lucky Draw opens wider (text column 284 -> 500px) with a
-   taller pane, so most screens show the whole campaign copy with little
-   or no scrolling. The pane is capped by the window's height so the
-   dialog still fits without useFitToScreen shrinking it. */
-@media (min-width:1024px) and (min-height:721px){
-  .modal-body--wide{max-width:920px}
-  .modal-body--wide .modal-text{flex:1 1 500px; max-width:500px}
-  .modal-body--wide .modal-merch{width:320px}
-  .modal-body--wide .scroll-copy__inner{max-height:min(380px, calc(100vh - 400px))}
+/* Tablets and desktops (768px+ wide, taller than a landscape phone):
+   Lucky Draw takes the window's width, up to 920px, leaving room for the
+   close button. The text column takes the extra width, so the campaign
+   copy needs little or no scrolling, and the prize card grows a little.
+   The pane is capped by the window's height so the dialog still fits
+   without useFitToScreen shrinking it (but never below 160px). */
+@media (min-width:768px) and (min-height:501px){
+  .modal-body--wide{width:min(calc(100vw - 96px), 920px); max-width:none}
+  .modal-body--wide .modal-content-row{width:100%; flex-wrap:nowrap}
+  .modal-body--wide .modal-text{flex:1 1 auto; min-width:0; max-width:none}
+  .modal-body--wide .modal-merch{width:clamp(284px, 38%, 340px)}
+  .modal-body--wide .scroll-copy__inner{max-height:max(160px, min(380px, calc(100vh - 400px)))}
 }
 /* Landscape phones: Lucky Draw takes the screen's width (up to 900px,
    leaving room for the close button) instead of its content's, and the
