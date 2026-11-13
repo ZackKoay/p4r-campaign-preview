@@ -310,8 +310,7 @@ a{color:inherit;text-decoration:none}
   flex:1; width:100%; min-height:200px; border-radius:16px; position:relative; overflow:hidden; isolation:isolate;
   display:flex; align-items:center; justify-content:center; box-shadow:4px 4px 0 #450000;
 }
-.prize-merch::before{content:""; position:absolute; inset:0; background:url('assets/merch-placeholder-bg.jpg') center/cover}
-.prize-merch::after{content:""; position:absolute; inset:0; background:#b10000; mix-blend-mode:multiply; opacity:.55}
+.prize-merch::before{content:""; position:absolute; inset:0; background:url('assets/home-merch-pattern.png') center/cover #700F0F}
 .prize-merch span{position:relative; z-index:1; font-family:var(--font-head); font-weight:400; color:#fff; font-size:24px; text-align:center; line-height:1.3}
 
 .enter-draw-btn{
@@ -836,9 +835,11 @@ window.P4R_I18N.apply(); // the rotate-your-phone prompt (plain HTML above)
 // The four Lucky Draw prizes (layout: .prize-stage). Product names
 // stay in English in both languages.
 const PRIZE_ITEMS = [{ id: 'monitor', alt: '55" Philips Monitor' }, { id: 'aniplus', alt: 'ANIPLUS Merchandise Set' }, { id: 'glasses', alt: 'Sunday Shades P4R Collaboration Exclusive Glasses' }, { id: 'controller', alt: 'Gamesir Controller' }];
-function PrizeShowcase() {
+// glitch: the tv-glitch.jpg layer under the prizes (the pop-up has it;
+// the event page's Lucky Draw card is the plain dot pattern, like Home's).
+function PrizeShowcase({ glitch = true }) {
   return h(React.Fragment, null,
-    h('div', { className: 'prize-glitch', 'aria-hidden': 'true' }),
+    glitch && h('div', { className: 'prize-glitch', 'aria-hidden': 'true' }),
     h('div', { className: 'prize-showcase' }, h('div', { className: 'prize-stage' },
       PRIZE_ITEMS.map((p) => h('img', { key: p.id, className: `prize-item prize-item--${p.id}`, src: `assets/prizes/prize-${p.id}.webp`, alt: p.alt, decoding: 'async' }))
     ))
@@ -1172,7 +1173,7 @@ function PrizeRail({ entries, total, onEnterDraw }) {
         h('p', null, L('event.luckydraw.entries_label', 'Entries acquired:  {n}/{total}', { n: entries, total }))
       )
     ),
-    h('div', { className: 'prize-merch' }, h(PrizeShowcase)),
+    h('div', { className: 'prize-merch' }, h(PrizeShowcase, { glitch: false })),
     h('button', {
       type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
       onClick: () => glowing && onEnterDraw(),
