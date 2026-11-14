@@ -25,7 +25,28 @@
                           language; English is restored from the markup.
      set(lang)            Home's toggle: remembers the choice and applies.
      subscribe(fn)        called with the new lang after set(); returns
-                          an unsubscribe function. */
+                          an unsubscribe function.
+     url(key)             an https:// link the backend has set for key
+                          (e.g. "link.tnc"), or null.
+     ready                a Promise, resolved once the backend's copy is
+                          in (or after 1.5 s at most); pages wait for it
+                          before their first render.
+
+   [data-i18n-href="key"] on a [data-i18n] element links its text to
+   url(key) once the backend sets one (the T&Cs notes use "link.tnc").
+
+   Copy from the backend: the P4R Mission API's translation store
+   (GET /api/language/en and /th, edited with the admin key) overrides
+   this file and the pages' built-in English, key by key, so copy can
+   change without a frontend release. The API address comes from this
+   script tag's data-api attribute; without it (the static preview) only
+   the built-in copy is used. The last copy fetched is kept in
+   localStorage, so a returning visitor gets it at once while a fresh
+   copy loads for next time. If the API is slow, refuses or is down, the
+   built-in copy stays: nothing breaks. Order for a key: Thai mode =
+   backend Thai, this file's Thai, backend English, the page's English;
+   English mode = backend English, the page's English. Backend values are
+   always shown as plain text (never as HTML). */
 (function () {
   var TH = {
     "home.meta.title": "Persona 4 Revival | Midnight Channel",
@@ -153,13 +174,10 @@
     "event.modal.upload_choose": "เลือกรูปภาพ",
     "event.modal.upload_drag": "หรือลากไฟล์มาวางที่นี่",
     "event.modal.upload_preparing": "กำลังเตรียมรูปภาพของคุณ…",
-    "event.modal.upload_hint": "อัปโหลดรูปภาพหลักฐานการสั่งซื้อล่วงหน้า 1 รูป (ไฟล์ JPEG หรือ PNG ขนาดไม่เกิน 1 MB) คุณสามารถอัปโหลดหลักฐานใหม่ได้ตลอดเวลา แต่ระบบจะใช้เฉพาะหลักฐานล่าสุดเท่านั้น",
     "event.modal.upload_remove_aria": "ลบรูปภาพนี้",
     "event.modal.upload_button": "อัปโหลดหลักฐาน",
     "event.modal.upload_uploading": "กำลังอัปโหลด…",
-    "event.modal.upload_error_type": "กรุณาเลือกรูปภาพ (JPEG หรือ PNG)",
     "event.modal.upload_error_size": "ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาเลือกรูปอื่น",
-    "event.modal.upload_error_open": "ไม่สามารถเปิดรูปภาพนี้ได้ กรุณาเลือกไฟล์ JPEG หรือ PNG",
     "event.toast.receipt_uploaded": "อัปโหลดหลักฐานเรียบร้อยแล้ว!",
     "event.toast.upload_failed": "อัปโหลดไม่สำเร็จ โปรดลองใหม่อีกครั้ง",
     "event.toast.signup_save_failed": "ไม่สามารถบันทึกการสมัครบัญชี SEGA ได้ กรุณาลองใหม่อีกครั้งโดยการเข้าสู่ระบบ",
@@ -176,6 +194,30 @@
   };
 
   var STORE_KEY = 'p4r_lang';
+  var COPY_KEY = 'p4r_copy_v1';
+  var script = document.currentScript;
+  var API_BASE = script && script.getAttribute('data-api') ? script.getAttribute('data-api').replace(/\/+$/, '') : '';
+
+  // Backend copy: { en: {key: text}, th: {key: text} }. Only short plain
+  // strings are kept.
+  var REMOTE = { en: {}, th: {} };
+  function cleanMap(data) {
+    var out = {};
+    if (!data || typeof data !== 'object') return out;
+    Object.keys(data).forEach(function (k) {
+      var v = data[k];
+      if (typeof v === 'string' && v.length <= 5000 && k.length <= 200) out[k] = v;
+    });
+    return out;
+  }
+  try {
+    var cached = JSON.parse(localStorage.getItem(COPY_KEY) || 'null');
+    if (cached && cached.api === API_BASE) { REMOTE.en = cleanMap(cached.en); REMOTE.th = cleanMap(cached.th); }
+  } catch (e) {}
+  function lookup(lang, key) {
+    if (lang === 'th') return REMOTE.th[key] || TH[key] || REMOTE.en[key] || null;
+    return REMOTE.en[key] || null;
+  }
 
   function storedChoice() {
     try {
@@ -208,7 +250,8 @@
     lang: storedChoice() || fromCountry() || fromDevice() || 'en',
 
     t: function (key, english, vars) {
-      var s = api.lang === 'th' && TH[key] ? TH[key] : english;
+      var s = lookup(api.lang, key);
+      if (s === null) s = english;
       if (vars) {
         s = s.replace(/\{(\w+)\}/g, function (m, name) { return name in vars ? vars[name] : m; });
       }
@@ -221,9 +264,18 @@
       for (var i = 0; i < els.length; i++) {
         var el = els[i];
         if (el.__p4rEnglish === undefined) el.__p4rEnglish = el.innerHTML;
-        var th = api.lang === 'th' && TH[el.getAttribute('data-i18n')];
-        if (th) el.textContent = th;
+        var text = lookup(api.lang, el.getAttribute('data-i18n'));
+        if (text) el.textContent = text;
         else el.innerHTML = el.__p4rEnglish;
+        // data-i18n-href="link.tnc": once the backend sets that link, the
+        // element's text becomes a link to it (new tab).
+        var href = el.getAttribute('data-i18n-href') && api.url(el.getAttribute('data-i18n-href'));
+        if (href) {
+          var a = document.createElement('a');
+          a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+          a.textContent = el.textContent;
+          el.textContent = ''; el.appendChild(a);
+        }
       }
       var labelled = document.querySelectorAll('[data-i18n-aria]');
       for (var j = 0; j < labelled.length; j++) {
@@ -251,7 +303,37 @@
       listeners.push(fn);
       return function () { listeners = listeners.filter(function (x) { return x !== fn; }); };
     },
+
+    url: function (key) {
+      var u = lookup(api.lang, key) || REMOTE.en[key] || '';
+      return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : null;
+    },
   };
+
+  // Fetch the backend's copy for both languages. Resolves `ready` as soon
+  // as it's in, or after 1.5 s; a late answer still updates the plain-HTML
+  // text (apply) and the cache, for the next page.
+  function fetchLang(lang) {
+    return fetch(API_BASE + '/api/language/' + lang, { headers: { Accept: 'application/json' }, credentials: 'omit' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (body) { return body && body.success ? cleanMap(body.data) : null; })
+      .catch(function () { return null; });
+  }
+  api.ready = !API_BASE || typeof fetch !== 'function' ? Promise.resolve() : new Promise(function (resolve) {
+    var hadCache = Object.keys(REMOTE.en).length > 0 || Object.keys(REMOTE.th).length > 0;
+    if (hadCache) resolve();
+    var timer = setTimeout(resolve, 1500);
+    Promise.all([fetchLang('en'), fetchLang('th')]).then(function (res) {
+      if (res[0] || res[1]) {
+        if (res[0]) REMOTE.en = res[0];
+        if (res[1]) REMOTE.th = res[1];
+        try { localStorage.setItem(COPY_KEY, JSON.stringify({ api: API_BASE, en: REMOTE.en, th: REMOTE.th, at: Date.now() })); } catch (e) {}
+        if (document.readyState !== 'loading') api.apply();
+      }
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 
   document.documentElement.lang = api.lang;
   window.P4R_I18N = api;

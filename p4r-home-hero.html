@@ -625,6 +625,7 @@ a{color:inherit;text-decoration:none}
   margin-top:-1px;
 }
 .tnc{font-family:var(--font-body); color:#636363; font-size:12px}
+.tnc a{color:inherit; text-decoration:underline} /* once the backend sets link.tnc */
 
 .col-right{position:relative; flex:1 1 320px; min-width:260px; max-width:900px; display:flex}
 /* Windows under 900px wide (taller than a landscape phone; PC windows
@@ -1003,12 +1004,16 @@ footer p{font-family:var(--font-body); font-size:12px; color:var(--grey-copy); t
 <script type="module">
 const React = window.React;
 const { createRoot } = window.ReactDOM;
+// The backend's copy (API translation store) first, at most 1.5 s; see i18n.js.
+await window.P4R_I18N.ready;
 const h = React.createElement;
 
 // Thai / English (assets/i18n.js): L(key, english) is the Thai text for
 // that sheet key in Thai mode, otherwise the English given here.
 const I18N = window.P4R_I18N;
 const L = I18N.t;
+// The T&Cs note links to the backend's "link.tnc" once it's set (i18n.js url()).
+const tncText = (text) => { const u = I18N.url && I18N.url('link.tnc'); return u ? h('a', { href: u, target: '_blank', rel: 'noopener noreferrer' }, text) : text; };
 // Re-renders on the EN/TH toggle.
 function useLang() {
   const [lang, setLang] = React.useState(I18N.lang);
@@ -1445,7 +1450,7 @@ function InfoSection({ onOpenAccountModal }) {
           ),
           h('p', { className: 'info-copy' }, L('home.info.copy', 'Clear all the Midnight Channel missions to unlock prizes and enter the Lucky Draw for exclusive Persona 4 Revival merch.')),
           h('button', { className: 'cta cta--dark cta--join', onClick: onOpenAccountModal }, h('span', null, L('home.info.join_cta', 'JOIN NOW'))),
-          h('p', { className: 'tnc' }, L('home.info.tnc', '*Terms & Conditions apply.'))
+          h('p', { className: 'tnc' }, tncText(L('home.info.tnc', '*Terms & Conditions apply.')))
         ),
         h('div', { className: 'col-right' },
           h('div', { className: 'merch-flower merch-flower--top-left' },
