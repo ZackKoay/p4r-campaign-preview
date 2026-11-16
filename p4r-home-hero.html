@@ -1014,6 +1014,10 @@ const h = React.createElement;
 // that sheet key in Thai mode, otherwise the English given here.
 const I18N = window.P4R_I18N;
 const L = I18N.t;
+// External links: the backend can replace any of them with a "link.*"
+// key in the API's text store (https only; see i18n.js url()). The
+// address given here is the fallback.
+const linkTo = (key, fallback) => (I18N.url && I18N.url(key)) || fallback;
 // The T&Cs note links to the backend's "link.tnc" once it's set (i18n.js url()).
 const tncText = (text) => { const u = I18N.url && I18N.url('link.tnc'); return u ? h('a', { href: u, target: '_blank', rel: 'noopener noreferrer' }, text) : text; };
 // Re-renders on the EN/TH toggle.
@@ -1477,10 +1481,10 @@ function InfoSection({ onOpenAccountModal }) {
 
 function Footer() {
   const socials = [
-    { label: 'Facebook', Icon: IconFacebook, href: 'https://www.facebook.com/Atlus.asia' },
-    { label: 'Discord', Icon: IconDiscord, href: 'https://discord.com/invite/atlussea' },
-    { label: 'TikTok', Icon: IconTikTok, href: 'https://www.tiktok.com/@segaatlus.sea' },
-    { label: 'Instagram', Icon: IconInstagram, href: 'https://www.instagram.com/atlus.sea/' },
+    { label: 'Facebook', Icon: IconFacebook, href: linkTo('link.facebook', 'https://www.facebook.com/Atlus.asia') },
+    { label: 'Discord', Icon: IconDiscord, href: linkTo('link.discord', 'https://discord.com/invite/atlussea') },
+    { label: 'TikTok', Icon: IconTikTok, href: linkTo('link.tiktok', 'https://www.tiktok.com/@segaatlus.sea') },
+    { label: 'Instagram', Icon: IconInstagram, href: linkTo('link.instagram', 'https://www.instagram.com/atlus.sea/') },
   ];
   return h('footer', null,
     h('div', { className: 'socials' },

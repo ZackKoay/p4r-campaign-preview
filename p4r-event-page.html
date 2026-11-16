@@ -867,6 +867,10 @@ const h = React.createElement;
 // here (a string or an element). This page has no toggle, so the
 // language is fixed for the visit.
 const L = window.P4R_I18N.t;
+// External links: the backend can replace any of them with a "link.*"
+// key in the API's text store (https only; see i18n.js url()). The
+// address given here is the fallback.
+const linkTo = (key, fallback) => (window.P4R_I18N.url && window.P4R_I18N.url(key)) || fallback;
 // The T&Cs note links to the backend's "link.tnc" once it's set (i18n.js url()).
 const tncText = (text) => { const u = window.P4R_I18N.url && window.P4R_I18N.url('link.tnc'); return u ? h('a', { href: u, target: '_blank', rel: 'noopener noreferrer' }, text) : text; };
 window.P4R_I18N.apply(); // the rotate-your-phone prompt (plain HTML above)
@@ -1054,7 +1058,7 @@ function fallbackCopy(text) {
 // match finds the linked words: "ATLUS SEA Instagram" in English, just
 // "ATLUS SEA" in Thai (written there with a no-break space).
 const ATLUS_INSTAGRAM = {
-  href: 'https://www.instagram.com/atlus.sea/?hl=en',
+  href: linkTo('link.instagram', 'https://www.instagram.com/atlus.sea/?hl=en'),
   match: /ATLUS[\s\u00a0]SEA Instagram|ATLUS[\s\u00a0]SEA/,
 };
 
@@ -1075,8 +1079,8 @@ const MISSIONS = [
     },
     tasks: [
       { id: '1.gate', label: L('event.task.1_gate', 'Sign up for SEGA Account'), kind: 'gate' },
-      { id: '1.a', label: L('event.task.1_a', 'Wishlist Persona 4 Revival'), kind: 'link', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
-      { id: '1.b', label: L('event.task.1_b', 'Follow ATLUS SEA on Instagram'), kind: 'link', href: 'https://www.instagram.com/atlus.sea/' },
+      { id: '1.a', label: L('event.task.1_a', 'Wishlist Persona 4 Revival'), kind: 'link', href: linkTo('link.steam_wishlist', 'https://store.steampowered.com/app/2963950/Persona_4_Revival/') },
+      { id: '1.b', label: L('event.task.1_b', 'Follow ATLUS SEA on Instagram'), kind: 'link', href: linkTo('link.instagram', 'https://www.instagram.com/atlus.sea/') },
       { id: '1.c', label: L('event.task.1_c', 'Invite a friend to join'), kind: 'share' },
     ],
   },
@@ -1091,7 +1095,7 @@ const MISSIONS = [
       file: { href: 'assets/bonus/P4R-Avatar-Frame.png', name: 'P4R-Avatar-Frame.png' },
     },
     tasks: [
-      { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: 'https://discord.com/invite/atlussea' },
+      { id: '2.a', label: L('event.task.2_a', 'Join the ATLUS SEA server on Discord'), kind: 'link', href: linkTo('link.discord', 'https://discord.com/invite/atlussea') },
       { id: '2.b', label: L('event.task.2_b', 'Input password from KOL streams'), kind: 'password', modalTitle: L('event.modal.password_title_kol', 'Enter the Password from the KOL Stream'), modalHint: linkPhrase(L('event.modal.password_hint_kol', 'Hint: Visit the official ATLUS SEA Instagram to find out more.'), ATLUS_INSTAGRAM) },
     ],
   },
@@ -1512,17 +1516,17 @@ function ShareModal({ shareUrl, onClose, onShared, onCopyLink }) {
          a fake in-site share action. */
       h('a', {
         className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('discord'),
-        href: 'https://discord.com/invite/atlussea',
+        href: linkTo('link.discord', 'https://discord.com/invite/atlussea'),
       }, h('span', { className: 'share-social-circle' }, h(IconDiscordFilled, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'Discord')),
       /* TikTok has no "share this URL" web intent either — same
          straight-to-profile treatment as Discord/Instagram above. */
       h('a', {
         className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('tiktok'),
-        href: 'https://www.tiktok.com/@segaatlus.sea',
+        href: linkTo('link.tiktok', 'https://www.tiktok.com/@segaatlus.sea'),
       }, h('span', { className: 'share-social-circle' }, h(IconTikTok, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'TikTok')),
       h('a', {
         className: 'share-social', target: '_blank', rel: 'noopener', onClick: () => onShared('instagram'),
-        href: 'https://www.instagram.com/atlus.sea/',
+        href: linkTo('link.instagram', 'https://www.instagram.com/atlus.sea/'),
       }, h('span', { className: 'share-social-circle' }, h(IconInstagramFilled, { width: 24, height: 24 })), h('span', { className: 'share-social-label' }, 'Instagram'))
     ),
     h('div', { className: 'share-link-row' },
@@ -1602,10 +1606,10 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
 // The client's order: Xbox, Steam, PlayStation, Switch 2. Each opens the
 // game's own store page, where the demo is.
 const DEMO_PLATFORMS = [
-  { id: 'xbox', label: 'Xbox', href: 'https://www.xbox.com/en-US/games/store/persona-4-revival/9n40dk5n4ld4' },
-  { id: 'steam', label: 'Steam', href: 'https://store.steampowered.com/app/2963950/Persona_4_Revival/' },
-  { id: 'playstation', label: 'PlayStation', href: 'https://www.playstation.com/en-sg/games/persona-4-revival/' },
-  { id: 'nintendo', label: 'Nintendo Switch 2', note: L('event.modal.demo_note_ns2', 'Releases 20 May'), href: 'https://www.nintendo.com/my/games/detail.html?id=70010000131659' },
+  { id: 'xbox', label: 'Xbox', href: linkTo('link.demo_xbox', 'https://www.xbox.com/en-US/games/store/persona-4-revival/9n40dk5n4ld4') },
+  { id: 'steam', label: 'Steam', href: linkTo('link.demo_steam', 'https://store.steampowered.com/app/2963950/Persona_4_Revival/') },
+  { id: 'playstation', label: 'PlayStation', href: linkTo('link.demo_playstation', 'https://www.playstation.com/en-sg/games/persona-4-revival/') },
+  { id: 'nintendo', label: 'Nintendo Switch 2', note: L('event.modal.demo_note_ns2', 'Releases 20 May'), href: linkTo('link.demo_nintendo', 'https://www.nintendo.com/my/games/detail.html?id=70010000131659') },
 ];
 // Platform logos (assets/icons/steam.svg, ps.svg, xbox.svg, ns2.svg),
 // inlined so they take the button's text colour.
@@ -2062,9 +2066,9 @@ function App() {
       ),
       h('footer', { className: 'event-footer' },
         h('div', { className: 'links' },
-          h('a', { href: 'https://www.sega.co.jp/en/privacypolicy/', target: '_blank', rel: 'noopener' }, L('event.footer.privacy', 'Privacy Policy')),
+          h('a', { href: linkTo('link.privacy', 'https://www.sega.co.jp/en/privacypolicy/'), target: '_blank', rel: 'noopener' }, L('event.footer.privacy', 'Privacy Policy')),
           h('div', { className: 'sep' }),
-          h('a', { href: 'https://sega-account.com/statics/terms', target: '_blank', rel: 'noopener' }, L('event.footer.tos', 'Terms of Service')),
+          h('a', { href: linkTo('link.terms', 'https://sega-account.com/statics/terms'), target: '_blank', rel: 'noopener' }, L('event.footer.tos', 'Terms of Service')),
           h('div', { className: 'sep' }),
           h('a', { href: '#', 'data-cookie-settings': '' }, L('common.cookie_settings', 'Cookie settings'))
         ),

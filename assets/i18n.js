@@ -33,6 +33,8 @@
                           in (or after 1.5 s at most); pages wait for it
                           before their first render.
 
+   [data-i18n-link="key"] on a link swaps its address for url(key) once
+   the backend sets one (Home's social links).
    [data-i18n-href="key"] on a [data-i18n] element links its text to
    url(key) once the backend sets one (the T&Cs notes use "link.tnc").
 
@@ -142,6 +144,13 @@
         var l = labelled[j];
         if (l.__p4rEnglishLabel === undefined) l.__p4rEnglishLabel = l.getAttribute('aria-label') || '';
         l.setAttribute('aria-label', api.t(l.getAttribute('data-i18n-aria'), l.__p4rEnglishLabel));
+      }
+      // [data-i18n-link="link.x"]: the backend's link for that key, if set.
+      var links = document.querySelectorAll('[data-i18n-link]');
+      for (var q = 0; q < links.length; q++) {
+        var ln = links[q];
+        if (ln.__p4rHref === undefined) ln.__p4rHref = ln.getAttribute('href') || '';
+        ln.setAttribute('href', api.url(ln.getAttribute('data-i18n-link')) || ln.__p4rHref);
       }
       var imgs = document.querySelectorAll('[data-i18n-alt]');
       for (var k = 0; k < imgs.length; k++) {
