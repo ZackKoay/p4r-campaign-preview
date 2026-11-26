@@ -522,6 +522,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 }
 .modal-btn--dark{background:#1B1B1B; color:var(--yellow)}
 .modal-btn--sm{padding:8px 28px; font-size:14px}
+/* Mission 3 bonus (Figma 5271:14673): heading and a line of copy that
+   runs the full width of the pop-up, the Discord mark after the label. */
+.modal-body--centered .bonus-discord .copy{max-width:600px; line-height:1.6}
+.bonus-discord{margin-bottom:var(--space-16)}
+.modal-btn[aria-disabled="true"]{opacity:.6; cursor:wait}
 /* A plain CSS border only draws along a box's real rectangular edges —
    .modal-btn's clip-path slices two of its corners diagonally, and
    those cuts aren't real edges, so the old `border` only ever showed
@@ -1121,6 +1126,10 @@ const MISSIONS = [
   {
     id: 3,
     name: L('event.mission.3_name', 'Reach the Goal'),
+    // Mission 3's bonus is an exclusive P4R Midnight Channel title on the
+    // ATLUS SEA Discord: no download, the player screenshots the pop-up
+    // and posts it there (Figma node 5271:14673).
+    bonusDiscord: true,
     tasks: [
       // Mock: coming back from SEGA's link page counts as linked (the
       // real site asks the API — see the Laravel event view).
@@ -1237,14 +1246,16 @@ function MissionCard({ mission, active, onSelect, done, onTaskGo, claimed, onBon
   );
 }
 
-function PrizeRail({ entries, total, onEnterDraw }) {
+function PrizeRail({ entries, draws, drawsTotal, onEnterDraw }) {
   const glowing = entries > 0;
   return h('div', { className: 'prize-rail' },
     h('div', { className: 'lucky-draw-block' },
       h('div', { className: `lucky-draw-title${glowing ? ' glow' : ''}` }, h('span', null, L('event.luckydraw.title', 'LUCKY DRAW'))),
       h('div', { className: 'lucky-draw-copy' },
         h('p', null, L('event.luckydraw.copy', 'Complete missions to accumulate entry chances!')),
-        h('p', null, L('event.luckydraw.entries_label', 'Entries acquired:  {n}/{total}', { n: entries, total }))
+        // The same count as the Lucky Draw pop-up: one entry per completed
+        // task, out of 10 (see `draws` in App).
+        h('p', null, L('event.luckydraw.entries_label', 'Entries acquired: {n}/{total}', { n: draws, total: drawsTotal }))
       )
     ),
     h('div', { className: 'prize-merch' }, h(PrizeShowcase)),
@@ -1253,7 +1264,7 @@ function PrizeRail({ entries, total, onEnterDraw }) {
         type: 'button', className: `enter-draw-btn${glowing ? ' active' : ''}`, disabled: !glowing,
         onClick: () => glowing && onEnterDraw(),
       }, L('event.luckydraw.enter_button', 'ENTER LUCKY DRAW')),
-      h('p', { className: 'event-date' }, L('event.luckydraw.period', 'Event period: xx October - xx November 2025'))
+      h('p', { className: 'event-date' }, L('event.luckydraw.event_period', 'Event period: 27 January - 5 March 2027 (23:59, GMT+8)'))
     )
   );
 }
@@ -1399,9 +1410,10 @@ function ScrollCopy({ label, children }) {
   );
 }
 
-// The draw opens after any one mission, so the heading only claims
-// "all the missions" when that's actually true.
-function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, onSubmit, onClose }) {
+// The client's campaign copy: period, draw date, details and prize pool
+// (each a text-store key, Thai included). The entry count itself is on
+// the Lucky Draw card.
+function LuckyDrawRevealModal({ busy, onSubmit, onClose }) {
   return h(Modal, {
     onClose, wide: true, header: L('event.modal.luckydraw_header', 'LUCKY DRAW'),
     actions: h('button', { type: 'button', className: 'modal-btn modal-btn--dark', disabled: busy, onClick: onSubmit }, busy ? L('event.modal.luckydraw_submitting', 'SUBMITTING...') : L('event.modal.luckydraw_submit', 'SUBMIT ENTRY')),
@@ -1409,13 +1421,13 @@ function LuckyDrawRevealModal({ entries, entriesTotal, draws, drawsTotal, busy, 
     h('div', { className: 'modal-content-row' },
       h('div', { className: 'modal-text' },
         h('div', null,
-          h('h3', null, entries >= entriesTotal ? L('event.modal.luckydraw_heading', "You've completed all the missions!") : L('event.modal.luckydraw_heading_partial', "You've completed {n} of {total} missions!", { n: entries, total: entriesTotal })),
-          h('p', { className: 'copy' }, L('event.modal.luckydraw_draws_copy', 'This gives you {draws}/{total} total draws.', { draws, total: drawsTotal })),
+          h('h3', null, L('event.modal.luckydraw_period', 'Campaign period: 27 January - 5 March 2027')),
+          h('p', { className: 'copy' }, L('event.modal.luckydraw_draw_date', '(Lucky draw starts on 6 March 2027)')),
         ),
         h(ScrollCopy, { label: L('event.modal.luckydraw_details_aria', 'Campaign details and prizes') },
-          richCopy(L('event.modal.luckydraw_join_copy', 'Complete missions to accumulate entry chances! Submit your entries and stand a chance to win one of these amazing prizes.\nAll prizes come with 1 autographed shikishi, signed by Persona 4 Revival Producer Kazuhisa Wada!\n\nPrize pool:\n- 1 x 55" Philips Monitor\n- 2 x Sunday Shades P4R Collaboration Exclusive Glasses\n- 3 x Gamesir Controller\n- 4 x ANIPLUS Merchandise Set\n\nTen winners will be chosen. Each takes home one prize from the pool.'))
+          richCopy(L('event.modal.luckydraw_details', 'Complete missions to accumulate entry chances! Submit your entries and stand a chance to win one of these amazing prizes.\nAll prizes come with 1 autographed shikishi, signed by Persona 4 Revival Producer Kazuhisa Wada, Game Director Daisuke Yajima and Business Producer Atsushi Nomura!\n\nPrize pool:\n- 55" Philips Monitor (1 winner)\n- Sunday Shades P4R Collaboration Exclusive Glasses (2 winners each)\n- Gamesir Controller (3 winners each)\n- ANIPLUS Merchandise Set (4 winners each)\n\nDon\'t miss this chance to score exclusive gifts! Join now.'))
         ),
-        h('p', { className: 'tnc' }, tncText(L('event.modal.luckydraw_tnc', '*T&Cs apply.')))
+        h('p', { className: 'tnc' }, tncText(L('event.modal.luckydraw_terms', '*Terms and Conditions apply.')))
       ),
       h('div', { className: 'modal-merch modal-merch--prizes' }, h(PrizeShowcase))
     )
@@ -1495,7 +1507,24 @@ function startDownload(file) {
 
 // downloads: a mission's bonusDownloads. One `file` gives a single
 // DOWNLOAD button; `desktop` / `mobile` give one button each.
-function BonusModal({ image, copy, downloads, busy, onDownload, onClose }) {
+function BonusModal({ image, copy, downloads, discord, busy, onDownload, onDiscord, onClose }) {
+  // Mission 3: a "you're done" screen to screenshot, and one button to
+  // the ATLUS SEA Discord where the title is claimed.
+  if (discord) {
+    return h(Modal, {
+      onClose, header: L('event.modal.bonus_header', 'BONUS'), centered: true,
+      actions: h('a', {
+        className: 'modal-btn modal-btn--dark', href: linkTo('link.discord', 'https://discord.com/invite/atlussea'),
+        target: '_blank', rel: 'noopener', 'aria-disabled': busy || undefined,
+        onClick: (e) => { if (busy) { e.preventDefault(); return; } onDiscord(); },
+      }, L('event.modal.bonus_m3_discord', 'Join Discord'), h(IconDiscordFilled, { width: 28, height: 28, 'aria-hidden': 'true' })),
+    },
+      h('div', { className: 'modal-text bonus-discord' },
+        h('h3', null, L('event.modal.bonus_m3_heading', 'You are eligible for an exclusive Discord title!')),
+        h('p', { className: 'copy' }, L('event.modal.bonus_m3_copy', 'Join our Official Discord below and send a screenshot of this page to claim your title'))
+      )
+    );
+  }
   return h(Modal, {
     onClose, header: L('event.modal.bonus_header', 'BONUS'), centered: true,
     actions: downloads && downloads.file
@@ -2081,6 +2110,14 @@ function App() {
     if (firstClaim) advanceAfterClaim(missionId, (id) => id === missionId || state.claimed[id]);
   };
 
+  // Mission 3: "Go to Discord" opens the server in a new tab and records
+  // the claim; the pop-up stays open for the screenshot.
+  const handleBonusDiscord = (missionId) => {
+    track('bonus_discord', { mission_id: missionId });
+    Api.claimBonus(missionId, 'discord');
+    setState((s) => ({ ...s, claimed: { ...s.claimed, [missionId]: true } }));
+  };
+
   const handleSubmitEntry = () => {
     track('lucky_draw_submit');
     Api.submitEntry(draws);
@@ -2090,10 +2127,9 @@ function App() {
   const entries = MISSIONS.filter((m) => m.tasks.every((t) => state.done[t.id])).length;
   const activeMission = MISSIONS.find((m) => m.id === active);
 
-  // "Total draws" (Figma: "This gives you 9/9 total draws") counts every
-  // individual completed task across all 3 missions, not just fully-
-  // completed missions — distinct from the rail's mission-based "Entries
-  // acquired" counter. 9 = 4 (Mission 1, incl. the sign-up gate) + 2 + 3.
+  // Lucky Draw entries: one per completed task across all 3 missions
+  // (shown on the Lucky Draw card). `entries`, whole missions done, still
+  // decides when ENTER LUCKY DRAW unlocks.
   const allTasks = MISSIONS.flatMap((m) => m.tasks);
   const draws = allTasks.filter((t) => state.done[t.id]).length;
   const drawsTotal = allTasks.length;
@@ -2122,7 +2158,7 @@ function App() {
               done: state.done, onTaskGo: handleTaskGo,
               claimed: state.claimed, onBonusClick: (missionId) => setModal({ type: 'bonus', missionId }),
             }),
-            h(PrizeRail, { entries, total: MISSIONS.length, onEnterDraw: () => { track('lucky_draw_open', { entries }); setModal('lucky-draw'); } })
+            h(PrizeRail, { entries, draws, drawsTotal, onEnterDraw: () => { track('lucky_draw_open', { entries }); setModal('lucky-draw'); } })
           )
         )
       ),
@@ -2141,7 +2177,7 @@ function App() {
       )
     ),
     modal === 'lucky-draw' && h(LuckyDrawRevealModal, {
-      entries, entriesTotal: MISSIONS.length, draws, drawsTotal, busy: saving,
+      busy: saving,
       onSubmit: handleSubmitEntry, onClose: () => setModal(null),
     }),
     modal === 'lucky-draw-submitted' && h(LuckyDrawSubmittedModal, { onReturn: () => setModal(null) }),
@@ -2150,8 +2186,10 @@ function App() {
       image: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusImage,
       copy: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusCopy,
       downloads: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusDownloads,
+      discord: (MISSIONS.find((m) => m.id === modal.missionId) || {}).bonusDiscord,
       busy: saving,
       onDownload: (platform) => handleBonusDownload(modal.missionId, platform),
+      onDiscord: () => handleBonusDiscord(modal.missionId),
       onClose: () => setModal(null),
     }),
     modal && modal.type === 'share' && h(ShareModal, {
