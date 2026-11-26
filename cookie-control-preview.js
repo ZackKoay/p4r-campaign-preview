@@ -5,9 +5,10 @@
    licence key, which only works on the licensed domain, so it can't
    run here. This is a static copy of how it will look with our
    settings: Cookie Control's default dark slide-out panel on the
-   right, its default English text, and our one optional category
-   (Analytics) plus the Privacy Policy link. Colours, sizes and text
-   are taken from Cookie Control's own default stylesheet and text.
+   right, with the client's "Civic Language" wording (the same cookie.*
+   text-store keys as the real site, so Thai shows once it's in the
+   store), two optional categories (Functional and Analytics,
+   Marketing) and the SEGA UK Cookie / Privacy Policy links.
 
    The round cookie button shows only on Home (the script tag there
    has data-icon); Loading and Event have none, just the footer's
@@ -74,32 +75,54 @@
     '@media (prefers-reduced-motion:reduce){#ccp-overlay,#ccp-module{animation:none}#ccp .ccp-toggle i{transition:none}}'
   ].join('\n');
 
-  var EXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
-  var html =
-    '<div id="ccp-overlay"></div>' +
+  // The client's "Civic Language" sheet, word for word; each line can be
+  // overridden from the text store (cookie.* keys), Thai included. A
+  // blank line = new paragraph, [[text]] = a link (Cookie Policy, then
+  // Privacy Policy), exactly as on the real site.
+  var I18N = window.P4R_I18N;
+  function t(key, english) { return I18N && I18N.t ? I18N.t(key, english) : english; }
+  function esc(x) { return String(x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var COOKIE_POLICY = 'https://www.sega.co.uk/cookiepolicy';
+  var PRIVACY_POLICY = 'https://www.sega.co.uk/Privacy';
+  function rich(key, english, links) {
+    var i = 0;
+    return String(t(key, english)).split(/\n\s*\n/).map(function (para) {
+      return '<p>' + esc(para.trim()).replace(/\n/g, '<br>').replace(/\[\[(.+?)\]\]/g, function (m, label) {
+        var href = links && links[i++];
+        return href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + label + '</a>' : label;
+      }) + '</p>';
+    }).join('');
+  }
+  function category(name, titleKey, title, descKey, desc) {
+    return '<div class="ccp-category">' +
+      '<h3>' + esc(t(titleKey, title)) + '</h3>' +
+      '<label class="ccp-toggle"><input type="checkbox" id="ccp-' + name + '" aria-label="' + esc(t(titleKey, title)) + '"><span class="ccp-off">Off</span><span class="ccp-on">On</span><i></i></label>' +
+      rich(descKey, desc) +
+    '</div>';
+  }
+  function buildHtml() {
+    return '<div id="ccp-overlay"></div>' +
     '<div id="ccp-module" role="dialog" aria-modal="true" aria-labelledby="ccp-title">' +
       '<div id="ccp-content">' +
         '<button type="button" id="ccp-close" aria-label="Close Cookie Control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
-        '<h2 id="ccp-title">This site uses cookies to store information on your computer.</h2>' +
-        '<p>Some of these cookies are essential, while others help us to improve your experience by providing insights into how the site is being used.</p>' +
-        '<p>For more detailed information, please read our <a href="https://www.sega.co.jp/en/privacypolicy/" target="_blank" rel="noopener">Privacy Policy' + EXT + '</a></p>' +
+        '<h2 id="ccp-title">' + esc(t('cookie.panel.title', 'Your choice regarding cookies on this site.')) + '</h2>' +
+        rich('cookie.panel.intro', 'Cookies served by us and our third-party partners help us to deliver and improve our services, and provide personalised ads to support our marketing campaigns. You can manage your cookie preferences using the Civic cookies tool, or read more about our use of cookies at [[Cookie Policy]].\n\nWhere cookies are referenced in this banner, this refers to cookies and similar technologies (such as tracking pixels, tags, conversion APIs or other identifiers) that store or access information on a user’s device or are used to collect usage data.', [COOKIE_POLICY]) +
         '<div id="ccp-buttons">' +
-          '<button type="button" class="ccp-button ccp-button--solid" data-ccp="accept">I Accept Cookies</button>' +
-          '<button type="button" class="ccp-button" data-ccp="reject">I Do Not Accept Cookies</button>' +
+          '<button type="button" class="ccp-button" data-ccp="accept">' + esc(t('cookie.button.accept_settings', 'I Accept')) + '</button>' +
+          '<button type="button" class="ccp-button" data-ccp="reject">' + esc(t('cookie.button.reject_settings', 'I Do Not Accept')) + '</button>' +
         '</div>' +
         '<hr>' +
-        '<h3>Necessary Cookies</h3>' +
-        '<p>Necessary cookies enable core functionality such as page navigation and access to secure areas. The website cannot function properly without these cookies, and can only be disabled by changing your browser preferences.</p>' +
+        '<h3>' + esc(t('cookie.necessary.title', 'Strictly Necessary Cookies')) + '</h3>' +
+        rich('cookie.necessary.description', 'These Cookies are required for the operation of our Websites. They enable basic site functionality such as page navigation and access to secure areas, such as when you sign in to your online account. The Websites cannot function properly without these Cookies. Strictly Necessary Cookies are enabled when you visit our Websites. If you block these Cookies, it may impact your experience when using our Websites.\n\nRetention period – max 12 months.') +
         '<hr>' +
-        '<div class="ccp-category">' +
-          '<h3>Analytics</h3>' +
-          '<label class="ccp-toggle"><input type="checkbox" id="ccp-analytics" aria-label="Analytics cookies"><span class="ccp-off">Off</span><span class="ccp-on">On</span><i></i></label>' +
-          '<p>Analytics cookies help us improve the site by measuring how visitors use it.</p>' +
-        '</div>' +
+        category('analytics', 'cookie.analytics.title', 'Functional and Analytics Cookies', 'cookie.analytics.description', 'Functional and Analytics Cookies help us to improve our Websites by collecting and reporting information on your use of our Websites. This includes analytics and re-marketing Cookies that allow us to monitor and analyse web traffic, understand visitor behaviours on the Websites, and enables us to analyse the success of our marketing campaigns and Products. Functional and Analytics Cookies also enable us to provide enhanced functionality and personalisation when you visit our Websites and interact with our Products. Any Functional and Analytics Cookie data that we collect is fully anonymised.\n\nRetention period – max 12 months.') +
+        '<hr>' +
+        category('marketing', 'cookie.marketing.title', 'Marketing Cookies', 'cookie.marketing.description', 'Marketing Cookies collect information about your browsing habits and enable us to show you adverts whilst you browse our Websites and other online sites. These Cookies may be set by us or our third party partners to understand the performance of our marketing activities, understand the way you interact with our marketing campaigns, and to improve the relevance of the adverts that you receive.\n\nMarketing Cookies on our Websites, as well as those contained within marketing emails you have signed up to, may include pixels and web beacons. The unique identifiers in these technologies enable us to recognise when you open our emails, which content you have interacted with on our Websites and email marketing materials, your IP address or other unique identifier, and the date and time of your interactions with our content. We use the data in these Cookies to create reports about how our email marketing campaigns perform. If unique identifiers are combined with other Cookie information held on your device, it could be used to create a profile that identifies users of our Websites. You can find out more information about pixel tracking used by SEGA in our Privacy Policy.\n\nYou may be able to interact with third party social networking sites from our Websites, for instance by clicking “Like” or “Share” using the social sharing plugins. You should refer to the privacy policies of these third party platforms (such as Facebook and Twitter) to find out more about how they process data about you, and/or to opt-out from the Cookies that these third parties serve. SEGA shall not be responsible for your use of and/or interactions with third party websites.\n\nFor a list of the third party providers that we use to serve Marketing Cookies, please click here.\n\nRetention period – max 12 months.') +
         '<hr>' +
         '<div id="ccp-end">Cookie Control by CIVIC — preview look-alike</div>' +
       '</div>' +
     '</div>';
+  }
 
   var style = document.createElement('style');
   style.textContent = css;
@@ -108,7 +131,6 @@
   var root = document.createElement('div');
   root.id = 'ccp';
   root.hidden = true;
-  root.innerHTML = html;
   document.body.appendChild(root);
 
   // The round cookie button: Home only.
@@ -123,13 +145,15 @@
     document.body.appendChild(icon);
   }
 
-  var analytics = root.querySelector('#ccp-analytics');
+  var analytics, marketing;
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
   function save(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }
   var opener = null;
   function open() {
+    if (!analytics) return; // still waiting for the text store
     var c = load();
     analytics.checked = !!(c && c.analytics);
+    marketing.checked = !!(c && c.marketing);
     opener = document.activeElement;
     root.hidden = false;
     if (icon) icon.hidden = true;
@@ -140,29 +164,38 @@
     if (icon) icon.hidden = false;
     if (opener && opener.focus && document.contains(opener)) opener.focus();
   }
+  function current() { return { analytics: analytics.checked, marketing: marketing.checked, interacted: true }; }
   function choose(on) {
-    analytics.checked = on;
-    save({ analytics: on, interacted: true });
+    analytics.checked = on; marketing.checked = on;
+    save(current());
     close();
   }
 
   root.addEventListener('click', function (e) {
     if (e.target.id === 'ccp-overlay' || e.target.closest('#ccp-close')) {
-      save({ analytics: analytics.checked, interacted: true });
+      save(current());
       close();
     }
     var b = e.target.closest('[data-ccp]');
     if (b) choose(b.getAttribute('data-ccp') === 'accept');
   });
-  analytics.addEventListener('change', function () { save({ analytics: analytics.checked, interacted: true }); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !root.hidden) close(); });
   if (icon) icon.addEventListener('click', open);
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-cookie-settings]')) { e.preventDefault(); open(); }
   });
 
-  // Like the real one with its default initialState ('open'): the panel
-  // opens on a first visit; afterwards only the small icon shows.
-  if (load()) { if (icon) icon.hidden = false; }
-  else open();
+  // Built once the site's text store has answered (as on the real site),
+  // so the backend's wording - Thai included - is used. Like the real one
+  // with its default initialState ('open'): the panel opens on a first
+  // visit; afterwards only the small icon shows.
+  var ready = I18N && I18N.ready ? I18N.ready : Promise.resolve();
+  ready.then(function () {
+    root.innerHTML = buildHtml();
+    analytics = root.querySelector('#ccp-analytics');
+    marketing = root.querySelector('#ccp-marketing');
+    root.addEventListener('change', function () { save(current()); });
+    if (load()) { if (icon) icon.hidden = false; }
+    else open();
+  });
 })();
