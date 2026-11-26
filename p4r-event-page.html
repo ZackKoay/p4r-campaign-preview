@@ -1632,7 +1632,7 @@ function PasswordModal({ title, hint, placeholder = L('event.modal.password_plac
           },
           onKeyDown: (e) => { if (e.key === 'Enter') handleSubmit(); },
         }),
-        status === 'error' && h('p', { className: 'password-error' }, L('event.modal.password_error', 'Password invalid. Please try a different password.')),
+        status === 'error' && h('p', { className: 'password-error', role: 'alert' }, L('event.modal.password_error', 'Password invalid. Please try a different password.')),
         hint && h('p', { className: 'password-hint' }, hint)
       ),
       h('button', {
@@ -1754,6 +1754,19 @@ const IconUpload = (p) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke:
   h('path', { d: 'M12 4l0 12' })
 );
 
+// Resolves with the file itself if the browser can open it as an image,
+// rejects if not (a broken or mislabelled file). Used for JPEG/PNG that
+// are already small enough to upload as they are.
+function checkImageOpens(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('unreadable')); };
+    img.src = url;
+  });
+}
+
 // Any image the browser can open (iPhone photos included) -> a JPEG of
 // at most maxBytes: first at up to 2400px on the long side, stepping
 // quality and then size down until it fits. Rejects if it can't be read.
@@ -1820,7 +1833,7 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
     if (!next.type.startsWith('image/')) { typeError(); return; }
     setStatus('preparing'); setError('');
     const ready = RECEIPT_KEEP_TYPES.includes(next.type) && next.size <= RECEIPT_MAX_BYTES
-      ? Promise.resolve(next)
+      ? checkImageOpens(next)
       : shrinkImage(next, RECEIPT_MAX_BYTES);
     ready
       .then((out) => {
@@ -1885,7 +1898,7 @@ function ReceiptUploadModal({ title, onClose, onUpload }) {
             h('span', { className: 'upload-zone-hint' }, L('event.modal.upload_drag', 'or drag it here'))
           ),
       h('p', { className: 'upload-hint' }, L('event.modal.upload_hint', 'Upload your pre-order receipt ({types}, up to {max} MB). You may reupload the receipt at any time but only the latest receipt will be used.', { types: RECEIPT_TYPES_LABEL, max: RECEIPT_MAX_MB })),
-      status === 'error' && h('p', { className: 'password-error' }, error)
+      status === 'error' && h('p', { className: 'password-error', role: 'alert' }, error)
     )
   );
 }
