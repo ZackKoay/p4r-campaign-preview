@@ -337,6 +337,16 @@ a{color:inherit;text-decoration:none}
 .event-footer .links a:hover{color:var(--yellow)}
 .event-footer .links .sep{width:1px; height:16px; background:rgba(255,255,255,.3)}
 .event-footer .copyright{font-family:var(--font-body); font-size:12px; color:#fff}
+.event-footer .footer-end{display:flex; align-items:center; gap:var(--space-24)}
+/* EN / TH: the current language in the brand yellow, the other dimmed
+   white that lights up yellow on hover, like the footer links. */
+.lang-switch{display:flex; align-items:center; gap:2px; font-family:var(--font-body); font-size:12px}
+.lang-switch-btn{appearance:none; background:none; border:0; margin:0; padding:4px 6px; font:inherit; font-weight:700; letter-spacing:.04em; color:rgba(255,255,255,.55); cursor:pointer}
+.lang-switch-btn:hover:not(:disabled){color:var(--yellow)}
+.lang-switch-btn.is-current{color:var(--yellow); cursor:default}
+.lang-switch-btn:disabled:not(.is-current){opacity:.5; cursor:wait}
+.lang-switch-btn:focus-visible{outline:2px solid var(--yellow); outline-offset:2px}
+.lang-switch-sep{color:rgba(255,255,255,.3)}
 
 /* =========================================================
    MODALS — Lucky Draw family (4 distinct dialogs, Figma nodes
@@ -736,6 +746,8 @@ a.modal-btn{text-decoration:none}
     padding:0 max(20px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(20px,env(safe-area-inset-left));
   }
   .event-footer .links a, .event-footer .copyright{font-size:11px}
+  .event-footer .footer-end{gap:var(--space-12)}
+  .lang-switch{font-size:11px}
 }
 /* Landscape phones: the header's desktop spacing would otherwise eat
    most of the height .main-fit scales into. */
@@ -1873,6 +1885,46 @@ function useFitScale() {
   return setNode;
 }
 
+/* Footer language switch (EN / TH). Much of this page's copy is read
+   once at load (mission names, pop-up steps), so switching saves the
+   choice (I18N.set: remembered, and the address moves to /th/event or
+   /en/event) and reloads into the new language. Progress lives on the
+   API, so the reload fetches exactly the same progress; the mission tab
+   the player was on is kept for that one reload (sessionStorage). */
+const RETURN_MISSION_KEY = 'p4r_event_return_mission';
+function rememberReturnMission(id) {
+  try { sessionStorage.setItem(RETURN_MISSION_KEY, String(id)); } catch (e) {}
+}
+function takeReturnMission() {
+  try {
+    const id = Number(sessionStorage.getItem(RETURN_MISSION_KEY));
+    sessionStorage.removeItem(RETURN_MISSION_KEY);
+    return MISSIONS.some((m) => m.id === id) ? id : null;
+  } catch (e) { return null; }
+}
+const LANGUAGES = [{ code: 'en', label: 'EN', name: 'English' }, { code: 'th', label: 'TH', name: 'ไทย' }];
+function LanguageSwitch({ busy, onSwitch }) {
+  const current = window.P4R_I18N.lang;
+  const choose = (code) => {
+    // Never mid-save: the reload would drop a request still in flight.
+    if (code === current || busy) return;
+    onSwitch();
+    window.P4R_I18N.set(code);
+    window.location.reload();
+  };
+  return h('div', { className: 'lang-switch', role: 'group', 'aria-label': L('event.footer.language_label', 'Language') },
+    LANGUAGES.map((l, i) => [
+      i > 0 && h('span', { key: `sep-${l.code}`, className: 'lang-switch-sep', 'aria-hidden': 'true' }, '/'),
+      h('button', {
+        key: l.code, type: 'button', lang: l.code, title: l.name,
+        className: 'lang-switch-btn' + (l.code === current ? ' is-current' : ''),
+        'aria-pressed': l.code === current, disabled: busy && l.code !== current,
+        onClick: () => choose(l.code),
+      }, l.label),
+    ])
+  );
+}
+
 function App() {
   const stageRef = useFitScale();
   const [state, setState] = React.useState(loadState);
@@ -1886,7 +1938,7 @@ function App() {
     trackedDoneRef.current = now;
     if (prev) trackDoneChanges(prev, now);
   }, [state]);
-  const [active, setActive] = React.useState(() => firstUnclaimedMission((id) => state.claimed[id]));
+  const [active, setActive] = React.useState(() => takeReturnMission() || firstUnclaimedMission((id) => state.claimed[id]));
   const advanceTimer = React.useRef(null);
   React.useEffect(() => () => clearTimeout(advanceTimer.current), []);
   const [modal, setModal] = React.useState(null); // null | 'lucky-draw' | 'lucky-draw-submitted' | 'logout' | { type:'bonus'|'share'|'password', missionId, taskId?, title? }
@@ -2082,7 +2134,10 @@ function App() {
           h('div', { className: 'sep' }),
           h('a', { href: '#', 'data-cookie-settings': '' }, L('common.cookie_settings', 'Cookie settings'))
         ),
-        h('p', { className: 'copyright' }, L('event.footer.copyright', '©ATLUS. ©SEGA.'))
+        h('div', { className: 'footer-end' },
+          h(LanguageSwitch, { busy: saving, onSwitch: () => rememberReturnMission(active) }),
+          h('p', { className: 'copyright' }, L('event.footer.copyright', '©ATLUS. ©SEGA.'))
+        )
       )
     ),
     modal === 'lucky-draw' && h(LuckyDrawRevealModal, {
