@@ -598,8 +598,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabi
 .demo-steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-8); text-align:left; width:100%; max-width:342px}
 .demo-steps li{display:flex; gap:var(--space-12); align-items:baseline; font-family:var(--font-body); font-size:14px; line-height:1.4; color:#3E3E3E}
 .demo-step-label{flex:none; min-width:52px; font-family:var(--font-head); font-weight:400; font-size:13px; color:#1B1B1B}
+/* The note under the steps: italic, a step smaller, as wide as the
+   platform buttons below it. */
+.demo-note{margin:var(--space-12) 0 0; width:100%; max-width:440px; font-family:var(--font-body); font-style:italic; font-size:13px; line-height:1.4; color:#3E3E3E; text-align:center; text-wrap:balance}
 .demo-platforms{display:flex; flex-direction:column; align-items:center; gap:var(--space-12)}
-.demo-platforms{margin-top:var(--space-16)}
+/* The demo note sits evenly between the steps and "Play Demo on:":
+   24px each side (the modal's own section gap, so no extra margin
+   below; the note adds 12px to the 12px steps gap above). */
+.demo-platforms{margin-top:0}
 /* Four platforms with logos don't fit one row in the pop-up, so they're
    a 2x2 grid of equal-width buttons (one column on narrow phones). */
 .demo-platforms .modal-actions{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-12) var(--space-16); width:100%; max-width:440px}
@@ -777,7 +783,7 @@ a.modal-btn{text-decoration:none}
   .share-social-label{font-size:13px}
   .share-link-box, .password-input{font-size:13px}
   .demo-howto{gap:var(--space-8)}
-  .demo-platforms{margin-top:var(--space-8)}
+  .demo-platforms{margin-top:4px}
   .cta{font-size:16px; padding:8px 28px}
   .cta--sm{font-size:13px; padding:6px 22px}
   .cta-icon{width:16px; height:16px}
@@ -785,6 +791,7 @@ a.modal-btn{text-decoration:none}
   .demo-steps{gap:6px}
   .demo-steps li{font-size:13px}
   .demo-step-label{font-size:12px; min-width:46px}
+  .demo-note{font-size:12px; margin-top:var(--space-8)}
   .upload-zone{min-height:96px; padding:var(--space-12)}
   .upload-zone-icon{width:24px; height:24px}
   .upload-zone-title{font-size:14px}
@@ -1654,7 +1661,10 @@ function DemoModal({ defaultPlatform, onPlay, onClose }) {
         DEMO_STEPS.map((step, i) => h('li', { key: i },
           h('span', { className: 'demo-step-label' }, L('event.modal.demo_step_label', 'Step {n}', { n: i + 1 })), h('span', null, step)
         ))
-      )
+      ),
+      // The demo task only completes once SEGA sees the play, which needs
+      // the platform linked to the player's SEGA account.
+      h('p', { className: 'demo-note' }, L('event.modal.demo_link_note', '*You must link the platform to your SEGA account for the mission to be successfully completed.'))
     ),
     !platform && h('div', { className: 'demo-platforms' },
       h('p', { className: 'copy' }, L('event.modal.demo_play_on', 'Play Demo on:')),
